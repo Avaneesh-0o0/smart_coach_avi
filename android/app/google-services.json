@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "162754887675",
+    "project_id": "smart-coaches",
+    "storage_bucket": "smart-coaches.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:162754887675:android:21cadea9fcd3fd6967955e",
+        "android_client_info": {
+          "package_name": "com.example.smart_coach_new"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBStk-C7HKR3eefptSEiN-sfv8PBhNLlUU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
