@@ -1,15 +1,38 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:excel/excel.dart';
+import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/bc_pressure/data/datasource/bc_dummy_data.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/bc_pressure/data/models/bc_pressure_model.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 class BCReportGenerator {
   static Future<void> generate(BuildContext context, List<BCPressureModel> coaches) async {
+    final String? format = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Select Report Format', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _formatOption(ctx, 'Excel Report', 'xlsx', Icons.table_chart, Colors.green),
+            const SizedBox(height: 12),
+            _formatOption(ctx, 'PDF Report', 'pdf', Icons.picture_as_pdf, Colors.red),
+          ],
+        ),
+      ),
+    );
+
+    if (format == null) return;
+    if (!context.mounted) return;
+
     final DateTimeRange? range = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2026, 1, 1),
@@ -44,7 +67,13 @@ class BCReportGenerator {
     await Future.delayed(const Duration(milliseconds: 800));
 
     try {
-      final file = await _buildExcel(coaches, range);
+      File file;
+      if (format == 'xlsx') {
+        file = await _buildExcel(coaches, range);
+      } else {
+        file = await _buildPdf(coaches);
+      }
+
       if (context.mounted) Navigator.pop(context);
       if (!context.mounted) return;
       _showSuccess(context, file.path);
@@ -54,6 +83,24 @@ class BCReportGenerator {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
       }
     }
+  }
+
+  static Future<File> _buildPdf(List<BCPressureModel> coaches) async {
+    final pdf = pw.Document();
+    pdf.addPage(pw.MultiPage(
+      build: (context) => [
+        pw.Header(level: 0, child: pw.Text('BC Pressure Monitoring Report', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+        pw.SizedBox(height: 20),
+        pw.TableHelper.fromTextArray(
+          headers: ['Coach No.', 'Pressure', 'Status', 'Brake Applied'],
+          data: coaches.map((c) => [c.coachNumber, '${c.pressure}', c.status, c.brakeApplied]).toList(),
+        ),
+      ],
+    ));
+    final dir = await getApplicationDocumentsDirectory();
+    final file = File('${dir.path}/BC_Pressure_Report_${DateTime.now().millisecondsSinceEpoch}.pdf');
+    await file.writeAsBytes(await pdf.save());
+    return file;
   }
 
   static Future<File> _buildExcel(List<BCPressureModel> coaches, DateTimeRange range) async {
@@ -215,7 +262,39 @@ class BCReportGenerator {
             onPressed: () { Navigator.pop(context); OpenFile.open(path); },
             child: Text('Open File', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
           ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey[700]),
+            onPressed: () {
+              Navigator.pop(context);
+              Share.shareXFiles([XFile(path)], text: 'BC Pressure Monitoring Report');
+            },
+            child: Text('Share', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+          ),
         ],
+      ),
+    );
+  }
+
+  static Widget _formatOption(BuildContext context, String label, String value, IconData icon, Color color) {
+    return InkWell(
+      onTap: () => Navigator.pop(context, value),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 16),
+            Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14)),
+            const Spacer(),
+            Icon(Icons.chevron_right, color: Colors.grey[400]),
+          ],
+        ),
       ),
     );
   }

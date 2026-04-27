@@ -44,8 +44,10 @@ class ChainPulledModal extends StatelessWidget {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(20),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   // Coach header
@@ -154,8 +156,10 @@ class ChainPulledModal extends StatelessWidget {
                 ],
               ),
             ),
-          ],
+          ),
         ),
+      ],
+    ),
       ),
     );
   }

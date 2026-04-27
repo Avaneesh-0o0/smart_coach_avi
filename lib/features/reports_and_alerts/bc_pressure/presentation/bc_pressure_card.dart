@@ -115,7 +115,7 @@ class BCPressureCard extends StatelessWidget {
           // ── Info rows ──
           _buildInfoRow('Pressure:', '${coach.pressure} Kg/cm\u00B2'),
           const SizedBox(height: 2),
-          _buildInfoRow('Brake Applied:', coach.brakeApplied),
+          _buildInfoRow('BA:', coach.brakeApplied),
           const SizedBox(height: 2),
 
           // Brake Released or warning message
@@ -131,7 +131,7 @@ class BCPressureCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             )
           else
-            _buildInfoRow('Brake Released:', coach.brakeReleased),
+            _buildInfoRow('BR:', coach.brakeReleased),
 
           const SizedBox(height: 8),
 

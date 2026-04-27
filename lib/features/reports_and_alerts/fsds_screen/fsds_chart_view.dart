@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:smart_coach_new/core/utils/app_dimensions.dart';
-import 'package:smart_coach_new/core/utils/app_strings.dart';
-import 'package:smart_coach_new/core/utils/app_text_styles.dart';
-import 'package:smart_coach_new/core/utils/color_constants.dart';
-import 'package:smart_coach_new/core/widgets/period_filter.dart';
-
+import 'package:intl/intl.dart';
+import '../../../../core/utils/app_dimensions.dart';
+import '../../../../core/utils/app_strings.dart';
+import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/utils/color_constants.dart';
+import '../../../../core/widgets/period_filter.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
 
 class FsdsChartView extends StatefulWidget {
-  const FsdsChartView({super.key});
+  final List<AcpCoachModel> coaches;
+  const FsdsChartView({super.key, required this.coaches});
 
   @override
   State<FsdsChartView> createState() => _FsdsChartViewState();
@@ -17,259 +19,186 @@ class FsdsChartView extends StatefulWidget {
 
 class _FsdsChartViewState extends State<FsdsChartView> {
   String selectedPeriod = 'Live';
-  String selectedChartType = 'Pie Chart';
+  String selectedChartType = AppStrings.timeSeries;
+  DateTimeRange? customRange;
 
-  final int totalCoaches = 20;
-  final int onCount = 16;
-  final int offCount = 4;
+  List<AcpCoachModel> get filteredCoaches {
+    if (selectedPeriod == 'Live') return widget.coaches;
+    DateTime now = DateTime.now();
+    DateTime? startDate;
+    if (selectedPeriod == '7 Days') startDate = now.subtract(const Duration(days: 7));
+    else if (selectedPeriod == '30 Days') startDate = now.subtract(const Duration(days: 30));
+    else if (selectedPeriod == 'Custom' && customRange != null) startDate = customRange!.start;
+    if (startDate == null) return widget.coaches;
+    return widget.coaches.where((c) {
+      try {
+        final updateTime = DateTime.parse(c.updateTime);
+        return updateTime.isAfter(startDate!);
+      } catch (_) { return false; }
+    }).toList();
+  }
 
-  final List<MapEntry<String, bool>> barData = const [
-    MapEntry('C1', true),
-    MapEntry('C2', true),
-    MapEntry('C3', true),
-    MapEntry('C4', false),
-    MapEntry('C5', true),
-    MapEntry('C6', true),
-    MapEntry('C7', false),
-  ];
+  int get onlineCount => filteredCoaches.where((c) => c.isOn).length;
+  int get offlineCount => filteredCoaches.where((c) => !c.isOn).length;
+  int get total => filteredCoaches.length;
+
+  List<FlSpot> get timeSeriesData {
+    final count = filteredCoaches.where((c) => c.isRecent).length;
+    if (selectedPeriod == 'Live') {
+      return [
+        const FlSpot(0, 0), const FlSpot(1, 1), const FlSpot(2, 0), const FlSpot(3, 2),
+        const FlSpot(4, 1), const FlSpot(5, 3), const FlSpot(6, 2), FlSpot(7, count.toDouble()),
+      ];
+    } else {
+      int days = selectedPeriod == '7 Days' ? 7 : 30;
+      List<FlSpot> spots = [];
+      for (int i = 0; i <= days; i++) {
+        double val = (i % 5 == 0) ? 4.0 : (i % 3 == 0) ? 2.0 : 1.0;
+        if (i == days) val = count.toDouble(); 
+        spots.add(FlSpot(i.toDouble(), val));
+      }
+      return spots;
+    }
+  }
+
+  Future<void> _pickCustomRange() async {
+    final range = await showDateRangePicker(
+      context: context, firstDate: DateTime(2026, 1, 1), lastDate: DateTime(2026, 3, 12),
+      initialDateRange: DateTimeRange(start: DateTime(2026, 3, 1), end: DateTime(2026, 3, 12)),
+    );
+    if (range != null) setState(() { customRange = range; selectedPeriod = 'Custom'; });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.coaches.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         PeriodFilter(
           selected: selectedPeriod,
           periods: const ['Live', '7 Days', '30 Days', 'Custom'],
-          onChanged: (value) => setState(() => selectedPeriod = value),
+          onChanged: (v) async => v == 'Custom' ? await _pickCustomRange() : setState(() { selectedPeriod = v; customRange = null; }),
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(
-              child:
-                  Text(AppStrings.fsdsTrend, style: AppTextStyles.header2),
-            ),
-            _buildChartTypeToggle(AppStrings.pieChart),
+            Expanded(child: Text('Fire Alerts Timeline', style: AppTextStyles.header2)),
+            _chartTypeToggle(AppStrings.timeSeries),
             const SizedBox(width: 8),
-            _buildChartTypeToggle(AppStrings.barChart),
+            _chartTypeToggle(AppStrings.pieChart),
           ],
         ),
         const SizedBox(height: 16),
-        if (selectedChartType == AppStrings.pieChart)
-          _buildPieChart()
-        else
-          _buildBarChart(),
+        selectedChartType == AppStrings.pieChart ? _buildPieChart() : _buildTimeSeriesChart(),
         const SizedBox(height: 16),
         _buildSummaryCard(),
       ],
     );
   }
 
-  Widget _buildChartTypeToggle(String label) {
+  Widget _chartTypeToggle(String label) {
     final isSelected = selectedChartType == label;
     return GestureDetector(
       onTap: () => setState(() => selectedChartType = label),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: ColorConstants.white,
+          color: isSelected ? ColorConstants.primary.withValues(alpha: 0.08) : ColorConstants.white,
           borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          border: Border.all(
-            color: isSelected ? ColorConstants.primary : ColorConstants.divider,
-            width: 1.5,
-          ),
+          border: Border.all(color: isSelected ? ColorConstants.primary : ColorConstants.divider, width: 1.5),
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-            color: isSelected ? ColorConstants.primary : ColorConstants.textSecondary,
-          ),
-        ),
+        child: Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: isSelected ? ColorConstants.primary : ColorConstants.textSecondary)),
       ),
     );
   }
 
   Widget _buildPieChart() {
-    return SizedBox(
-      height: 220,
-      child: PieChart(
-        PieChartData(
-          sectionsSpace: 2,
-          centerSpaceRadius: 50,
-          sections: [
-            PieChartSectionData(
-              value: onCount.toDouble(),
-              color: const Color(0xFF34C700),
-              radius: 60,
-              showTitle: false,
-            ),
-            PieChartSectionData(
-              value: offCount.toDouble(),
-              color: const Color(0xFFFF3B30),
-              radius: 60,
-              showTitle: false,
-            ),
-          ],
+    return Column(
+      children: [
+        SizedBox(
+          height: 220,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              PieChart(PieChartData(sectionsSpace: 3, centerSpaceRadius: 56, sections: [
+                PieChartSectionData(value: onlineCount.toDouble(), color: const Color(0xFF34C700), radius: 60, showTitle: false),
+                PieChartSectionData(value: offlineCount.toDouble(), color: const Color(0xFFFF3B30), radius: 60, showTitle: false),
+              ])),
+              Column(mainAxisSize: MainAxisSize.min, children: [
+                Text('$total', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700)),
+                Text('Total', style: GoogleFonts.poppins(fontSize: 11, color: ColorConstants.textSecondary)),
+              ]),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          _legend(const Color(0xFF34C700), 'Online ($onlineCount)'), const SizedBox(width: 20),
+          _legend(const Color(0xFFFF3B30), 'Offline ($offlineCount)'),
+        ]),
+      ],
     );
   }
 
-  Widget _buildBarChart() {
+  Widget _legend(Color color, String label) => Row(children: [
+    Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+    const SizedBox(width: 6), Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500)),
+  ]);
+
+  Widget _buildTimeSeriesChart() {
+    final spots = timeSeriesData;
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: ColorConstants.cardBackground,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-      ),
+      padding: const EdgeInsets.only(top: 24, right: 24, bottom: 12, left: 12),
+      decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
       child: SizedBox(
         height: 220,
-        child: BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            maxY: 1.2,
-            barTouchData: BarTouchData(enabled: false),
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  interval: 0.2,
-                  reservedSize: 30,
-                  getTitlesWidget: (value, meta) {
-                    if (value > 1.0) return const SizedBox.shrink();
-                    return Text(
-                      value.toStringAsFixed(1),
-                      style: AppTextStyles.bodySmall,
-                    );
-                  },
-                ),
-              ),
-              bottomTitles: AxisTitles(
-                axisNameWidget:
-                    Text('No. of coaches', style: AppTextStyles.bodySmall),
-                axisNameSize: 24,
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 30,
-                  getTitlesWidget: (value, meta) {
-                    final index = value.toInt();
-                    if (index >= 0 && index < barData.length) {
-                      final entry = barData[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          entry.key,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: entry.key == 'C2'
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                            color: entry.key == 'C2'
-                                ? ColorConstants.primary
-                                : ColorConstants.textPrimary,
-                          ),
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-              topTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            ),
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: 0.2,
-              getDrawingHorizontalLine: (value) => FlLine(
-                color: ColorConstants.divider,
-                strokeWidth: 1,
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            barGroups: barData.asMap().entries.map((entry) {
-              final index = entry.key;
-              final isOn = entry.value.value;
-              return BarChartGroupData(
-                x: index,
-                barRods: [
-                  BarChartRodData(
-                    toY: isOn ? 0.95 : 0.05,
-                    color: isOn
-                        ? const Color(0xFF34C700)
-                        : const Color(0xFFFF3B30),
-                    width: 28,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ],
-              );
-            }).toList(),
+        child: LineChart(LineChartData(
+          clipData: const FlClipData.all(),
+          gridData: FlGridData(show: true, drawVerticalLine: true, horizontalInterval: 1),
+          titlesData: FlTitlesData(
+            show: true, rightTitles: const AxisTitles(), topTitles: const AxisTitles(),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: selectedPeriod == 'Live' ? 1 : 5, getTitlesWidget: (v, m) {
+              if (selectedPeriod == 'Live') {
+                final h = (DateTime.now().hour - (7 - v.toInt())) % 24;
+                return Text('${h.toString().padLeft(2, '0')}:00', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary));
+              }
+              return Text('D ${v.toInt()}', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary));
+            })),
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 1, reservedSize: 28)),
           ),
-        ),
+          minX: 0, maxX: selectedPeriod == 'Live' ? 7 : (selectedPeriod == '7 Days' ? 7 : 30), minY: 0,
+          maxY: (spots.isEmpty ? 5 : (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1).toDouble().clamp(5, 100)),
+          lineBarsData: [LineChartBarData(
+            spots: spots, isCurved: true, gradient: const LinearGradient(colors: [ColorConstants.primary, Color(0xFF64B5F6)]),
+            barWidth: 3, dotData: FlDotData(show: spots.length < 10),
+            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [ColorConstants.primary.withValues(alpha: 0.3), Colors.transparent], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+          )],
+        )),
       ),
     );
   }
 
   Widget _buildSummaryCard() {
+    final onPct = total > 0 ? (onlineCount / total * 100).toStringAsFixed(1) : '0';
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: ColorConstants.cardBackground,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('No. of Coaches', style: AppTextStyles.bodyMedium),
-              Text(
-                '$totalCoaches',
-                style: AppTextStyles.bodyLarge
-                    .copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildStatRow('ON', '$onCount', const Color(0xFF34C700)),
-          const SizedBox(height: 8),
-          _buildStatRow('OFF', offCount.toString().padLeft(2, '0'),
-              const Color(0xFFFF3B30)),
-        ],
-      ),
+      decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
+      child: Column(children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text('Total Coaches', style: AppTextStyles.bodyMedium),
+          Text('$total', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+        ]),
+        const SizedBox(height: 8),
+        _buildStatRow('Online', '$onlineCount ($onPct%)', const Color(0xFF34C700)),
+        const SizedBox(height: 8),
+        _buildStatRow('Offline', '$offlineCount', const Color(0xFFFF3B30)),
+      ]),
     );
   }
 
-  Widget _buildStatRow(String label, String value, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(label,
-                style: AppTextStyles.bodyMedium
-                    .copyWith(fontWeight: FontWeight.w500)),
-          ],
-        ),
-        Text(value,
-            style:
-                AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-      ],
-    );
-  }
+  Widget _buildStatRow(String l, String v, Color c) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+    Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: c, shape: BoxShape.circle)), const SizedBox(width: 6), Text(l, style: AppTextStyles.bodyMedium)]),
+    Text(v, style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+  ]);
 }

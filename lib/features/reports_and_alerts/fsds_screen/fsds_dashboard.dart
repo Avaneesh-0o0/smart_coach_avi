@@ -2,23 +2,25 @@ import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:smart_coach_new/core/di/inject.dart';
-import 'package:smart_coach_new/core/utils/app_dimensions.dart';
-import 'package:smart_coach_new/core/utils/app_icons.dart';
-import 'package:smart_coach_new/core/utils/app_strings.dart';
-import 'package:smart_coach_new/core/utils/app_text_styles.dart';
-import 'package:smart_coach_new/core/utils/color_constants.dart';
-import 'package:smart_coach_new/core/widgets/action_button.dart';
-import 'package:smart_coach_new/core/widgets/filter_dropdown.dart';
-import 'package:smart_coach_new/core/widgets/status_chip.dart';
-import 'package:smart_coach_new/core/widgets/view_type_selector.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/repository/acp_repository.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_log_response.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/presentation/widgets/acp_report_generator.dart';
+import '../../../../core/di/inject.dart';
+import '../../../../core/utils/app_dimensions.dart';
+import '../../../../core/utils/app_icons.dart';
+import '../../../../core/utils/app_strings.dart';
+import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/utils/color_constants.dart';
+import '../../../../core/widgets/action_button.dart';
+import '../../../../core/widgets/filter_dropdown.dart';
+import '../../../../core/widgets/status_chip.dart';
+import '../../../../core/widgets/view_type_selector.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
-import 'data/models/fsds_model.dart';
-import 'fsds_coaches_view.dart';
-import 'fsds_chart_view.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_log_response.dart';
 import 'fsds_alert_view.dart';
+import 'fsds_chart_view.dart';
+import 'fsds_coaches_view.dart';
 
 class FsdsDashboard extends StatefulWidget {
   final String? title;
@@ -30,15 +32,18 @@ class FsdsDashboard extends StatefulWidget {
 
 class _FsdsDashboardState extends State<FsdsDashboard> {
   String selectedTrainNumber = 'All Trains';
-  String selectedCoachNumber = 'All Coaches';
+  String selectedCoachType = 'All Types';
+  String selectedCoachNumber = 'All Unique IDs';
   String selectedStatus = 'All';
   String selectedViewType = 'Coaches';
   String lastUpdated = 'Never';
   bool isRefreshing = false;
+  bool showRecentOnly = false;
   Timer? _refreshTimer;
 
   List<String> trainNumbers = ['All Trains'];
-  List<String> coachNumbers = ['All Coaches'];
+  List<String> coachTypes = ['All Types'];
+  List<String> coachNumbers = ['All Unique IDs'];
 
   List<AcpCoachModel> _allCoaches = [];
   List<AcpCoachModel> _filteredCoaches = [];
@@ -65,11 +70,15 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
   }
 
   void _clearFilters() {
+    if (selectedTrainNumber == 'All Trains' && selectedStatus == 'All') return;
     setState(() {
       selectedTrainNumber = 'All Trains';
-      selectedCoachNumber = 'All Coaches';
+      selectedCoachType = 'All Types';
+      selectedCoachNumber = 'All Unique IDs';
       selectedStatus = 'All';
-      coachNumbers = ['All Coaches'];
+      showRecentOnly = false;
+      coachTypes = ['All Types'];
+      coachNumbers = ['All Unique IDs'];
     });
     _refreshData();
   }
@@ -91,22 +100,59 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
     }
   }
 
-  Future<void> _loadCoachNumbers(String trainNo) async {
+  Future<void> _loadCoachTypes(String trainNo) async {
     try {
       final response = await getIt<AcpRepository>().getAcpFilters(trainNo: trainNo);
       if (response.success == true) {
         if (mounted) {
           setState(() {
             final data = response.data ?? [];
+            final extracted = data.map((e) => e.commCoachNo).where((e) => e != null).cast<String>().toList();
+            coachTypes = ['All Types', ...extracted];
+            selectedCoachType = 'All Types';
+            coachNumbers = ['All Unique IDs'];
+            selectedCoachNumber = 'All Unique IDs';
+          });
+        }
+      }
+    } catch (e) {
+      log('Error loading coach types: $e');
+    }
+  }
+
+  Future<void> _loadCoachNumbers(String trainNo, String coachType) async {
+    try {
+      final response = await getIt<AcpRepository>().getAcpFilters(trainNo: trainNo, coachType: coachType);
+      if (response.success == true) {
+        if (mounted) {
+          setState(() {
+            final data = response.data ?? [];
             final extracted = data.map((e) => e.techCoachNo).where((e) => e != null).cast<String>().toList();
-            coachNumbers = ['All Coaches', ...extracted];
-            selectedCoachNumber = 'All Coaches';
+            coachNumbers = ['All Unique IDs', ...extracted];
+            selectedCoachNumber = 'All Unique IDs';
           });
         }
       }
     } catch (e) {
       log('Error loading coach numbers: $e');
     }
+  }
+
+  void _applyFilters() {
+    setState(() {
+      _filteredCoaches = _allCoaches.where((coach) {
+        final matchesTrain = selectedTrainNumber == 'All Trains' || 
+                           coach.trainNo == selectedTrainNumber;
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || 
+                           coach.sensorId == selectedCoachNumber;
+        final matchesStatus = selectedStatus == 'All' || 
+                             (selectedStatus == 'ON' && coach.isChainPulled) ||
+                             (selectedStatus == 'OFF' && !coach.isChainPulled);
+        final matchesRecent = !showRecentOnly || coach.isRecent;
+        
+        return matchesTrain && matchesCoach && matchesStatus && matchesRecent;
+      }).toList();
+    });
   }
 
   Future<void> _refreshData({bool isBackgroundRefresh = false}) async {
@@ -120,7 +166,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
 
     try {
       var logs = <AcpLogData>[];
-      if (selectedTrainNumber == 'All Trains' || selectedCoachNumber == 'All Coaches') {
+      if (selectedTrainNumber == 'All Trains' || selectedCoachNumber == 'All Unique IDs') {
         logs = await getIt<AcpRepository>().getAcpSummary();
       } else {
         logs = await getIt<AcpRepository>().getAcpFilteredLogs(
@@ -143,7 +189,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
             final lastUpdate = DateTime.parse(logEntry.lastUpdated!);
             final diff = DateTime.now().difference(lastUpdate).inMinutes;
             if (diff < 5 && countVal > 0) isRecent = true;
-            if (diff < 10) isStale = false;
+            if (diff < 4320) isStale = false; // 72 hours
           } catch (_) {}
         }
 
@@ -180,19 +226,58 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
     }
   }
 
-  void _applyFilters() {
-    setState(() {
-      _filteredCoaches = _allCoaches.where((coach) {
-        final matchesTrain = selectedTrainNumber == 'All Trains' || 
-                           coach.trainNo == selectedTrainNumber;
-        final matchesCoach = selectedCoachNumber == 'All Coaches' || 
-                           coach.sensorId == selectedCoachNumber;
-        final matchesStatus = selectedStatus == 'All' || 
-                             (selectedStatus == 'ON' && coach.isOn) ||
-                             (selectedStatus == 'OFF' && !coach.isOn);
-        return matchesTrain && matchesCoach && matchesStatus;
-      }).toList();
-    });
+  void _sendAlerts() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Send Alerts', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Alert will be sent to:', style: GoogleFonts.poppins(fontSize: 13, color: ColorConstants.textSecondary)),
+            const SizedBox(height: 12),
+            _alertRecipient(Icons.person, 'Train Guard'),
+            _alertRecipient(Icons.support_agent, 'Station Master'),
+            _alertRecipient(Icons.security, 'RPF Control Room'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: ColorConstants.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: ColorConstants.primary),
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('✅ Alert sent successfully', style: GoogleFonts.poppins(fontSize: 13)),
+                  backgroundColor: Colors.green[700],
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: Text('Send Now', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _alertRecipient(IconData icon, String name) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: ColorConstants.primary),
+          const SizedBox(width: 8),
+          Text(name, style: GoogleFonts.poppins(fontSize: 13)),
+        ],
+      ),
+    );
   }
 
   @override
@@ -210,8 +295,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
           onPressed: () => Navigator.pop(context),
         ),
         titleSpacing: 4,
-        title: Text(widget.title ?? AppStrings.fsdsMonitoring,
-            style: AppTextStyles.header1),
+        title: Text(widget.title ?? 'FSDS Bypass', style: AppTextStyles.header1),
         actions: [
           Center(
             child: Padding(
@@ -231,37 +315,34 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionCard(child: _buildFiltersSection()),
-              const SizedBox(height: 8),
-              _buildSectionCard(child: _buildQuickActionsSection()),
-              const SizedBox(height: 8),
-              _buildSectionCard(child: _buildViewTypeSection()),
-              const SizedBox(height: 8),
-              _buildSectionCard(
-                child: _buildCurrentView(),
-              ),
-            ],
+      body: (isRefreshing && _allCoaches.isEmpty)
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+        onRefresh: _refreshData,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionCard(child: _buildFiltersSection()),
+                const SizedBox(height: 8),
+                _buildSectionCard(child: _buildQuickActionsSection()),
+                const SizedBox(height: 8),
+                _buildSectionCard(child: _buildViewTypeSection()),
+                const SizedBox(height: 8),
+                if (selectedViewType == 'Coaches')
+                  _buildSectionCard(child: FsdsCoachesView(coaches: _filteredCoaches))
+                else if (selectedViewType == 'Chart View')
+                  _buildSectionCard(child: FsdsChartView(coaches: _filteredCoaches))
+                else if (selectedViewType == 'Alerts')
+                    _buildSectionCard(child: const FsdsAlertsView()),
+              ],
+            ),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildCurrentView() {
-    switch (selectedViewType) {
-      case 'Chart View':
-        return const FsdsChartView();
-      case 'Alerts':
-        return const FsdsAlertsView();
-      default:
-        return FsdsCoachesView(coaches: _filteredCoaches);
-    }
   }
 
   Widget _buildSectionCard({required Widget child}) {
@@ -292,7 +373,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: ColorConstants.primary.withOpacity(0.1),
+                  color: ColorConstants.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -301,11 +382,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                     const SizedBox(width: 4),
                     Text(
                       'Clear Filters',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: ColorConstants.primary,
-                      ),
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: ColorConstants.primary),
                     ),
                   ],
                 ),
@@ -321,26 +398,37 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                 label: AppStrings.trainNumber,
                 value: selectedTrainNumber,
                 items: trainNumbers,
-                onChanged: (v) {
-                   if (v != null) {
-                     setState(() => selectedTrainNumber = v);
-                     if (v != 'All Trains') _loadCoachNumbers(v);
-                     _refreshData();
-                   }
+                onChanged: (value) {
+                  setState(() => selectedTrainNumber = value!);
+                  if (value != 'All Trains') _loadCoachTypes(value!);
+                  _refreshData();
                 },
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: FilterDropdown(
-                label: AppStrings.coachNumber,
+                label: 'Coach Type',
+                value: selectedCoachType,
+                items: coachTypes,
+                onChanged: (value) {
+                  setState(() => selectedCoachType = value!);
+                  if (value != 'All Types' && selectedTrainNumber != 'All Trains') {
+                    _loadCoachNumbers(selectedTrainNumber, value!);
+                  }
+                  _refreshData();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilterDropdown(
+                label: AppStrings.uniqueId,
                 value: selectedCoachNumber,
                 items: coachNumbers,
-                onChanged: (v) {
-                   if (v != null) {
-                     setState(() => selectedCoachNumber = v);
-                     _refreshData();
-                   }
+                onChanged: (value) {
+                  setState(() => selectedCoachNumber = value!);
+                  _refreshData();
                 },
               ),
             ),
@@ -351,29 +439,11 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
         const SizedBox(height: 4),
         Row(
           children: [
-            Expanded(
-              child: StatusChip(
-                label: AppStrings.all,
-                isSelected: selectedStatus == 'All',
-                onTap: () => setState(() { selectedStatus = 'All'; _applyFilters(); }),
-              ),
-            ),
+            Expanded(child: StatusChip(label: AppStrings.all, isSelected: selectedStatus == 'All', onTap: () { setState(() => selectedStatus = 'All'); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(
-              child: StatusChip(
-                label: AppStrings.on,
-                isSelected: selectedStatus == 'ON',
-                onTap: () => setState(() { selectedStatus = 'ON'; _applyFilters(); }),
-              ),
-            ),
+            Expanded(child: StatusChip(label: AppStrings.on, isSelected: selectedStatus == 'ON', onTap: () { setState(() => selectedStatus = 'ON'); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(
-              child: StatusChip(
-                label: AppStrings.off,
-                isSelected: selectedStatus == 'OFF',
-                onTap: () => setState(() { selectedStatus = 'OFF'; _applyFilters(); }),
-              ),
-            ),
+            Expanded(child: StatusChip(label: AppStrings.off, isSelected: selectedStatus == 'OFF', onTap: () { setState(() => selectedStatus = 'OFF'); _applyFilters(); })),
           ],
         ),
       ],
@@ -392,7 +462,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
               child: ActionButton(
                 label: AppStrings.sendAlerts,
                 svgIcon: AppIcons.alert,
-                onTap: () {},
+                onTap: _sendAlerts,
                 isPrimary: true,
                 isFullWidth: true,
               ),
@@ -402,13 +472,29 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
               child: ActionButton(
                 label: AppStrings.generateReport,
                 svgIcon: AppIcons.report,
-                onTap: () {},
+                onTap: () {
+                  final recentCoaches = _allCoaches.where((c) => c.isRecent).toList();
+                  AcpReportGenerator.generate(context, recentCoaches, title: 'Alert Report');
+                },
+                isFullWidth: true,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ActionButton(
+                label: AppStrings.recentlyPulled,
+                svgIcon: AppIcons.alert,
+                onTap: () {
+                  setState(() => showRecentOnly = !showRecentOnly);
+                  _applyFilters();
+                },
+                isPrimary: showRecentOnly,
                 isFullWidth: true,
               ),
             ),
             const SizedBox(width: 8),
             GestureDetector(
-              onTap: () => _refreshData(),
+              onTap: isRefreshing ? () {} : _refreshData,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
@@ -418,7 +504,12 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                 ),
                 child: isRefreshing 
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: ColorConstants.primary))
-                    : const Icon(Icons.refresh, size: 18, color: ColorConstants.iconGrey),
+                    : SvgPicture.asset(
+                        AppIcons.refresh,
+                        width: 18,
+                        height: 18,
+                        colorFilter: const ColorFilter.mode(ColorConstants.iconGrey, BlendMode.srcIn),
+                      ),
               ),
             ),
           ],
@@ -435,32 +526,11 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(
-              child: ViewTypeSelector(
-                label: AppStrings.coachesView,
-                svgIcon: AppIcons.coaches,
-                isSelected: selectedViewType == 'Coaches',
-                onTap: () => setState(() => selectedViewType = 'Coaches'),
-              ),
-            ),
+            Expanded(child: ViewTypeSelector(label: AppStrings.coachesView, svgIcon: AppIcons.coaches, isSelected: selectedViewType == 'Coaches', onTap: () => setState(() => selectedViewType = 'Coaches'))),
             const SizedBox(width: 8),
-            Expanded(
-              child: ViewTypeSelector(
-                label: AppStrings.chartView,
-                svgIcon: AppIcons.graph,
-                isSelected: selectedViewType == 'Chart View',
-                onTap: () => setState(() => selectedViewType = 'Chart View'),
-              ),
-            ),
+            Expanded(child: ViewTypeSelector(label: AppStrings.chartView, svgIcon: AppIcons.graph, isSelected: selectedViewType == 'Chart View', onTap: () => setState(() => selectedViewType = 'Chart View'))),
             const SizedBox(width: 8),
-            Expanded(
-              child: ViewTypeSelector(
-                label: AppStrings.alerts,
-                svgIcon: AppIcons.alert,
-                isSelected: selectedViewType == 'Alerts',
-                onTap: () => setState(() => selectedViewType = 'Alerts'),
-              ),
-            ),
+            Expanded(child: ViewTypeSelector(label: AppStrings.alerts, svgIcon: AppIcons.alert, isSelected: selectedViewType == 'Alerts', onTap: () => setState(() => selectedViewType = 'Alerts'))),
           ],
         ),
       ],

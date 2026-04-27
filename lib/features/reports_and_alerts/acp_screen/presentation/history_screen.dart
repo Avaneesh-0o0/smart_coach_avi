@@ -39,35 +39,59 @@ class _AcpHistoryScreenState extends State<AcpHistoryScreen> {
         trainNo: widget.coach.trainNo != 'N/A' ? widget.coach.trainNo : null,
         techCoachNo: widget.coach.sensorId,
       );
+      
+      // Sort logs by date ascending to track count increments
+      logs.sort((a, b) {
+        final da = DateTime.tryParse(a.lastUpdated ?? '') ?? DateTime(0);
+        final db = DateTime.tryParse(b.lastUpdated ?? '') ?? DateTime(0);
+        return da.compareTo(db);
+      });
+
       final List<AcpHistoryEntry> entriesList = [];
+      int? lastCount;
       
       for (var logEntry in logs) {
-        String time24h = 'N/A';
-        DateTime logDate = DateTime.now();
-        if (logEntry.lastUpdated != null && logEntry.lastUpdated!.isNotEmpty) {
-          try {
-            logDate = DateTime.parse(logEntry.lastUpdated!);
-            time24h = DateFormat('dd/MM/yyyy HH:mm:ss').format(logDate);
-          } catch (_) {}
-        }
+        final currentCount = int.tryParse(logEntry.totalCount ?? '0') ?? 0;
         
-        entriesList.add(AcpHistoryEntry(
-          sensorId: logEntry.techCoachNo ?? 'N/A',
-          lastPull: time24h,
-          reset: 'N/A',
-          trainSpeed: 'N/A',
-          location: logEntry.trainLocation ?? 'N/A',
-          date: logDate,
-          status: logEntry.acpStatus ?? '0',
-          totalCount: logEntry.totalCount ?? '0',
-          powerCarNo: logEntry.powerCarNo ?? 'N/A',
-          rawAssetName: logEntry.rawAssetName ?? '',
-          deviceId: logEntry.deviceId ?? 'N/A',
-        ));
+        // A chain pull is identified when the totalCount increases
+        bool isChainPull = false;
+        if (lastCount != null && currentCount > lastCount) {
+          isChainPull = true;
+        } else if (lastCount == null && currentCount > 0) {
+          // If first entry has count > 0, consider it a pull event if we don't have prior data
+          isChainPull = true;
+        }
+
+        if (isChainPull) {
+          String time24h = 'N/A';
+          DateTime logDate = DateTime.now();
+          if (logEntry.lastUpdated != null && logEntry.lastUpdated!.isNotEmpty) {
+            try {
+              logDate = DateTime.parse(logEntry.lastUpdated!);
+              time24h = DateFormat('dd/MM/yyyy HH:mm:ss').format(logDate);
+            } catch (_) {}
+          }
+          
+          entriesList.add(AcpHistoryEntry(
+            sensorId: logEntry.techCoachNo ?? 'N/A',
+            lastPull: time24h,
+            reset: 'N/A',
+            trainSpeed: 'N/A',
+            location: logEntry.trainLocation ?? 'N/A',
+            date: logDate,
+            status: logEntry.acpStatus ?? '0',
+            totalCount: logEntry.totalCount ?? '0',
+            powerCarNo: logEntry.powerCarNo ?? 'N/A',
+            rawAssetName: logEntry.rawAssetName ?? '',
+            deviceId: (logEntry.deviceId != null && logEntry.deviceId != 'N/A') ? logEntry.deviceId! : widget.coach.deviceId,
+          ));
+        }
+        lastCount = currentCount;
       }
 
+      // Reverse list to show newest pulls at the top
       setState(() {
-        _historyEntries = entriesList;
+        _historyEntries = entriesList.reversed.toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -77,7 +101,30 @@ class _AcpHistoryScreenState extends State<AcpHistoryScreen> {
     }
   }
 
-  List<AcpHistoryEntry> get entries => _historyEntries;
+  List<AcpHistoryEntry> get entries {
+    if (selectedPeriod == 'All') return _historyEntries;
+    
+    DateTime now = DateTime.now();
+    DateTime? startDate;
+    DateTime? endDate;
+
+    if (selectedPeriod == '7 Days') {
+      startDate = now.subtract(const Duration(days: 7));
+    } else if (selectedPeriod == '30 Days') {
+      startDate = now.subtract(const Duration(days: 30));
+    } else if (selectedPeriod == 'Custom' && customRange != null) {
+      startDate = customRange!.start;
+      endDate = customRange!.end.add(const Duration(days: 1)); // Include full end day
+    }
+
+    if (startDate == null) return _historyEntries;
+
+    return _historyEntries.where((entry) {
+      bool afterStart = entry.date.isAfter(startDate!);
+      bool beforeEnd = endDate == null || entry.date.isBefore(endDate);
+      return afterStart && beforeEnd;
+    }).toList();
+  }
 
   Future<void> _pickCustomRange() async {
     final range = await showDateRangePicker(

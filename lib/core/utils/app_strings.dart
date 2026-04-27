@@ -6,6 +6,7 @@ class AppStrings {
   static const String filters = 'Filters';
   static const String trainNumber = 'Train Number';
   static const String coachNumber = 'Coach Number';
+  static const String uniqueId = 'Unique ID';
   static const String status = 'Status';
   static const String all = 'All';
   static const String good = 'Good';
@@ -18,6 +19,7 @@ class AppStrings {
   static const String quickActions = 'Quick Actions';
   static const String sendAlerts = 'Send Alerts';
   static const String generateReport = 'Generate Report';
+  static const String recentlyPulled = 'Recently Pulled';
   static const String refreshData = 'Refresh Data';
   static const String settings = 'Settings';
   
@@ -65,6 +67,7 @@ class AppStrings {
   static const String chainPullHistory = 'Chain Pull History';
   static const String pieChart = 'Pie Chart';
   static const String barChart = 'Bar Chart';
+  static const String timeSeries = 'Time Series';
 
   // FSDS Monitoring
   static const String fsdsMonitoring = 'FSDS Monitoring';

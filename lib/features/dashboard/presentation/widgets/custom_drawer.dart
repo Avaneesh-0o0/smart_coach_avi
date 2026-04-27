@@ -190,6 +190,13 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 );
               },
               children: [
+                _drawerItem(
+                  'Coach Dashboard',
+                  icon: Icons.dashboard_customize_outlined,
+                  onTap: () {
+                    context.push(AppRouter.coachDashboardRoute);
+                  },
+                ),
                 // _drawerItem('Level Report', onTap: () {
                 //   context.push(AppRouter.levelIndicatorRoute);
                 // }),

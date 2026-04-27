@@ -39,6 +39,8 @@ import 'package:smart_coach_new/features/auth/register/domain/usecases/register_
     as _i490;
 import 'package:smart_coach_new/features/auth/register/presentation/bloc/register_bloc.dart'
     as _i596;
+import 'package:smart_coach_new/features/coach_dashboard/presentation/bloc/coach_dashboard_bloc.dart'
+    as _i115;
 import 'package:smart_coach_new/features/configuration/coach_configuration/data/datasources/coach_configuration_remote_data_source.dart'
     as _i495;
 import 'package:smart_coach_new/features/configuration/coach_configuration/domain/repositories/coach_configuration_repository.dart'
@@ -412,6 +414,11 @@ extension GetItInjectableX on _i174.GetIt {
         loginUseCase: gh<_i259.LoginUseCase>(),
         prefs: gh<_i1038.Prefs>(),
         permissionBloc: gh<_i416.PermissionBloc>(),
+      ),
+    );
+    gh.factory<_i115.CoachDashboardBloc>(
+      () => _i115.CoachDashboardBloc(
+        coachConfigurationUseCase: gh<_i781.CoachConfigurationUseCase>(),
       ),
     );
     gh.factory<_i603.CoachConfigurationBloc>(

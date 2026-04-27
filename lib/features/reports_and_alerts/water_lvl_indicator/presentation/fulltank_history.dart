@@ -310,10 +310,10 @@ class _FullTankHistoryState extends State<FullTankHistory> {
                   reservedSize: 30,
                   getTitlesWidget: (value, meta) {
                     const labels = [
-                      '09:00 AM',
-                      '11:00 AM',
-                      '08:00 PM',
-                      '10:00 PM'
+                      '09:00',
+                      '11:00',
+                      '20:00',
+                      '22:00'
                     ];
                     if (value.toInt() >= 0 &&
                         value.toInt() < labels.length) {
@@ -472,7 +472,7 @@ class _FullTankHistoryState extends State<FullTankHistory> {
                           .copyWith(fontWeight: FontWeight.w600),
                     ),
                     Text(
-                      'Refilled  By',
+                      'Level Status',
                       style: AppTextStyles.bodyMedium
                           .copyWith(fontWeight: FontWeight.w600),
                     ),

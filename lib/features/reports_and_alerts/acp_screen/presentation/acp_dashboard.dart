@@ -32,16 +32,17 @@ class AcpDashboard extends StatefulWidget {
 class _AcpDashboardState extends State<AcpDashboard> {
   String selectedTrainNumber = 'All Trains';
   String selectedCoachType = 'All Types';
-  String selectedCoachNumber = 'All Coaches';
+  String selectedCoachNumber = 'All Unique IDs';
   String selectedStatus = 'All';
   String selectedViewType = 'Coaches';
   String lastUpdated = 'Never';
   bool isRefreshing = false;
+  bool showRecentOnly = false;
   Timer? _refreshTimer;
 
   List<String> trainNumbers = ['All Trains'];
   List<String> coachTypes = ['All Types'];
-  List<String> coachNumbers = ['All Coaches'];
+  List<String> coachNumbers = ['All Unique IDs'];
 
   List<AcpCoachModel> _allCoaches = [];
   List<AcpCoachModel> _filteredCoaches = [];
@@ -72,10 +73,11 @@ class _AcpDashboardState extends State<AcpDashboard> {
     setState(() {
       selectedTrainNumber = 'All Trains';
       selectedCoachType = 'All Types';
-      selectedCoachNumber = 'All Coaches';
+      selectedCoachNumber = 'All Unique IDs';
       selectedStatus = 'All';
+      showRecentOnly = false;
       coachTypes = ['All Types'];
-      coachNumbers = ['All Coaches'];
+      coachNumbers = ['All Unique IDs'];
     });
     _refreshData();
   }
@@ -107,8 +109,8 @@ class _AcpDashboardState extends State<AcpDashboard> {
             final extracted = data.map((e) => e.commCoachNo).where((e) => e != null).cast<String>().toList();
             coachTypes = ['All Types', ...extracted];
             selectedCoachType = 'All Types';
-            coachNumbers = ['All Coaches'];
-            selectedCoachNumber = 'All Coaches';
+            coachNumbers = ['All Unique IDs'];
+            selectedCoachNumber = 'All Unique IDs';
           });
         }
       }
@@ -125,8 +127,8 @@ class _AcpDashboardState extends State<AcpDashboard> {
           setState(() {
             final data = response.data ?? [];
             final extracted = data.map((e) => e.techCoachNo).where((e) => e != null).cast<String>().toList();
-            coachNumbers = ['All Coaches', ...extracted];
-            selectedCoachNumber = 'All Coaches';
+            coachNumbers = ['All Unique IDs', ...extracted];
+            selectedCoachNumber = 'All Unique IDs';
           });
         }
       }
@@ -140,12 +142,14 @@ class _AcpDashboardState extends State<AcpDashboard> {
       _filteredCoaches = _allCoaches.where((coach) {
         final matchesTrain = selectedTrainNumber == 'All Trains' || 
                            coach.trainNo == selectedTrainNumber;
-        final matchesCoach = selectedCoachNumber == 'All Coaches' || 
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || 
                            coach.sensorId == selectedCoachNumber;
         final matchesStatus = selectedStatus == 'All' || 
-                             (selectedStatus == 'Active' && coach.isChainPulled) ||
-                             (selectedStatus == 'Resolved' && !coach.isChainPulled);
-        return matchesTrain && matchesCoach && matchesStatus;
+                             (selectedStatus == 'ON' && coach.isChainPulled) ||
+                             (selectedStatus == 'OFF' && !coach.isChainPulled);
+        final matchesRecent = !showRecentOnly || coach.isRecent;
+        
+        return matchesTrain && matchesCoach && matchesStatus && matchesRecent;
       }).toList();
     });
   }
@@ -181,7 +185,7 @@ class _AcpDashboardState extends State<AcpDashboard> {
 
     try {
       var logs = <AcpLogData>[];
-      if (selectedTrainNumber == 'All Trains' || selectedCoachNumber == 'All Coaches') {
+      if (selectedTrainNumber == 'All Trains' || selectedCoachNumber == 'All Unique IDs') {
         logs = await getIt<AcpRepository>().getAcpSummary();
       } else {
         logs = await getIt<AcpRepository>().getAcpFilteredLogs(
@@ -205,7 +209,7 @@ class _AcpDashboardState extends State<AcpDashboard> {
             final lastUpdate = DateTime.parse(logEntry.lastUpdated!);
             final diff = DateTime.now().difference(lastUpdate).inMinutes;
             if (diff < 5 && countVal > 0) isRecent = true;
-            if (diff < 10) isStale = false;
+            if (diff < 4320) isStale = false; // 72 hours = 4320 minutes
           } catch (_) {}
         }
 
@@ -397,7 +401,7 @@ class _AcpDashboardState extends State<AcpDashboard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: ColorConstants.primary.withOpacity(0.1),
+                  color: ColorConstants.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -434,8 +438,8 @@ class _AcpDashboardState extends State<AcpDashboard> {
                     setState(() {
                       coachTypes = ['All Types'];
                       selectedCoachType = 'All Types';
-                      coachNumbers = ['All Coaches'];
-                      selectedCoachNumber = 'All Coaches';
+                      coachNumbers = ['All Unique IDs'];
+                      selectedCoachNumber = 'All Unique IDs';
                     });
                   }
                   _refreshData();
@@ -454,8 +458,8 @@ class _AcpDashboardState extends State<AcpDashboard> {
                     _loadCoachNumbers(selectedTrainNumber, value!);
                   } else {
                     setState(() {
-                      coachNumbers = ['All Coaches'];
-                      selectedCoachNumber = 'All Coaches';
+                      coachNumbers = ['All Unique IDs'];
+                      selectedCoachNumber = 'All Unique IDs';
                     });
                   }
                   _refreshData();
@@ -465,9 +469,9 @@ class _AcpDashboardState extends State<AcpDashboard> {
             const SizedBox(width: 8),
             Expanded(
               child: FilterDropdown(
-                label: AppStrings.coachNumber,
+                label: AppStrings.uniqueId,
                 value: selectedCoachNumber,
-                items: coachNumbers.isNotEmpty ? coachNumbers : ['All Coaches'],
+                items: coachNumbers.isNotEmpty ? coachNumbers : ['All Unique IDs'],
                 onChanged: (value) {
                   setState(() => selectedCoachNumber = value!);
                   _refreshData();
@@ -514,7 +518,28 @@ class _AcpDashboardState extends State<AcpDashboard> {
               child: ActionButton(
                 label: AppStrings.generateReport,
                 svgIcon: AppIcons.report,
-                onTap: () => AcpReportGenerator.generate(context, _filteredCoaches),
+                onTap: () {
+                  // Filter for recently pulled chains if that's what's requested
+                  final recentCoaches = _allCoaches.where((c) => c.isRecent).toList();
+                  AcpReportGenerator.generate(
+                    context, 
+                    recentCoaches, 
+                    title: 'Recent Chain Pull Report',
+                  );
+                },
+                isFullWidth: true,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ActionButton(
+                label: AppStrings.recentlyPulled,
+                svgIcon: AppIcons.alert,
+                onTap: () {
+                  setState(() => showRecentOnly = !showRecentOnly);
+                  _applyFilters();
+                },
+                isPrimary: showRecentOnly,
                 isFullWidth: true,
               ),
             ),

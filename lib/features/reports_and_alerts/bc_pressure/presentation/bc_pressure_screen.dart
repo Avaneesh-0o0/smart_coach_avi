@@ -26,16 +26,18 @@ class BCPressureScreen extends StatefulWidget {
 }
 
 class _BCPressureScreenState extends State<BCPressureScreen> {
-  String selectedTrainNumber = '12615/6 Grand Tr...';
-  String selectedCoachNumber = 'All Coaches';
+  String selectedTrainNumber = 'All Trains';
+  String selectedCoachType = 'All Types';
+  String selectedCoachNumber = 'All Unique IDs';
   String selectedStatus = 'All';
   String selectedViewType = 'BC Pressure';
   String lastUpdated = '10:46 AM';
   bool isRefreshing = false;
 
-  final List<String> trainNumbers = ['12615/6 Grand Tr...'];
+  final List<String> trainNumbers = ['All Trains', '12615/6 Grand Tr...'];
+  final List<String> coachTypes = ['All Types', 'LHB', 'ICF'];
   final List<String> coachNumbers = [
-    'All Coaches',
+    'All Unique IDs',
     ...List.generate(20, (i) => 'Coach ${i + 1}'),
   ];
 
@@ -45,25 +47,13 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
   void _applyFilters() {
     setState(() {
       _filteredCoaches = _allCoaches.where((coach) {
-        final matchesCoach = selectedCoachNumber == 'All Coaches' ||
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' ||
             coach.coachNumber == selectedCoachNumber;
         final matchesStatus = selectedStatus == 'All' ||
             coach.status.toLowerCase() == selectedStatus.toLowerCase();
         return matchesCoach && matchesStatus;
       }).toList();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Filter applied: ${_filteredCoaches.length} coach(es) found',
-          style: GoogleFonts.poppins(fontSize: 13),
-        ),
-        backgroundColor: ColorConstants.primary,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   Future<void> _refreshData() async {
@@ -160,8 +150,9 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
 
   void _clearFilters() {
     setState(() {
-      selectedTrainNumber = trainNumbers.first;
-      selectedCoachNumber = 'All Coaches';
+      selectedTrainNumber = 'All Trains';
+      selectedCoachType = 'All Types';
+      selectedCoachNumber = 'All Unique IDs';
       selectedStatus = 'All';
     });
     _applyFilters();
@@ -213,7 +204,7 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
               else if (selectedViewType == 'Chart View')
                 _card(child: const BCChartView())
               else if (selectedViewType == 'Alerts')
-                  _card(child: const BCAlertsView()),
+                _card(child: const BCAlertsView()),
             ],
           ),
         ),
@@ -268,9 +259,41 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: FilterDropdown(label: AppStrings.trainNumber, value: selectedTrainNumber, items: trainNumbers, onChanged: (v) { setState(() => selectedTrainNumber = v!); _applyFilters(); })),
+            Expanded(
+              child: FilterDropdown(
+                label: AppStrings.trainNumber,
+                value: selectedTrainNumber,
+                items: trainNumbers,
+                onChanged: (v) {
+                  setState(() => selectedTrainNumber = v!);
+                  _applyFilters();
+                },
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: FilterDropdown(label: AppStrings.coachNumber, value: selectedCoachNumber, items: coachNumbers, onChanged: (v) { setState(() => selectedCoachNumber = v!); _applyFilters(); })),
+            Expanded(
+              child: FilterDropdown(
+                label: 'Coach Type',
+                value: selectedCoachType,
+                items: coachTypes,
+                onChanged: (v) {
+                  setState(() => selectedCoachType = v!);
+                  _applyFilters();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilterDropdown(
+                label: AppStrings.uniqueId,
+                value: selectedCoachNumber,
+                items: coachNumbers,
+                onChanged: (v) {
+                  setState(() => selectedCoachNumber = v!);
+                  _applyFilters();
+                },
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),

@@ -36,7 +36,24 @@ class BCDummyData {
     if (period == 'Live' || period == '5 Sec') return _liveData(coachId);
     if (period == '1 min')   return _oneMinData(coachId);
     if (period == '5 mins')  return _fiveMinsData(coachId);
-    return _thirtyMinsData(coachId);
+    if (period == '1 hr' || period == '2 hr') return _thirtyMinsData(coachId);
+    return _twelveHrData(coachId);
+  }
+
+  static Map<String, dynamic> _twelveHrData(int id) {
+    final critical = [7, 20].contains(id);
+    final spots = critical
+        ? [[0,4.0],[1,3.0],[2,2.0],[3,1.5],[4,1.0],[5,0.8],[6,0.6],[7,0.7],[8,0.6],[9,0.7]]
+        : [[0,4.5],[1,4.2],[2,4.8],[3,4.6],[4,5.0],[5,4.8],[6,5.0],[7,4.9],[8,5.0],[9,4.9]];
+    final pressures = spots.map((s) => s[1]).toList();
+    return {
+      'spots': spots,
+      'highest': pressures.reduce((a, b) => a > b ? a : b).toStringAsFixed(1),
+      'lowest':  pressures.reduce((a, b) => a < b ? a : b).toStringAsFixed(1),
+      'average': (pressures.reduce((a, b) => a + b) / pressures.length).toStringAsFixed(1),
+      'brakeCount': critical ? 45 : 124,
+      'xLabels': const ['2h','4h','6h','8h','10h','12h'],
+    };
   }
 
   static Map<String, dynamic> _liveData(int id) {

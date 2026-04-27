@@ -21,6 +21,7 @@ class BCCoachDetail extends StatefulWidget {
 }
 
 class _BCCoachDetailState extends State<BCCoachDetail> {
+  String livePeriod = '1 hr';
   String selectedPeriod = '7 Days';
   DateTimeRange? customRange;
 
@@ -41,7 +42,7 @@ class _BCCoachDetailState extends State<BCCoachDetail> {
   }
 
   Map<String, dynamic> get _liveData =>
-      BCDummyData.getChartData(widget.coach.coachNumber, 'Live');
+      BCDummyData.getChartData(widget.coach.coachNumber, livePeriod);
 
   List<FlSpot> get _liveSpots => (_liveData['spots'] as List)
       .map((s) => FlSpot((s[0] as num).toDouble(), (s[1] as num).toDouble()))
@@ -189,7 +190,19 @@ class _BCCoachDetailState extends State<BCCoachDetail> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Live Pressure', style: AppTextStyles.header2),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Live Pressure', style: AppTextStyles.header2),
+            Flexible(
+              child: PeriodFilter(
+                selected: livePeriod,
+                periods: const ['1 hr', '2 hr', '6 hr', '12 hr'],
+                onChanged: (val) => setState(() => livePeriod = val),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         SizedBox(
           height: 200,
@@ -204,7 +217,7 @@ class _BCCoachDetailState extends State<BCCoachDetail> {
               bottomTitles: AxisTitles(sideTitles: SideTitles(
                 showTitles: true, reservedSize: 30,
                 getTitlesWidget: (value, meta) {
-                  const labels = ['10:34:56', '10:35:02', '10:35:11', '10:35:20'];
+                  final labels = (_liveData['xLabels'] as List<String>);
                   final idx = value.toInt();
                   if (idx >= 0 && idx < labels.length) return Padding(padding: const EdgeInsets.only(top: 8), child: Text(labels[idx], style: AppTextStyles.bodySmall.copyWith(fontSize: 8)));
                   return const SizedBox.shrink();

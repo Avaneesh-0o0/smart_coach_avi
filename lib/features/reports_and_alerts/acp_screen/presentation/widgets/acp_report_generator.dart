@@ -1,33 +1,43 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:excel/excel.dart';
+import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/datasource/acp_dummy_data.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 class AcpReportGenerator {
-  static Future<void> generate(BuildContext context, List<AcpCoachModel> coaches) async {
-    final DateTimeRange? range = await showDateRangePicker(
+  static Future<void> generate(BuildContext context, List<AcpCoachModel> coaches, {String title = 'ACP Monitoring Report'}) async {
+    final String? format = await showDialog<String>(
       context: context,
-      firstDate: DateTime(2026, 1, 1),
-      lastDate: DateTime(2026, 3, 12),
-      initialDateRange: DateTimeRange(
-        start: DateTime(2026, 3, 5),
-        end: DateTime(2026, 3, 12),
-      ),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: ColorConstants.primary),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Select Report Format', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _formatOption(ctx, 'Excel Report', 'xlsx', Icons.table_chart, Colors.green),
+            const SizedBox(height: 12),
+            _formatOption(ctx, 'PDF Report', 'pdf', Icons.picture_as_pdf, Colors.red),
+          ],
         ),
-        child: child!,
       ),
     );
 
-    if (range == null) return;
+    if (format == null) return;
     if (!context.mounted) return;
+
+    final range = DateTimeRange(
+      start: DateTime.now().subtract(const Duration(days: 1)),
+      end: DateTime.now(),
+    );
 
     // Show loading
     showDialog(
@@ -57,7 +67,13 @@ class AcpReportGenerator {
     await Future.delayed(const Duration(milliseconds: 800));
 
     try {
-      final file = await _buildExcel(coaches, range);
+      File file;
+      if (format == 'xlsx') {
+        file = await _buildExcel(coaches, range, title: title);
+      } else {
+        file = await _buildPdf(coaches, title: title);
+      }
+      
       if (context.mounted) Navigator.pop(context); // close loading
 
       if (!context.mounted) return;
@@ -72,20 +88,20 @@ class AcpReportGenerator {
     }
   }
 
-  static Future<File> _buildExcel(List<AcpCoachModel> coaches, DateTimeRange range) async {
+  static Future<File> _buildExcel(List<AcpCoachModel> coaches, DateTimeRange range, {String title = 'ACP Monitoring Report'}) async {
     final excel = Excel.createExcel();
 
     // ─── Sheet 1: Summary ────────────────────────────────────────────────────
     final summary = excel['Summary'];
     excel.setDefaultSheet('Summary');
 
-    _header(summary, 0, 0, 'ACP Monitoring Report — ${AcpDummyData.trainName}');
+    _header(summary, 0, 0, '$title — ${AcpDummyData.trainName}');
     _header(summary, 1, 0, 'Period: ${_fmt(range.start)}  →  ${_fmt(range.end)}');
-    _header(summary, 2, 0, 'Generated: ${_fmt(DateTime(2026, 3, 12))} | Last Updated: 10:46 AM');
+    _header(summary, 2, 0, 'Generated: ${_fmt(DateTime.now())} | Last Updated: ${DateFormat('HH:mm').format(DateTime.now())}');
     _blankRow(summary, 3);
 
     // Column headers
-    final headers = ['Coach No.', 'Sensor ID', 'Status', 'Last Update', 'Location', 'Train Speed', 'Reset Done?', 'Chain Pulled Count'];
+    final headers = ['Coach No.', 'Unique ID', 'Status', 'Last Update', 'Location', 'Chain Pulled Count'];
     for (var i = 0; i < headers.length; i++) {
       _colHeader(summary, 4, i, headers[i]);
     }
@@ -99,9 +115,7 @@ class AcpReportGenerator {
       _cell(summary, row, 2, c.status, color: c.isOn ? '2E7D32' : 'D32F2F');
       _cell(summary, row, 3, c.updateTime);
       _cell(summary, row, 4, c.location);
-      _cell(summary, row, 5, c.trainSpeed);
-      _cell(summary, row, 6, c.reset);
-      _cell(summary, row, 7, c.isChainPulled ? '1' : '0');
+      _cell(summary, row, 5, c.isChainPulled ? '1' : '0');
     }
 
     // Totals
@@ -119,7 +133,7 @@ class AcpReportGenerator {
     _header(histSheet, 1, 0, 'Period: ${_fmt(range.start)}  →  ${_fmt(range.end)}');
     _blankRow(histSheet, 2);
 
-    final histHeaders = ['Coach No.', 'Sensor ID', 'Pull Date/Time', 'Train Speed', 'Location', 'Reset Status'];
+    final histHeaders = ['Coach No.', 'Unique ID', 'Pull Date/Time', 'Location'];
     for (var i = 0; i < histHeaders.length; i++) {
       _colHeader(histSheet, 3, i, histHeaders[i]);
     }
@@ -131,9 +145,7 @@ class AcpReportGenerator {
         _cell(histSheet, histRow, 0, coach.coachNumber);
         _cell(histSheet, histRow, 1, entry.sensorId);
         _cell(histSheet, histRow, 2, entry.lastPull);
-        _cell(histSheet, histRow, 3, entry.trainSpeed);
-        _cell(histSheet, histRow, 4, entry.location);
-        _cell(histSheet, histRow, 5, entry.reset, color: entry.reset == 'Not done' ? 'D32F2F' : '2E7D32');
+        _cell(histSheet, histRow, 3, entry.location);
         histRow++;
       }
     }
@@ -179,6 +191,66 @@ class AcpReportGenerator {
     final file = File('${dir.path}/$fileName');
     final bytes = excel.encode()!;
     await file.writeAsBytes(bytes);
+    return file;
+  }
+
+  static Future<File> _buildPdf(List<AcpCoachModel> coaches, {String title = 'ACP Monitoring Report'}) async {
+    final pdf = pw.Document();
+    
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            pw.Header(
+              level: 0,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(title, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+                  pw.Text(DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()), style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            pw.TableHelper.fromTextArray(
+              headers: ['Coach No.', 'Unique ID', 'Status', 'Last Pull', 'Location'],
+              data: coaches.map((c) => [
+                c.coachNumber,
+                c.sensorId,
+                c.isChainPulled ? 'PULLED' : 'NOT PULLED',
+                c.updateTime,
+                c.location,
+              ]).toList(),
+              headerStyle: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.blue900),
+              cellHeight: 30,
+              cellAlignments: {
+                0: pw.Alignment.centerLeft,
+                1: pw.Alignment.centerLeft,
+                2: pw.Alignment.center,
+                3: pw.Alignment.center,
+                4: pw.Alignment.centerLeft,
+              },
+            ),
+            pw.SizedBox(height: 20),
+            pw.Divider(),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.end,
+              children: [
+                pw.Text('Total Incidents: ${coaches.where((c) => c.isChainPulled).length}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              ],
+            ),
+          ];
+        },
+      ),
+    );
+
+    final dir = await getApplicationDocumentsDirectory();
+    final fileName = 'ACP_Report_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final file = File('${dir.path}/$fileName');
+    await file.writeAsBytes(await pdf.save());
     return file;
   }
 
@@ -239,7 +311,7 @@ class AcpReportGenerator {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Excel report generated successfully.', style: GoogleFonts.poppins(fontSize: 13)),
+            Text('Report generated successfully.', style: GoogleFonts.poppins(fontSize: 13)),
             const SizedBox(height: 8),
             Text('Includes:', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500)),
             const SizedBox(height: 4),
@@ -267,6 +339,14 @@ class AcpReportGenerator {
             },
             child: Text('Open File', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey[700]),
+            onPressed: () {
+              Navigator.pop(context);
+              Share.shareXFiles([XFile(path)], text: 'ACP Monitoring Report');
+            },
+            child: Text('Share', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );
@@ -282,4 +362,27 @@ class AcpReportGenerator {
       ],
     ),
   );
+
+  static Widget _formatOption(BuildContext context, String label, String value, IconData icon, Color color) {
+    return InkWell(
+      onTap: () => Navigator.pop(context, value),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 16),
+            Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14)),
+            const Spacer(),
+            Icon(Icons.chevron_right, color: Colors.grey[400]),
+          ],
+        ),
+      ),
+    );
+  }
 }

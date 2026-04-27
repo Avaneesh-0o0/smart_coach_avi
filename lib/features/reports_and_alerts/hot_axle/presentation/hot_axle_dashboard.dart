@@ -9,11 +9,14 @@ import 'package:smart_coach_new/core/widgets/action_button.dart';
 import 'package:smart_coach_new/core/widgets/filter_dropdown.dart';
 import 'package:smart_coach_new/core/widgets/status_chip.dart';
 import 'package:smart_coach_new/core/widgets/view_type_selector.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/data/datasource/hot_axle_dummy_data.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/presentation/widgets/hot_axle_report_generator.dart';
 import '../data/models/hot_axle_model.dart';
 import 'hot_axle_alert_view.dart';
 import 'hot_axle_coaches_view.dart';
+import 'hot_axle_chart_view.dart';
 
 class HotAxleDashboard extends StatefulWidget {
   const HotAxleDashboard({super.key});
@@ -23,96 +26,76 @@ class HotAxleDashboard extends StatefulWidget {
 }
 
 class _HotAxleDashboardState extends State<HotAxleDashboard> {
-  String selectedTrainNumber = '12615/6 Grand Tr...';
-  String selectedCoachNumber = 'All Coaches';
+  String selectedTrainNumber = 'All Trains';
+  String selectedCoachType = 'All Types';
+  String selectedCoachNumber = 'All Unique IDs';
   String selectedStatus = 'All';
-  String selectedViewType = 'Hot Axle';
-  String lastUpdated = '10:46 AM';
+  String selectedViewType = 'Coaches';
+  String lastUpdated = 'Never';
   bool isRefreshing = false;
 
-  final List<String> trainNumbers = ['12615/6 Grand Tr...'];
-  final List<String> coachNumbers = [
-    'All Coaches',
-    ...List.generate(20, (i) => 'Coach ${i + 1}'),
-  ];
+  List<String> trainNumbers = ['All Trains'];
+  List<String> coachTypes = ['All Types'];
+  List<String> coachNumbers = ['All Unique IDs'];
 
   late List<HotAxleCoachModel> _allCoaches = HotAxleDummyData.generateCoaches();
   late List<HotAxleCoachModel> _filteredCoaches = List.from(_allCoaches);
 
+  @override
+  void initState() {
+    super.initState();
+    _refreshData();
+  }
+
   void _applyFilters() {
     setState(() {
       _filteredCoaches = _allCoaches.where((coach) {
-        final matchesCoach = selectedCoachNumber == 'All Coaches' ||
+        final matchesTrain = selectedTrainNumber == 'All Trains' ||
+            HotAxleDummyData.trainName == selectedTrainNumber;
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' ||
             coach.coachNumber == selectedCoachNumber;
         final matchesStatus = selectedStatus == 'All' ||
             coach.status.toLowerCase() == selectedStatus.toLowerCase();
-        return matchesCoach && matchesStatus;
+        
+        return matchesTrain && matchesCoach && matchesStatus;
       }).toList();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Filter applied: ${_filteredCoaches.length} coach(es) found', style: GoogleFonts.poppins(fontSize: 13)),
-        backgroundColor: ColorConstants.primary,
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   Future<void> _refreshData() async {
     setState(() => isRefreshing = true);
-    await Future.delayed(const Duration(seconds: 2));
-    final now = TimeOfDay.now();
-    setState(() {
-      isRefreshing = false;
-      lastUpdated = now.format(context);
-      _allCoaches = HotAxleDummyData.generateCoaches();
-      _filteredCoaches = List.from(_allCoaches);
-    });
+    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Data refreshed at ${now.format(context)}', style: GoogleFonts.poppins(fontSize: 13)),
-          backgroundColor: Colors.green[700],
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      final coaches = HotAxleDummyData.generateCoaches();
+      setState(() {
+        isRefreshing = false;
+        lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
+        _allCoaches = coaches;
+        
+        trainNumbers = ['All Trains', HotAxleDummyData.trainName];
+        coachTypes = ['All Types', 'LHB', 'ICF'];
+        coachNumbers = ['All Unique IDs', ...coaches.map((e) => e.coachNumber)];
+        
+        _applyFilters();
+      });
     }
   }
 
   void _sendAlerts() {
-    final criticalCoaches = _allCoaches.where((c) => c.status == 'Critical').map((c) => c.coachNumber).join(', ');
-    final warningCoaches  = _allCoaches.where((c) => c.status == 'Warning').map((c) => c.coachNumber).join(', ');
-    final totalIssueAxles = _allCoaches.fold(0, (sum, c) => sum + c.axlesIssue);
-
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Send Hot Axle Alerts', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        title: Text('Send Alerts', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Alert will be sent to:', style: GoogleFonts.poppins(fontSize: 13, color: ColorConstants.textSecondary)),
-            const SizedBox(height: 10),
-            _alertRow(Icons.person,       'Train Guard - Ramesh Kumar'),
-            _alertRow(Icons.support_agent,'Station Master - Ujjain'),
-            _alertRow(Icons.security,     'RPF Control Room'),
-            _alertRow(Icons.engineering,  'Maintenance Team'),
             const SizedBox(height: 12),
-            if (criticalCoaches.isNotEmpty) ...[
-              _statusBanner('Critical: $criticalCoaches', const Color(0xFFD32F2F)),
-              const SizedBox(height: 6),
-            ],
-            if (warningCoaches.isNotEmpty) ...[
-              _statusBanner('Warning: $warningCoaches', const Color(0xFFBE8B22)),
-              const SizedBox(height: 6),
-            ],
-            _statusBanner('Total axles with issues: $totalIssueAxles', ColorConstants.textSecondary),
+            _alertRecipient(Icons.person, 'Train Guard'),
+            _alertRecipient(Icons.support_agent, 'Station Master'),
+            _alertRecipient(Icons.security, 'RPF Control Room'),
           ],
         ),
         actions: [
@@ -126,10 +109,9 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Alert sent to 4 recipients', style: GoogleFonts.poppins(fontSize: 13)),
+                  content: Text('✅ Alert sent successfully', style: GoogleFonts.poppins(fontSize: 13)),
                   backgroundColor: Colors.green[700],
                   behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               );
             },
@@ -140,25 +122,24 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
     );
   }
 
-  Widget _alertRow(IconData icon, String name) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 3),
-    child: Row(children: [
-      Icon(icon, size: 16, color: ColorConstants.primary),
-      const SizedBox(width: 8),
-      Text(name, style: GoogleFonts.poppins(fontSize: 13)),
-    ]),
-  );
-
-  Widget _statusBanner(String text, Color color) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-    child: Text(text, style: GoogleFonts.poppins(fontSize: 12, color: color, fontWeight: FontWeight.w500)),
-  );
+  Widget _alertRecipient(IconData icon, String name) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: ColorConstants.primary),
+          const SizedBox(width: 8),
+          Text(name, style: GoogleFonts.poppins(fontSize: 13)),
+        ],
+      ),
+    );
+  }
 
   void _clearFilters() {
     setState(() {
-      selectedTrainNumber = trainNumbers.first;
-      selectedCoachNumber = 'All Coaches';
+      selectedTrainNumber = 'All Trains';
+      selectedCoachType = 'All Types';
+      selectedCoachNumber = 'All Unique IDs';
       selectedStatus = 'All';
     });
     _applyFilters();
@@ -186,56 +167,78 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
               padding: const EdgeInsets.only(right: 16),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: ColorConstants.white, borderRadius: BorderRadius.circular(8)),
-                child: Text('Last Updated: $lastUpdated', style: AppTextStyles.bodySmall),
+                decoration: BoxDecoration(
+                  color: ColorConstants.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Last Updated: $lastUpdated',
+                  style: AppTextStyles.bodySmall,
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _card(child: _buildFilters()),
-              const SizedBox(height: 8),
-              _card(child: _buildQuickActions()),
-              const SizedBox(height: 8),
-              _card(child: _buildViewType()),
-              const SizedBox(height: 8),
-              _card(child: selectedViewType == 'Alerts'
-                  ? const HotAxleAlertView()
-                  : HotAxleCoachesView(coaches: _filteredCoaches)),
-            ],
+      body: (isRefreshing && _allCoaches.isEmpty)
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+        onRefresh: _refreshData,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionCard(child: _buildFiltersSection()),
+                const SizedBox(height: 8),
+                _buildSectionCard(child: _buildQuickActionsSection()),
+                const SizedBox(height: 8),
+                _buildSectionCard(child: _buildViewTypeSection()),
+                const SizedBox(height: 8),
+                if (selectedViewType == 'Coaches')
+                  _buildSectionCard(child: HotAxleCoachesView(coaches: _filteredCoaches))
+                else if (selectedViewType == 'Chart View')
+                  _buildSectionCard(child: HotAxleChartView(coaches: _filteredCoaches))
+                else if (selectedViewType == 'Alerts')
+                    _buildSectionCard(child: const HotAxleAlertView()),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _card({required Widget child}) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-    decoration: BoxDecoration(color: ColorConstants.white, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
-    child: child,
-  );
+  Widget _buildSectionCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      decoration: BoxDecoration(
+        color: ColorConstants.white,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+      ),
+      child: child,
+    );
+  }
 
-  Widget _buildFilters() {
+  Widget _buildFiltersSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(AppStrings.filters, style: AppTextStyles.header2.copyWith(color: ColorConstants.primary)),
+            Text(
+              AppStrings.filters,
+              style: AppTextStyles.header2.copyWith(color: ColorConstants.primary),
+            ),
             GestureDetector(
               onTap: _clearFilters,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: ColorConstants.primary.withOpacity(0.1),
+                  color: ColorConstants.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -244,7 +247,7 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
                     const SizedBox(width: 4),
                     Text(
                       'Clear Filters',
-                      style: AppTextStyles.label.copyWith(
+                      style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: ColorConstants.primary,
@@ -259,9 +262,41 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: FilterDropdown(label: AppStrings.trainNumber, value: selectedTrainNumber, items: trainNumbers, onChanged: (v) { setState(() => selectedTrainNumber = v!); _applyFilters(); })),
+            Expanded(
+              child: FilterDropdown(
+                label: AppStrings.trainNumber,
+                value: selectedTrainNumber,
+                items: trainNumbers,
+                onChanged: (value) {
+                  setState(() => selectedTrainNumber = value!);
+                  _applyFilters();
+                },
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: FilterDropdown(label: AppStrings.coachNumber, value: selectedCoachNumber, items: coachNumbers, onChanged: (v) { setState(() => selectedCoachNumber = v!); _applyFilters(); })),
+            Expanded(
+              child: FilterDropdown(
+                label: 'Coach Type',
+                value: selectedCoachType,
+                items: coachTypes,
+                onChanged: (value) {
+                  setState(() => selectedCoachType = value!);
+                  _applyFilters();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilterDropdown(
+                label: AppStrings.uniqueId,
+                value: selectedCoachNumber,
+                items: coachNumbers,
+                onChanged: (value) {
+                  setState(() => selectedCoachNumber = value!);
+                  _applyFilters();
+                },
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -269,11 +304,11 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
         const SizedBox(height: 4),
         Row(
           children: [
-            Expanded(child: StatusChip(label: AppStrings.all,      isSelected: selectedStatus == 'All',      onTap: () { setState(() => selectedStatus = 'All'); _applyFilters(); })),
+            Expanded(child: StatusChip(label: AppStrings.all, isSelected: selectedStatus == 'All', onTap: () { setState(() => selectedStatus = 'All'); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(child: StatusChip(label: AppStrings.good,     isSelected: selectedStatus == 'Good',     onTap: () { setState(() => selectedStatus = 'Good'); _applyFilters(); })),
+            Expanded(child: StatusChip(label: AppStrings.good, isSelected: selectedStatus == 'Good', onTap: () { setState(() => selectedStatus = 'Good'); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(child: StatusChip(label: AppStrings.warning,  isSelected: selectedStatus == 'Warning',  onTap: () { setState(() => selectedStatus = 'Warning'); _applyFilters(); })),
+            Expanded(child: StatusChip(label: AppStrings.warning, isSelected: selectedStatus == 'Warning', onTap: () { setState(() => selectedStatus = 'Warning'); _applyFilters(); })),
             const SizedBox(width: 8),
             Expanded(child: StatusChip(label: AppStrings.critical, isSelected: selectedStatus == 'Critical', onTap: () { setState(() => selectedStatus = 'Critical'); _applyFilters(); })),
           ],
@@ -282,7 +317,7 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildQuickActionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -290,9 +325,26 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: ActionButton(label: AppStrings.sendAlerts,    svgIcon: AppIcons.alert,  onTap: _sendAlerts, isPrimary: true, isFullWidth: true)),
+            Expanded(
+              child: ActionButton(
+                label: AppStrings.sendAlerts,
+                svgIcon: AppIcons.alert,
+                onTap: _sendAlerts,
+                isPrimary: true,
+                isFullWidth: true,
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: ActionButton(label: AppStrings.generateReport, svgIcon: AppIcons.report, onTap: () => HotAxleReportGenerator.generate(context, _filteredCoaches), isFullWidth: true)),
+            Expanded(
+              child: ActionButton(
+                label: AppStrings.generateReport,
+                svgIcon: AppIcons.report,
+                onTap: () {
+                  HotAxleReportGenerator.generate(context, _filteredCoaches);
+                },
+                isFullWidth: true,
+              ),
+            ),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: isRefreshing ? () {} : _refreshData,
@@ -305,7 +357,12 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
                 ),
                 child: isRefreshing 
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: ColorConstants.primary))
-                    : const Icon(Icons.refresh, size: 18, color: ColorConstants.iconGrey),
+                    : SvgPicture.asset(
+                        AppIcons.refresh,
+                        width: 18,
+                        height: 18,
+                        colorFilter: const ColorFilter.mode(ColorConstants.iconGrey, BlendMode.srcIn),
+                      ),
               ),
             ),
           ],
@@ -314,7 +371,7 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
     );
   }
 
-  Widget _buildViewType() {
+  Widget _buildViewTypeSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -322,9 +379,11 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: ViewTypeSelector(label: AppStrings.hotAxle, svgIcon: AppIcons.axelGrey, isSelected: selectedViewType == 'Hot Axle', onTap: () => setState(() => selectedViewType = 'Hot Axle'))),
+            Expanded(child: ViewTypeSelector(label: AppStrings.coachesView, svgIcon: AppIcons.coaches, isSelected: selectedViewType == 'Coaches', onTap: () => setState(() => selectedViewType = 'Coaches'))),
             const SizedBox(width: 8),
-            Expanded(child: ViewTypeSelector(label: AppStrings.alerts,  svgIcon: AppIcons.alert,    isSelected: selectedViewType == 'Alerts',   onTap: () => setState(() => selectedViewType = 'Alerts'))),
+            Expanded(child: ViewTypeSelector(label: AppStrings.chartView, svgIcon: AppIcons.graph, isSelected: selectedViewType == 'Chart View', onTap: () => setState(() => selectedViewType = 'Chart View'))),
+            const SizedBox(width: 8),
+            Expanded(child: ViewTypeSelector(label: AppStrings.alerts, svgIcon: AppIcons.alert, isSelected: selectedViewType == 'Alerts', onTap: () => setState(() => selectedViewType = 'Alerts'))),
           ],
         ),
       ],

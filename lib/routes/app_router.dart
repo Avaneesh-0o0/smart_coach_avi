@@ -40,6 +40,8 @@ import 'package:smart_coach_new/features/user_management/presentation/user_manag
 import '../features/reports_and_alerts/odour_management_screen.dart';
 import '../features/reports_and_alerts/break_binding/presentation/bloc/break_binding_bloc.dart';
 import '../features/reports_and_alerts/break_binding/presentation/brake_binding_screen.dart';
+import '../features/coach_dashboard/presentation/bloc/coach_dashboard_bloc.dart';
+import '../features/coach_dashboard/presentation/coach_dashboard_screen.dart';
 
 class AppRouter {
   static const String splashRoute = '/';
@@ -68,6 +70,7 @@ class AppRouter {
   static const String profileRoute = '/profile';
   static const String notificationsRoute = '/notifications';
   static const String alertsRoute = '/alerts';
+  static const String coachDashboardRoute = '/coach_dashboard';
 
   static final router = GoRouter(
     initialLocation: splashRoute,
@@ -242,6 +245,13 @@ class AppRouter {
       GoRoute(
         path: notificationsRoute,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: coachDashboardRoute,
+        builder: (context, state) => BlocProvider(
+          create: (_) => GetIt.I<CoachDashboardBloc>(),
+          child: const CoachDashboardScreen(),
+        ),
       ),
 
     ],

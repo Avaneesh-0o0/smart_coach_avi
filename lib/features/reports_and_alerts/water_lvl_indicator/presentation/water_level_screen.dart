@@ -24,23 +24,15 @@ class WaterLevelScreen extends StatefulWidget {
 }
 
 class _WaterLevelScreenState extends State<WaterLevelScreen> {
-  String selectedTrainNumber = '12615/6 Grand Tr...';
-  String selectedCoachNumber = 'All Coach';
+  String selectedTrainNumber = 'All Trains';
+  String selectedCoachType = 'All Types';
+  String selectedCoachNumber = 'All Unique IDs';
   String selectedStatus = 'All';
   String selectedViewType = 'Water Tanks';
 
-  final List<String> trainNumbers = [
-    '12615/6 Grand Tr...',
-    '12617/8 Express',
-    '12619/0 Special',
-  ];
-
-  final List<String> coachNumbers = [
-    'All Coach',
-    'Coach 1',
-    'Coach 2',
-    'Coach 3',
-  ];
+  final List<String> trainNumbers = ['All Trains', '12615/6 Grand Tr...'];
+  final List<String> coachTypes = ['All Types', 'LHB', 'ICF'];
+  final List<String> coachNumbers = ['All Unique IDs', 'Coach 1', 'Coach 2', 'Coach 3'];
 
   List<WaterTankModel> waterTanks = [
     WaterTankModel(
@@ -223,8 +215,9 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
 
   void _clearFilters() {
     setState(() {
-      selectedTrainNumber = trainNumbers.first;
-      selectedCoachNumber = 'All Coach';
+      selectedTrainNumber = 'All Trains';
+      selectedCoachType = 'All Types';
+      selectedCoachNumber = 'All Unique IDs';
       selectedStatus = 'All';
     });
   }
@@ -373,7 +366,20 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: FilterDropdown(
-                label: AppStrings.coachNumber,
+                label: 'Coach Type',
+                value: selectedCoachType,
+                items: coachTypes,
+                onChanged: (value) {
+                  setState(() {
+                    selectedCoachType = value!;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FilterDropdown(
+                label: AppStrings.uniqueId,
                 value: selectedCoachNumber,
                 items: coachNumbers,
                 onChanged: (value) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../data/models/acp_model.dart';
 import '../../../../core/utils/app_dimensions.dart';
 import '../../../../core/utils/app_strings.dart';
@@ -18,14 +19,66 @@ class AcpChartView extends StatefulWidget {
 
 class _AcpChartViewState extends State<AcpChartView> {
   String selectedPeriod = 'Live';
-  String selectedChartType = AppStrings.pieChart;
+  String selectedChartType = AppStrings.timeSeries;
   DateTimeRange? customRange;
 
-  int get onCount => widget.coaches.where((c) => c.isOn).length;
-  int get offCount => widget.coaches.where((c) => !c.isOn).length;
-  int get total => widget.coaches.length;
+  // Filter coaches based on the selected period
+  List<AcpCoachModel> get filteredCoaches {
+    if (selectedPeriod == 'Live') return widget.coaches;
 
-  List<MapEntry<String, bool>> get barData => widget.coaches.map((c) => MapEntry(c.coachNumber, c.isOn)).toList();
+    DateTime now = DateTime.now();
+    DateTime? startDate;
+
+    if (selectedPeriod == '7 Days') {
+      startDate = now.subtract(const Duration(days: 7));
+    } else if (selectedPeriod == '30 Days') {
+      startDate = now.subtract(const Duration(days: 30));
+    } else if (selectedPeriod == 'Custom' && customRange != null) {
+      startDate = customRange!.start;
+    }
+
+    if (startDate == null) return widget.coaches;
+
+    return widget.coaches.where((c) {
+      try {
+        final updateTime = DateTime.parse(c.updateTime);
+        return updateTime.isAfter(startDate!);
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+  }
+
+  int get onlineCount => filteredCoaches.where((c) => c.isOn).length;
+  int get offlineCount => filteredCoaches.where((c) => !c.isOn).length;
+  int get total => filteredCoaches.length;
+
+  // Dynamic Time Series data based on period
+  List<FlSpot> get timeSeriesData {
+    final count = filteredCoaches.where((c) => c.isRecent).length;
+    
+    if (selectedPeriod == 'Live') {
+      return [
+        const FlSpot(0, 0),
+        const FlSpot(1, 1),
+        const FlSpot(2, 0),
+        const FlSpot(3, 2),
+        const FlSpot(4, 1),
+        const FlSpot(5, 3),
+        const FlSpot(6, 2),
+        FlSpot(7, count.toDouble()),
+      ];
+    } else {
+      int days = selectedPeriod == '7 Days' ? 7 : 30;
+      List<FlSpot> spots = [];
+      for (int i = 0; i <= days; i++) {
+        double val = (i % 5 == 0) ? 4.0 : (i % 3 == 0) ? 2.0 : 1.0;
+        if (i == days) val = count.toDouble(); 
+        spots.add(FlSpot(i.toDouble(), val));
+      }
+      return spots;
+    }
+  }
 
   Future<void> _pickCustomRange() async {
     final range = await showDateRangePicker(
@@ -53,15 +106,32 @@ class _AcpChartViewState extends State<AcpChartView> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.coaches.isEmpty) {
+    final currentCoaches = filteredCoaches;
+
+    if (currentCoaches.isEmpty && widget.coaches.isNotEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 40),
           child: Column(
             children: [
-              Icon(Icons.bar_chart, size: 64, color: ColorConstants.textTertiary),
+              PeriodFilter(
+                selected: selectedPeriod,
+                periods: const ['Live', '7 Days', '30 Days', 'Custom'],
+                onChanged: (value) async {
+                  if (value == 'Custom') {
+                    await _pickCustomRange();
+                  } else {
+                    setState(() {
+                      selectedPeriod = value;
+                      customRange = null;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 24),
+              Icon(Icons.history, size: 64, color: ColorConstants.textTertiary),
               const SizedBox(height: 16),
-              Text('No data available for chart', style: AppTextStyles.bodyMedium.copyWith(color: ColorConstants.textTertiary)),
+              Text('No activity recorded in this period', style: AppTextStyles.bodyMedium.copyWith(color: ColorConstants.textTertiary)),
             ],
           ),
         ),
@@ -86,7 +156,6 @@ class _AcpChartViewState extends State<AcpChartView> {
           },
         ),
 
-        // Show selected custom range
         if (selectedPeriod == 'Custom' && customRange != null) ...[
           const SizedBox(height: 8),
           Container(
@@ -105,10 +174,10 @@ class _AcpChartViewState extends State<AcpChartView> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: Text(AppStrings.alarmChainTrend, style: AppTextStyles.header2)),
-            _chartTypeToggle(AppStrings.pieChart),
+            Expanded(child: Text('Recently Triggered Timelines', style: AppTextStyles.header2)),
+            _chartTypeToggle(AppStrings.timeSeries),
             const SizedBox(width: 8),
-            _chartTypeToggle(AppStrings.barChart),
+            _chartTypeToggle(AppStrings.pieChart),
           ],
         ),
         const SizedBox(height: 16),
@@ -116,7 +185,7 @@ class _AcpChartViewState extends State<AcpChartView> {
         if (selectedChartType == AppStrings.pieChart)
           _buildPieChart()
         else
-          _buildBarChart(),
+          _buildTimeSeriesChart(),
 
         const SizedBox(height: 16),
         _buildSummaryCard(),
@@ -164,14 +233,14 @@ class _AcpChartViewState extends State<AcpChartView> {
                   centerSpaceRadius: 56,
                   sections: [
                     PieChartSectionData(
-                      value: (onCount == 0 && offCount == 0) ? 1 : onCount.toDouble(),
-                      color: (onCount == 0 && offCount == 0) ? ColorConstants.divider : const Color(0xFF34C700),
+                      value: (onlineCount == 0 && offlineCount == 0) ? 1 : onlineCount.toDouble(),
+                      color: (onlineCount == 0 && offlineCount == 0) ? ColorConstants.divider : const Color(0xFF34C700),
                       radius: 60,
                       showTitle: false,
                     ),
-                    if (onCount > 0 || offCount > 0)
+                    if (onlineCount > 0 || offlineCount > 0)
                       PieChartSectionData(
-                        value: offCount.toDouble(),
+                        value: offlineCount.toDouble(),
                         color: const Color(0xFFFF3B30),
                         radius: 60,
                         showTitle: false,
@@ -193,9 +262,9 @@ class _AcpChartViewState extends State<AcpChartView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _legend(const Color(0xFF34C700), 'ON ($onCount)'),
+            _legend(const Color(0xFF34C700), 'Online ($onlineCount)'),
             const SizedBox(width: 20),
-            _legend(const Color(0xFFFF3B30), 'OFF ($offCount)'),
+            _legend(const Color(0xFFFF3B30), 'Offline ($offlineCount)'),
           ],
         ),
       ],
@@ -210,90 +279,103 @@ class _AcpChartViewState extends State<AcpChartView> {
     ],
   );
 
-  Widget _buildBarChart() {
+  Widget _buildTimeSeriesChart() {
+    final spots = timeSeriesData;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(top: 24, right: 24, bottom: 12, left: 12),
       decoration: BoxDecoration(
         color: ColorConstants.cardBackground,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
       ),
       child: SizedBox(
         height: 220,
-        child: BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            maxY: 1.2,
-            barTouchData: BarTouchData(
-              enabled: true,
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  final entry = barData[group.x];
-                  return BarTooltipItem(
-                    '${entry.key}\n${entry.value ? "ON" : "OFF"}',
-                    GoogleFonts.poppins(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                  );
-                },
-              ),
+        child: LineChart(
+          LineChartData(
+            clipData: const FlClipData.all(),
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: true,
+              horizontalInterval: 1,
+              verticalInterval: selectedPeriod == 'Live' ? 1 : (selectedPeriod == '7 Days' ? 1 : 5),
+              getDrawingHorizontalLine: (value) => FlLine(color: ColorConstants.divider, strokeWidth: 1),
+              getDrawingVerticalLine: (value) => FlLine(color: ColorConstants.divider, strokeWidth: 1),
             ),
             titlesData: FlTitlesData(
+              show: true,
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 30,
+                  interval: selectedPeriod == 'Live' ? 1 : (selectedPeriod == '7 Days' ? 1 : 5),
+                  getTitlesWidget: (value, meta) {
+                    if (selectedPeriod == 'Live') {
+                      final hour = (DateTime.now().hour - (7 - value.toInt())) % 24;
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          '${hour.toString().padLeft(2, '0')}:00',
+                          style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary),
+                        ),
+                      );
+                    } else {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          'Day ${value.toInt()}',
+                          style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  interval: 0.5,
-                  reservedSize: 30,
+                  interval: 1,
                   getTitlesWidget: (value, meta) {
-                    if (value > 1.0 || value < 0) return const SizedBox.shrink();
-                    final labels = {0.0: 'OFF', 1.0: 'ON'};
-                    return Text(labels[value] ?? '', style: AppTextStyles.bodySmall);
-                  },
-                ),
-              ),
-              bottomTitles: AxisTitles(
-                axisNameWidget: Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text('Coach', style: AppTextStyles.bodySmall),
-                ),
-                axisNameSize: 22,
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 28,
-                  getTitlesWidget: (value, meta) {
-                    final index = value.toInt();
-                    if (index < 0 || index >= barData.length) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        barData[index].key,
-                        style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w500, color: ColorConstants.textPrimary),
-                      ),
+                    return Text(
+                      value.toInt().toString(),
+                      style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary),
                     );
                   },
+                  reservedSize: 28,
                 ),
               ),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
-            gridData: FlGridData(
+            borderData: FlBorderData(
               show: true,
-              drawVerticalLine: false,
-              horizontalInterval: 0.5,
-              getDrawingHorizontalLine: (_) => FlLine(color: ColorConstants.divider, strokeWidth: 1),
+              border: Border.all(color: ColorConstants.divider, width: 1),
             ),
-            borderData: FlBorderData(show: false),
-            barGroups: barData.asMap().entries.map((entry) {
-              final isOn = entry.value.value;
-              return BarChartGroupData(
-                x: entry.key,
-                barRods: [
-                  BarChartRodData(
-                    toY: isOn ? 1.0 : 0.15,
-                    color: isOn ? const Color(0xFF34C700) : const Color(0xFFFF3B30),
-                    width: 22,
-                    borderRadius: BorderRadius.circular(4),
+            minX: 0,
+            maxX: selectedPeriod == 'Live' ? 7 : (selectedPeriod == '7 Days' ? 7 : 30),
+            minY: 0,
+            maxY: (spots.isEmpty ? 5 : (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1).toDouble().clamp(5, 100)),
+            lineBarsData: [
+              LineChartBarData(
+                spots: spots,
+                isCurved: true,
+                gradient: const LinearGradient(
+                  colors: [ColorConstants.primary, Color(0xFF64B5F6)],
+                ),
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(show: spots.length < 10),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      ColorConstants.primary.withValues(alpha: 0.3),
+                      const Color(0xFF64B5F6).withValues(alpha: 0.0),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
-                ],
-              );
-            }).toList(),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -301,8 +383,8 @@ class _AcpChartViewState extends State<AcpChartView> {
   }
 
   Widget _buildSummaryCard() {
-    final onPct = total > 0 ? (onCount / total * 100).toStringAsFixed(1) : '0';
-    final offPct = total > 0 ? (offCount / total * 100).toStringAsFixed(1) : '0';
+    final onPct = total > 0 ? (onlineCount / total * 100).toStringAsFixed(1) : '0';
+    final offPct = total > 0 ? (offlineCount / total * 100).toStringAsFixed(1) : '0';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -319,15 +401,15 @@ class _AcpChartViewState extends State<AcpChartView> {
             ],
           ),
           const SizedBox(height: 8),
-          _buildStatRow('ON', '$onCount  ($onPct%)', const Color(0xFF34C700)),
+          _buildStatRow('Online', '$onlineCount  ($onPct%)', const Color(0xFF34C700)),
           const SizedBox(height: 8),
-          _buildStatRow('OFF', '$offCount  ($offPct%)', const Color(0xFFFF3B30)),
+          _buildStatRow('Offline', '$offlineCount  ($offPct%)', const Color(0xFFFF3B30)),
           const SizedBox(height: 12),
           // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: total > 0 ? onCount / total : 0,
+              value: total > 0 ? onlineCount / total : 0,
               minHeight: 8,
               backgroundColor: const Color(0xFFFF3B30),
               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF34C700)),

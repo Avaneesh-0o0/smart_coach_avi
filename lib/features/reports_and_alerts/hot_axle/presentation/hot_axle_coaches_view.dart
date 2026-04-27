@@ -38,28 +38,20 @@ class HotAxleCoachesView extends StatelessWidget {
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
-            final cardWidth  = (constraints.maxWidth - 10) / 2;
-            final cardHeight = cardWidth * 1.15;
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: cardWidth / cardHeight,
-              ),
-              itemCount: coaches.length,
-              itemBuilder: (context, index) {
-                final coach = coaches[index];
-                return HotAxleCoachCard(
+            final cardWidth = (constraints.maxWidth - 10) / 2;
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: coaches.map((coach) => SizedBox(
+                width: cardWidth,
+                child: HotAxleCoachCard(
                   coach: coach,
                   onEyeIconTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => HotAxleDetailScreen(coach: coach)),
                   ),
-                );
-              },
+                ),
+              )).toList(),
             );
           },
         ),
