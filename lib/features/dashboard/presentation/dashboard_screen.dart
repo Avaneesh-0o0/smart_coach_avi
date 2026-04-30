@@ -93,18 +93,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           GestureDetector(
             onTap: () {
-              _dashboardBloc.add(NavigateToProfile());
+              context.push(AppRouter.profileRoute);
             },
             child: CircleAvatar(
               backgroundColor: const Color(0xFF3883F8),
               radius: 12.sp,
-              child: const Icon(Icons.person_rounded, color: Colors.white,size: 20,)
+              child: const Icon(Icons.person_rounded, color: Colors.white, size: 20),
             ),
           ),
           SizedBox(width: 2.w),
           GestureDetector(
             onTap: () {
-              _dashboardBloc.add(NavigateToNotifications());
+              context.push(AppRouter.notificationsRoute);
             },
             child: Icon(
               Icons.notifications_none_rounded,

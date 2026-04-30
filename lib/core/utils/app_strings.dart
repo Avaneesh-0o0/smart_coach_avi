@@ -5,6 +5,7 @@ class AppStrings {
   // Filters
   static const String filters = 'Filters';
   static const String trainNumber = 'Train Number';
+  static const String coachType = 'Coach Type';
   static const String coachNumber = 'Coach Number';
   static const String uniqueId = 'Unique ID';
   static const String status = 'Status';

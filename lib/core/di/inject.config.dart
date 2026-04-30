@@ -398,6 +398,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i489.ProfileUseCase>(
       () => _i489.ProfileUseCase(gh<_i713.ProfileRepository>()),
     );
+    gh.factory<_i115.CoachDashboardBloc>(
+      () => _i115.CoachDashboardBloc(
+        coachConfigurationUseCase: gh<_i781.CoachConfigurationUseCase>(),
+        acpRepository: gh<_i626.AcpRepository>(),
+      ),
+    );
     gh.factory<_i849.SensorTypeConfigurationUseCase>(
       () => _i849.SensorTypeConfigurationUseCase(
         gh<_i718.SensorTypeConfigurationRepository>(),
@@ -414,11 +420,6 @@ extension GetItInjectableX on _i174.GetIt {
         loginUseCase: gh<_i259.LoginUseCase>(),
         prefs: gh<_i1038.Prefs>(),
         permissionBloc: gh<_i416.PermissionBloc>(),
-      ),
-    );
-    gh.factory<_i115.CoachDashboardBloc>(
-      () => _i115.CoachDashboardBloc(
-        coachConfigurationUseCase: gh<_i781.CoachConfigurationUseCase>(),
       ),
     );
     gh.factory<_i603.CoachConfigurationBloc>(

@@ -1,25 +1,58 @@
-class FsdsCoachModel {
-  final String coachNumber;
-  final String status; // 'ON' or 'OFF'
-  final String updateTime;
-  final bool isFireDetected;
+class FsdsAssetModel {
+  final String assetId;
+  final String assetName;
+  final String timestamp;
+  final num lightValue;
+  final num smokeLevel;
   final String sensorId;
-  final String lastPull;
-  final String reset;
-  final String trainSpeed;
-  final String location;
+  final String locName;
+  final String locId;
 
-  const FsdsCoachModel({
-    required this.coachNumber,
-    required this.status,
-    required this.updateTime,
-    this.isFireDetected = false,
-    this.sensorId = 'FSDS-B5-04',
-    this.lastPull = '10:42 AM',
-    this.reset = 'Not done',
-    this.trainSpeed = '62 km/h',
-    this.location = 'Ratlam',
+  FsdsAssetModel({
+    required this.assetId,
+    required this.assetName,
+    required this.timestamp,
+    required this.lightValue,
+    required this.smokeLevel,
+    required this.sensorId,
+    required this.locName,
+    required this.locId,
   });
 
-  bool get isOn => status == 'ON';
+  bool get isSmokeDetected => smokeLevel > 30; // Threshold example
+  bool get isRecent {
+    try {
+      return DateTime.now().difference(DateTime.parse(timestamp)).inMinutes < 60;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  factory FsdsAssetModel.fromJson(Map<String, dynamic> json, String sensorId, String locName, String locId) {
+    final metrics = json['metrics'] ?? {};
+    final timestamp = metrics['timestamp'] ?? '';
+    final values = metrics['values'] as List? ?? [];
+    
+    num light = 0;
+    num smoke = 0;
+
+    for (var v in values) {
+      if (v['name'].toString().contains('LIGHT')) {
+        light = v['value'] ?? 0;
+      } else if (v['name'].toString().contains('SMOKE')) {
+        smoke = v['value'] ?? 0;
+      }
+    }
+
+    return FsdsAssetModel(
+      assetId: json['assetId'] ?? '',
+      assetName: json['assetName'] ?? '',
+      timestamp: timestamp,
+      lightValue: light,
+      smokeLevel: smoke,
+      sensorId: sensorId,
+      locName: locName,
+      locId: locId,
+    );
+  }
 }

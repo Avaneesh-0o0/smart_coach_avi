@@ -5,10 +5,10 @@ class ImageUtils {
   //ICONS
 
   //IMAGE
-  static const String pisolve = '${images}mirtha.png';
-  static const String vaspLogo = '${images}mirtha.png';
-  static const String mirthaLogo = '${images}mirtha.png';
-  static const String pisolveName = '${images}mirtha.png';
+  static const String pisolve = '${images}vasp.png';
+  static const String vaspLogo = '${images}vasp.png';
+  static const String mirthaLogo = '${images}vasp.png';
+  static const String pisolveName = '${images}vasp.png';
 
   //SVG
   static const String icTrain = '${svgs}ic_train.svg';

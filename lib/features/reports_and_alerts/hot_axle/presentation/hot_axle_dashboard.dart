@@ -38,8 +38,8 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
   List<String> coachTypes = ['All Types'];
   List<String> coachNumbers = ['All Unique IDs'];
 
-  late List<HotAxleCoachModel> _allCoaches = HotAxleDummyData.generateCoaches();
-  late List<HotAxleCoachModel> _filteredCoaches = List.from(_allCoaches);
+  List<HotAxleCoachModel> _allCoaches = [];
+  List<HotAxleCoachModel> _filteredCoaches = [];
 
   @override
   void initState() {
@@ -50,31 +50,67 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
   void _applyFilters() {
     setState(() {
       _filteredCoaches = _allCoaches.where((coach) {
-        final matchesTrain = selectedTrainNumber == 'All Trains' ||
-            HotAxleDummyData.trainName == selectedTrainNumber;
-        final matchesCoach = selectedCoachNumber == 'All Unique IDs' ||
-            coach.coachNumber == selectedCoachNumber;
-        final matchesStatus = selectedStatus == 'All' ||
-            coach.status.toLowerCase() == selectedStatus.toLowerCase();
+        final matchesTrain = selectedTrainNumber == 'All Trains' || coach.owningRly.contains(selectedTrainNumber);
+        final matchesType = selectedCoachType == 'All Types' || coach.coachType == selectedCoachType;
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || coach.coachNumber == selectedCoachNumber;
+        final matchesStatus = selectedStatus == 'All' || coach.status.toUpperCase() == selectedStatus.toUpperCase();
         
-        return matchesTrain && matchesCoach && matchesStatus;
+        return matchesTrain && matchesType && matchesCoach && matchesStatus;
       }).toList();
     });
   }
 
-  Future<void> _refreshData() async {
-    setState(() => isRefreshing = true);
-    await Future.delayed(const Duration(seconds: 1));
+  Future<void> _refreshData({bool isBackgroundRefresh = false}) async {
+    if (!isBackgroundRefresh) setState(() => isRefreshing = true);
+    
+    await Future.delayed(const Duration(milliseconds: 500));
+    
     if (mounted) {
-      final coaches = HotAxleDummyData.generateCoaches();
+      final List<HotAxleCoachModel> mockData = [
+        HotAxleCoachModel(
+          deviceId: "HA_DEV_100676",
+          coachNumber: "100676",
+          coachType: "LHB_AC_2TIER",
+          owningRly: "SEC",
+          timestamp: "2026-04-21T22:15:00.000Z",
+          a11Temp: 45.2,
+          a12Temp: 46.8,
+          a21Temp: 82.5,
+          a22Temp: 44.1,
+          a31Temp: 45.9,
+          a32Temp: 47.3,
+          a41Temp: 44.8,
+          a42Temp: 46.2,
+          batteryPercentage: 88,
+          signalStrength: -65,
+        ),
+        HotAxleCoachModel(
+          deviceId: "HA_DEV_100677",
+          coachNumber: "100677",
+          coachType: "LHB_AC_3TIER",
+          owningRly: "SEC",
+          timestamp: "2026-04-21T22:20:00.000Z",
+          a11Temp: 40.2,
+          a12Temp: 41.8,
+          a21Temp: 42.5,
+          a22Temp: 40.1,
+          a31Temp: 41.9,
+          a32Temp: 42.3,
+          a41Temp: 41.8,
+          a42Temp: 42.2,
+          batteryPercentage: 92,
+          signalStrength: -60,
+        ),
+      ];
+
       setState(() {
         isRefreshing = false;
         lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
-        _allCoaches = coaches;
+        _allCoaches = mockData;
         
-        trainNumbers = ['All Trains', HotAxleDummyData.trainName];
-        coachTypes = ['All Types', 'LHB', 'ICF'];
-        coachNumbers = ['All Unique IDs', ...coaches.map((e) => e.coachNumber)];
+        trainNumbers = ['All Trains', ...mockData.map((e) => e.owningRly).toSet()];
+        coachTypes = ['All Types', ...mockData.map((e) => e.coachType).toSet()];
+        coachNumbers = ['All Unique IDs', ...mockData.map((e) => e.coachNumber).toSet()];
         
         _applyFilters();
       });

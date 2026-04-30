@@ -4,23 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/repository/acp_repository.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/presentation/widgets/acp_report_generator.dart';
-import '../../../../core/di/inject.dart';
-import '../../../../core/utils/app_dimensions.dart';
-import '../../../../core/utils/app_icons.dart';
-import '../../../../core/utils/app_strings.dart';
-import '../../../../core/utils/app_text_styles.dart';
-import '../../../../core/utils/color_constants.dart';
-import '../../../../core/widgets/action_button.dart';
-import '../../../../core/widgets/filter_dropdown.dart';
-import '../../../../core/widgets/status_chip.dart';
-import '../../../../core/widgets/view_type_selector.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_log_response.dart';
-import 'fsds_alert_view.dart';
-import 'fsds_chart_view.dart';
+import 'package:smart_coach_new/core/utils/app_dimensions.dart';
+import 'package:smart_coach_new/core/utils/app_icons.dart';
+import 'package:smart_coach_new/core/utils/app_strings.dart';
+import 'package:smart_coach_new/core/utils/app_text_styles.dart';
+import 'package:smart_coach_new/core/utils/color_constants.dart';
+import 'package:smart_coach_new/core/widgets/action_button.dart';
+import 'package:smart_coach_new/core/widgets/filter_dropdown.dart';
+import 'package:smart_coach_new/core/widgets/status_chip.dart';
+import 'package:smart_coach_new/core/widgets/view_type_selector.dart';
+import 'data/models/fsds_model.dart';
+import 'presentation/widgets/fsds_report_generator.dart';
 import 'fsds_coaches_view.dart';
+import 'fsds_chart_view.dart';
+import 'fsds_alerts_view.dart';
 
 class FsdsDashboard extends StatefulWidget {
   final String? title;
@@ -45,8 +42,8 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
   List<String> coachTypes = ['All Types'];
   List<String> coachNumbers = ['All Unique IDs'];
 
-  List<AcpCoachModel> _allCoaches = [];
-  List<AcpCoachModel> _filteredCoaches = [];
+  List<FsdsAssetModel> _allAssets = [];
+  List<FsdsAssetModel> _filteredAssets = [];
 
   @override
   void initState() {
@@ -62,7 +59,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
   }
 
   void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (mounted) {
         _refreshData(isBackgroundRefresh: true);
       }
@@ -70,85 +67,25 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
   }
 
   void _clearFilters() {
-    if (selectedTrainNumber == 'All Trains' && selectedStatus == 'All') return;
     setState(() {
       selectedTrainNumber = 'All Trains';
       selectedCoachType = 'All Types';
       selectedCoachNumber = 'All Unique IDs';
       selectedStatus = 'All';
       showRecentOnly = false;
-      coachTypes = ['All Types'];
-      coachNumbers = ['All Unique IDs'];
     });
-    _refreshData();
-  }
-
-  Future<void> _loadTrains() async {
-    try {
-      final response = await getIt<AcpRepository>().getAcpFilters();
-      if (response.success == true) {
-        if (mounted) {
-          setState(() {
-            final data = response.data ?? [];
-            final extracted = data.map((e) => e.trainNo).where((e) => e != null).cast<String>().toList();
-            trainNumbers = ['All Trains', ...extracted];
-          });
-        }
-      }
-    } catch (e) {
-      log('Error loading trains: $e');
-    }
-  }
-
-  Future<void> _loadCoachTypes(String trainNo) async {
-    try {
-      final response = await getIt<AcpRepository>().getAcpFilters(trainNo: trainNo);
-      if (response.success == true) {
-        if (mounted) {
-          setState(() {
-            final data = response.data ?? [];
-            final extracted = data.map((e) => e.commCoachNo).where((e) => e != null).cast<String>().toList();
-            coachTypes = ['All Types', ...extracted];
-            selectedCoachType = 'All Types';
-            coachNumbers = ['All Unique IDs'];
-            selectedCoachNumber = 'All Unique IDs';
-          });
-        }
-      }
-    } catch (e) {
-      log('Error loading coach types: $e');
-    }
-  }
-
-  Future<void> _loadCoachNumbers(String trainNo, String coachType) async {
-    try {
-      final response = await getIt<AcpRepository>().getAcpFilters(trainNo: trainNo, coachType: coachType);
-      if (response.success == true) {
-        if (mounted) {
-          setState(() {
-            final data = response.data ?? [];
-            final extracted = data.map((e) => e.techCoachNo).where((e) => e != null).cast<String>().toList();
-            coachNumbers = ['All Unique IDs', ...extracted];
-            selectedCoachNumber = 'All Unique IDs';
-          });
-        }
-      }
-    } catch (e) {
-      log('Error loading coach numbers: $e');
-    }
+    _applyFilters();
   }
 
   void _applyFilters() {
     setState(() {
-      _filteredCoaches = _allCoaches.where((coach) {
-        final matchesTrain = selectedTrainNumber == 'All Trains' || 
-                           coach.trainNo == selectedTrainNumber;
-        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || 
-                           coach.sensorId == selectedCoachNumber;
+      _filteredAssets = _allAssets.where((asset) {
+        final matchesTrain = selectedTrainNumber == 'All Trains' || asset.locName.contains(selectedTrainNumber);
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || asset.assetName.contains(selectedCoachNumber);
         final matchesStatus = selectedStatus == 'All' || 
-                             (selectedStatus == 'ON' && coach.isChainPulled) ||
-                             (selectedStatus == 'OFF' && !coach.isChainPulled);
-        final matchesRecent = !showRecentOnly || coach.isRecent;
+                             (selectedStatus == 'ON' && asset.isSmokeDetected) ||
+                             (selectedStatus == 'OFF' && !asset.isSmokeDetected);
+        final matchesRecent = !showRecentOnly || asset.isRecent;
         
         return matchesTrain && matchesCoach && matchesStatus && matchesRecent;
       }).toList();
@@ -159,125 +96,61 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
     if (!isBackgroundRefresh) {
       if (mounted) setState(() => isRefreshing = true);
     }
-    
-    if (trainNumbers.length <= 1 && selectedTrainNumber == 'All Trains') {
-      _loadTrains();
-    }
 
     try {
-      var logs = <AcpLogData>[];
-      if (selectedTrainNumber == 'All Trains' || selectedCoachNumber == 'All Unique IDs') {
-        logs = await getIt<AcpRepository>().getAcpSummary();
-      } else {
-        logs = await getIt<AcpRepository>().getAcpFilteredLogs(
-           trainNo: selectedTrainNumber,
-           techCoachNo: selectedCoachNumber,
-        );
-      }
-
-      final List<AcpCoachModel> coaches = [];
+      await Future.delayed(const Duration(milliseconds: 500));
       
-      for (var logEntry in logs) {
-        final sensorId = logEntry.techCoachNo ?? 'Unknown';
-        final coachName = logEntry.commCoachNo ?? 'Unknown';
-        final countVal = int.tryParse(logEntry.acpStatus ?? '0') ?? 0;
-        
-        bool isRecent = false;
-        bool isStale = true;
-        if (logEntry.lastUpdated != null) {
-          try {
-            final lastUpdate = DateTime.parse(logEntry.lastUpdated!);
-            final diff = DateTime.now().difference(lastUpdate).inMinutes;
-            if (diff < 5 && countVal > 0) isRecent = true;
-            if (diff < 4320) isStale = false; // 72 hours
-          } catch (_) {}
-        }
-
-        coaches.add(AcpCoachModel(
-          coachNumber: coachName,
-          status: logEntry.acpStatus ?? '0',
-          totalCount: logEntry.totalCount ?? '0',
-          updateTime: logEntry.lastUpdated ?? 'N/A',
-          isChainPulled: countVal > 0,
-          location: logEntry.trainLocation ?? 'N/A', 
-          lastPull: logEntry.lastUpdated ?? 'N/A', 
-          sensorId: sensorId,
-          rawAssetName: logEntry.rawAssetName ?? '$coachName $sensorId',
-          isOn: !isStale,
-          isRecent: isRecent,
-          trainNo: logEntry.trainNo ?? 'N/A',
-          deviceId: logEntry.deviceId ?? 'N/A',
-        ));
-      }
+      // Mock data based on FSDS payload
+      final List<FsdsAssetModel> mockData = [
+        FsdsAssetModel(
+          assetId: "7d831f05-d38f-4c41-833a-1c43fa9a240a",
+          assetName: "GS 255386 FSDS 1",
+          timestamp: "2026-04-23T10:18:19.209Z",
+          lightValue: 1023,
+          smokeLevel: 45,
+          sensorId: "FSDS_TEST_001",
+          locName: "VASP FSDS Train 8",
+          locId: "be3c934f-28ed-4300-b278-aabfa8d1eca6",
+        ),
+        FsdsAssetModel(
+          assetId: "8e942f16-e49g-5d52-944b-2d54gb0b351b",
+          assetName: "GS 255387 FSDS 2",
+          timestamp: "2026-04-23T10:25:00.000Z",
+          lightValue: 100,
+          smokeLevel: 10,
+          sensorId: "FSDS_TEST_002",
+          locName: "VASP FSDS Train 8",
+          locId: "be3c934f-28ed-4300-b278-aabfa8d1eca6",
+        ),
+        FsdsAssetModel(
+          assetId: "9f053g27-f50h-6e63-055c-3e65hc1c462c",
+          assetName: "GS 255388 FSDS 3",
+          timestamp: "2026-04-23T10:30:00.000Z",
+          lightValue: 512,
+          smokeLevel: 65,
+          sensorId: "FSDS_TEST_003",
+          locName: "VASP FSDS Train 8",
+          locId: "be3c934f-28ed-4300-b278-aabfa8d1eca6",
+        ),
+      ];
 
       if (mounted) {
         setState(() {
-          _allCoaches = coaches;
+          _allAssets = mockData;
+          trainNumbers = ['All Trains', ...mockData.map((e) => e.locName).toSet()];
+          coachNumbers = ['All Unique IDs', ...mockData.map((e) => e.assetName).toSet()];
+          
           _applyFilters();
           lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
           if (!isBackgroundRefresh) isRefreshing = false;
         });
       }
     } catch (e) {
-      log('Error refreshing data: $e');
+      log('Error refreshing FSDS data: $e');
       if (mounted && !isBackgroundRefresh) {
         setState(() => isRefreshing = false);
       }
     }
-  }
-
-  void _sendAlerts() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Send Alerts', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Alert will be sent to:', style: GoogleFonts.poppins(fontSize: 13, color: ColorConstants.textSecondary)),
-            const SizedBox(height: 12),
-            _alertRecipient(Icons.person, 'Train Guard'),
-            _alertRecipient(Icons.support_agent, 'Station Master'),
-            _alertRecipient(Icons.security, 'RPF Control Room'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: ColorConstants.textSecondary)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: ColorConstants.primary),
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('✅ Alert sent successfully', style: GoogleFonts.poppins(fontSize: 13)),
-                  backgroundColor: Colors.green[700],
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            child: Text('Send Now', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _alertRecipient(IconData icon, String name) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: ColorConstants.primary),
-          const SizedBox(width: 8),
-          Text(name, style: GoogleFonts.poppins(fontSize: 13)),
-        ],
-      ),
-    );
   }
 
   @override
@@ -288,14 +161,11 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
         backgroundColor: ColorConstants.scaffoldBackground,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leadingWidth: 40,
         leading: IconButton(
-          padding: EdgeInsets.zero,
           icon: const Icon(Icons.arrow_back, color: ColorConstants.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        titleSpacing: 4,
-        title: Text(widget.title ?? 'FSDS Bypass', style: AppTextStyles.header1),
+        title: Text(widget.title ?? "FSDS Dashboard", style: AppTextStyles.header1),
         actions: [
           Center(
             child: Padding(
@@ -306,42 +176,35 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                   color: ColorConstants.white,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'Last Updated: $lastUpdated',
-                  style: AppTextStyles.bodySmall,
-                ),
+                child: Text('Last Updated: $lastUpdated', style: AppTextStyles.bodySmall),
               ),
             ),
           ),
         ],
       ),
-      body: (isRefreshing && _allCoaches.isEmpty)
+      body: isRefreshing && _allAssets.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-        onRefresh: _refreshData,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionCard(child: _buildFiltersSection()),
-                const SizedBox(height: 8),
-                _buildSectionCard(child: _buildQuickActionsSection()),
-                const SizedBox(height: 8),
-                _buildSectionCard(child: _buildViewTypeSection()),
-                const SizedBox(height: 8),
-                if (selectedViewType == 'Coaches')
-                  _buildSectionCard(child: FsdsCoachesView(coaches: _filteredCoaches))
-                else if (selectedViewType == 'Chart View')
-                  _buildSectionCard(child: FsdsChartView(coaches: _filteredCoaches))
-                else if (selectedViewType == 'Alerts')
-                    _buildSectionCard(child: const FsdsAlertsView()),
-              ],
+              onRefresh: _refreshData,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                child: Column(
+                  children: [
+                    _buildSectionCard(child: _buildFiltersSection()),
+                    const SizedBox(height: 8),
+                    _buildSectionCard(child: _buildQuickActionsSection()),
+                    const SizedBox(height: 8),
+                    _buildSectionCard(child: _buildViewTypeSection()),
+                    if (selectedViewType == 'Coaches')
+                      _buildSectionCard(child: FsdsCoachesView(assets: _filteredAssets))
+                    else if (selectedViewType == 'Chart View')
+                      _buildSectionCard(child: FsdsChartView(assets: _filteredAssets))
+                    else if (selectedViewType == 'Alerts')
+                      _buildSectionCard(child: FsdsAlertsView(assets: _filteredAssets)),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -382,7 +245,11 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                     const SizedBox(width: 4),
                     Text(
                       'Clear Filters',
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: ColorConstants.primary),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: ColorConstants.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -398,11 +265,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                 label: AppStrings.trainNumber,
                 value: selectedTrainNumber,
                 items: trainNumbers,
-                onChanged: (value) {
-                  setState(() => selectedTrainNumber = value!);
-                  if (value != 'All Trains') _loadCoachTypes(value!);
-                  _refreshData();
-                },
+                onChanged: (v) => setState(() => selectedTrainNumber = v!),
               ),
             ),
             const SizedBox(width: 8),
@@ -411,25 +274,16 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                 label: 'Coach Type',
                 value: selectedCoachType,
                 items: coachTypes,
-                onChanged: (value) {
-                  setState(() => selectedCoachType = value!);
-                  if (value != 'All Types' && selectedTrainNumber != 'All Trains') {
-                    _loadCoachNumbers(selectedTrainNumber, value!);
-                  }
-                  _refreshData();
-                },
+                onChanged: (v) => setState(() => selectedCoachType = v!),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: FilterDropdown(
-                label: AppStrings.uniqueId,
+                label: 'Unique ID',
                 value: selectedCoachNumber,
                 items: coachNumbers,
-                onChanged: (value) {
-                  setState(() => selectedCoachNumber = value!);
-                  _refreshData();
-                },
+                onChanged: (v) => setState(() => selectedCoachNumber = v!),
               ),
             ),
           ],
@@ -441,9 +295,9 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
           children: [
             Expanded(child: StatusChip(label: AppStrings.all, isSelected: selectedStatus == 'All', onTap: () { setState(() => selectedStatus = 'All'); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(child: StatusChip(label: AppStrings.on, isSelected: selectedStatus == 'ON', onTap: () { setState(() => selectedStatus = 'ON'); _applyFilters(); })),
+            Expanded(child: StatusChip(label: 'Alert', isSelected: selectedStatus == 'ON', onTap: () { setState(() => selectedStatus = 'ON'); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(child: StatusChip(label: AppStrings.off, isSelected: selectedStatus == 'OFF', onTap: () { setState(() => selectedStatus = 'OFF'); _applyFilters(); })),
+            Expanded(child: StatusChip(label: 'Normal', isSelected: selectedStatus == 'OFF', onTap: () { setState(() => selectedStatus = 'OFF'); _applyFilters(); })),
           ],
         ),
       ],
@@ -462,7 +316,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
               child: ActionButton(
                 label: AppStrings.sendAlerts,
                 svgIcon: AppIcons.alert,
-                onTap: _sendAlerts,
+                onTap: () {}, // Implement Send Alert Dialog if needed
                 isPrimary: true,
                 isFullWidth: true,
               ),
@@ -473,8 +327,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                 label: AppStrings.generateReport,
                 svgIcon: AppIcons.report,
                 onTap: () {
-                  final recentCoaches = _allCoaches.where((c) => c.isRecent).toList();
-                  AcpReportGenerator.generate(context, recentCoaches, title: 'Alert Report');
+                  FsdsReportGenerator.generate(context, _allAssets);
                 },
                 isFullWidth: true,
               ),
@@ -482,7 +335,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
             const SizedBox(width: 8),
             Expanded(
               child: ActionButton(
-                label: AppStrings.recentlyPulled,
+                label: 'Recent',
                 svgIcon: AppIcons.alert,
                 onTap: () {
                   setState(() => showRecentOnly = !showRecentOnly);
@@ -526,11 +379,11 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: ViewTypeSelector(label: AppStrings.coachesView, svgIcon: AppIcons.coaches, isSelected: selectedViewType == 'Coaches', onTap: () => setState(() => selectedViewType = 'Coaches'))),
+            Expanded(child: ViewTypeSelector(label: "Assets View", svgIcon: AppIcons.coaches, isSelected: selectedViewType == 'Coaches', onTap: () => setState(() => selectedViewType = 'Coaches'))),
             const SizedBox(width: 8),
-            Expanded(child: ViewTypeSelector(label: AppStrings.chartView, svgIcon: AppIcons.graph, isSelected: selectedViewType == 'Chart View', onTap: () => setState(() => selectedViewType = 'Chart View'))),
+            Expanded(child: ViewTypeSelector(label: "Chart View", svgIcon: AppIcons.graph, isSelected: selectedViewType == 'Chart View', onTap: () => setState(() => selectedViewType = 'Chart View'))),
             const SizedBox(width: 8),
-            Expanded(child: ViewTypeSelector(label: AppStrings.alerts, svgIcon: AppIcons.alert, isSelected: selectedViewType == 'Alerts', onTap: () => setState(() => selectedViewType = 'Alerts'))),
+            Expanded(child: ViewTypeSelector(label: "Alerts", svgIcon: AppIcons.alert, isSelected: selectedViewType == 'Alerts', onTap: () => setState(() => selectedViewType = 'Alerts'))),
           ],
         ),
       ],

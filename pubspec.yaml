@@ -65,11 +65,11 @@ dev_dependencies:
   freezed: ^3.0.6
 
 flutter_launcher_icons:
-  image_path_android: "assets/images/mirtha.png"
-  image_path_ios: "assets/images/mirtha.png"
+  image_path_android: "assets/images/vasp.png"
+  image_path_ios: "assets/images/vasp.png"
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/mirtha.png"
+  image_path: "assets/images/vasp.png"
   remove_alpha_ios: true
   min_sdk_android: 21
 

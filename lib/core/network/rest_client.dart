@@ -54,6 +54,7 @@ import '../../features/reports_and_alerts/level_indicator/data/models/train_list
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_log_response.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_filters_response.dart';
 import '../../features/reports_and_alerts/break_binding/data/models/pneumatic_status_model.dart';
+import 'package:smart_coach_new/features/coach_dashboard/data/models/coach_config_response.dart';
 import 'api_constants.dart';
 
 part 'rest_client.g.dart';
@@ -365,4 +366,19 @@ abstract class RestClient {
       @Query("to_date") String? toDate,
       @Query("limit") int? limit,
       );
+
+  @GET("${ApiConstants.coachConfigApiEndpoint}/{coach_no}")
+  Future<CoachConfigResponse> getCoachConfig(@Path("coach_no") String coachNo);
+
+  @POST(ApiConstants.fsdsReceiveDataApiEndpoint)
+  Future<dynamic> postFsdsData(@Body() Map<String, dynamic> body);
+
+  @POST(ApiConstants.hotAxleReceiveDataApiEndpoint)
+  Future<dynamic> postHotAxleData(@Body() Map<String, dynamic> body);
+
+  @POST(ApiConstants.pressureReceiveDataApiEndpoint)
+  Future<dynamic> postPressureData(@Body() Map<String, dynamic> body);
+
+  @POST(ApiConstants.wliReceiveDataApiEndpoint)
+  Future<dynamic> postWliData(@Body() Map<String, dynamic> body);
 }

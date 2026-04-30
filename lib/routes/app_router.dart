@@ -37,7 +37,7 @@ import 'package:smart_coach_new/features/reports_and_alerts/alerts_screen.dart';
 import 'package:smart_coach_new/features/user_management/presentation/bloc/user_management_bloc.dart';
 import 'package:smart_coach_new/features/user_management/presentation/user_management_screen.dart';
 
-import '../features/reports_and_alerts/odour_management_screen.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/odour_management/presentation/odour_dashboard.dart';
 import '../features/reports_and_alerts/break_binding/presentation/bloc/break_binding_bloc.dart';
 import '../features/reports_and_alerts/break_binding/presentation/brake_binding_screen.dart';
 import '../features/coach_dashboard/presentation/bloc/coach_dashboard_bloc.dart';
@@ -197,7 +197,7 @@ class AppRouter {
       ),
       GoRoute(
         path: odourManagement,
-        builder: (context, state) => const OdourManagementScreen(),
+        builder: (context, state) => const OdourDashboard(),
       ),
       GoRoute(
         path: acpMonitoringRoute,

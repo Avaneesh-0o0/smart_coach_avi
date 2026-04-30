@@ -1,121 +1,94 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../core/utils/app_dimensions.dart';
-import '../../../../../core/utils/app_icons.dart';
-import '../../../../../core/utils/color_constants.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
+import 'package:smart_coach_new/core/utils/app_dimensions.dart';
+import 'package:smart_coach_new/core/utils/color_constants.dart';
+import '../../data/models/fsds_model.dart';
+
+import 'fsds_modal.dart';
 
 class FsdsCoachCard extends StatelessWidget {
-  final AcpCoachModel coach;
+  final FsdsAssetModel coach;
   final VoidCallback? onEyeIconTap;
 
   const FsdsCoachCard({super.key, required this.coach, this.onEyeIconTap});
 
   @override
   Widget build(BuildContext context) {
-    final isRecent = coach.isRecent;
-    final isPulled = coach.isChainPulled;
+    final bool isAlert = coach.isSmokeDetected;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: !isRecent
-            ? ColorConstants.cardBackground
-            : const Color(0xFFFFF0F0),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        border: !isRecent
-            ? Border.all(
-                color: ColorConstants.divider.withValues(alpha: 0.5),
-                width: 1,
-              )
-            : Border.all(color: Colors.red.withValues(alpha: 0.15), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => FsdsModal(coach: coach),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isAlert ? const Color(0xFFFFF0F0) : ColorConstants.cardBackground,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+          border: Border.all(
+            color: isAlert ? Colors.red.withValues(alpha: 0.1) : ColorConstants.divider.withValues(alpha: 0.5),
           ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              coach.assetName,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: ColorConstants.primary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Loc: ${coach.locName}',
+              style: GoogleFonts.poppins(
+                fontSize: 9,
+                color: ColorConstants.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildMetric("Smoke", "${coach.smokeLevel}", isAlert ? Colors.red : Colors.green),
+                _buildMetric("Light", "${coach.lightValue}", Colors.blue),
+              ],
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Unique ID: ${coach.sensorId}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: ColorConstants.primary,
-                      ),
-                    ),
-                    Text(
-                      'Device ID: ${coach.deviceId}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: ColorConstants.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: onEyeIconTap,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: ColorConstants.primary.withValues(alpha: 0.05),
-                    shape: BoxShape.circle,
-                  ),
-                  child: SvgPicture.asset(
-                    AppIcons.eye,
-                    width: 16,
-                    height: 16,
-                    colorFilter: const ColorFilter.mode(
-                      ColorConstants.primary,
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+    );
+  }
+
+  Widget _buildMetric(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.poppins(fontSize: 8, color: ColorConstants.textTertiary)),
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
           ),
-          const SizedBox(height: 6),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Status',
-                style: GoogleFonts.poppins(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
-                  color: ColorConstants.textTertiary,
-                ),
-              ),
-              Text(
-                isPulled ? 'PULLED' : 'NOT PULLED',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isPulled
-                      ? const Color(0xFFD32F2F)
-                      : const Color(0xFF2E7D32),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

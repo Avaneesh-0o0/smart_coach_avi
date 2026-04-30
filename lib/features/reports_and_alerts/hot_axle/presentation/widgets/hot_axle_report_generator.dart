@@ -126,7 +126,7 @@ class HotAxleReportGenerator {
       final statusColor = c.status == 'Critical' ? 'D32F2F' : c.status == 'Warning' ? 'BE8B22' : '2E7D32';
       _cell(summary, row, 0, c.coachNumber);
       _cell(summary, row, 1, c.status,             color: statusColor);
-      _cell(summary, row, 2, c.maxTemp,             color: c.axlesIssue > 0 ? statusColor : null);
+      _cell(summary, row, 2, '${c.maxTemp.toStringAsFixed(1)}°C', color: c.axlesIssue > 0 ? statusColor : null);
       _cell(summary, row, 3, '${c.axlesMonitored}');
       _cell(summary, row, 4, '${c.axlesIssue}',    color: c.axlesIssue > 0 ? statusColor : null);
       _cell(summary, row, 5, c.updateTime);

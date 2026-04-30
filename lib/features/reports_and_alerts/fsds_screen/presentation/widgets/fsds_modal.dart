@@ -3,16 +3,15 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/utils/app_dimensions.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/utils/color_constants.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/fsds_screen/fsds_history_screen.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/fsds_screen/data/models/fsds_model.dart';
 
 class FsdsModal extends StatelessWidget {
-  final AcpCoachModel coach;
+  final FsdsAssetModel coach;
   const FsdsModal({super.key, required this.coach});
 
   @override
   Widget build(BuildContext context) {
-    final isAlert = coach.isRecent;
+    final isAlert = coach.isSmokeDetected;
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
@@ -37,8 +36,12 @@ class FsdsModal extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  isAlert ? 'Fire Detected' : 'FSDS Status',
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: isAlert ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32)),
+                  isAlert ? 'Smoke Detected' : 'FSDS Status',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.w600, 
+                    color: isAlert ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32)
+                  ),
                 ),
               ),
             ),
@@ -66,7 +69,7 @@ class FsdsModal extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              coach.coachNumber,
+                              coach.assetName,
                               style: GoogleFonts.poppins(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
@@ -82,7 +85,7 @@ class FsdsModal extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              '\u2022 ${coach.status}',
+                              '\u2022 ${isAlert ? "ALERT" : "NORMAL"}',
                               style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: isAlert ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32)),
                             ),
                           ),
@@ -98,58 +101,34 @@ class FsdsModal extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            _buildDetailRow('Tech Coach #', coach.sensorId, showTopBorder: false),
-                            _buildDetailRow('Device ID', coach.deviceId),
-                            _buildDetailRow('Train No', coach.trainNo),
-                            _buildDetailRow('Location', coach.location),
-                            _buildDetailRow('COUNT', '${coach.status} nos'),
-                            _buildDetailRow('TOTAL', '${coach.totalCount} nos'),
+                            _buildDetailRow('Asset ID', coach.assetId, showTopBorder: false),
+                            _buildDetailRow('Sensor ID', coach.sensorId),
+                            _buildDetailRow('Location ID', coach.locId),
+                            _buildDetailRow('Location', coach.locName),
                             _buildDetailRow(
-                              'STATUS', 
-                              coach.isChainPulled ? 'TRIGGERED' : 'NORMAL',
-                              valueColor: coach.isChainPulled ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32),
+                              'SMOKE LEVEL', 
+                              '${coach.smokeLevel}',
+                              valueColor: isAlert ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32),
                             ),
-                            _buildDetailRow(
-                              'RECENT', 
-                              coach.isRecent ? 'RECENTLY TRIGGERED' : 'NO RECENT ACTIVITY', 
-                              valueColor: coach.isRecent ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32)
-                            ),
-                            _buildDetailRow('Last Updated', coach.updateTime),
+                            _buildDetailRow('LIGHT VALUE', '${coach.lightValue}'),
+                            _buildDetailRow('Timestamp', coach.timestamp),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
 
                       // Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                side: const BorderSide(color: ColorConstants.divider),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMedium)),
-                              ),
-                              child: Text('Close', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w500)),
-                            ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: const BorderSide(color: ColorConstants.divider),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMedium)),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => FsdsHistoryScreen(coach: coach)));
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorConstants.primary,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMedium)),
-                              ),
-                              child: Text('View History', style: AppTextStyles.button),
-                            ),
-                          ),
-                        ],
+                          child: Text('Close', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w500)),
+                        ),
                       ),
                     ],
                   ),

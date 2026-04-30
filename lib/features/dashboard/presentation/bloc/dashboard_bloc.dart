@@ -38,24 +38,52 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     LoadDashboardData event,
     Emitter<DashboardState> emit,
   ) async {
-    emit(DashboardLoading());
+    final prevState = state;
+    if (prevState is! DashboardDataLoaded) {
+      emit(DashboardLoading());
+    }
+
     try {
+      // We use individual try-catches or a custom wrapper to be more resilient
+      Future<T?> safeFetch<T>(Future<T> Function() call) async {
+        try {
+          return await call();
+        } catch (e) {
+          print("Dashboard fetch error: $e");
+          return null;
+        }
+      }
+
       final results = await Future.wait([
-        trainRepository.fetchTrainList(),
-        coachRepository.fetchCoachList(),
-        deviceRepository.fetchDevice(),
-        sensorRepository.fetchSensor(),
-        acpRepository.getAcpSummary(),
-        breakBindingRepository.getPneumaticStatus(),
+        safeFetch(() => trainRepository.fetchTrainList()),
+        safeFetch(() => coachRepository.fetchCoachList()),
+        safeFetch(() => deviceRepository.fetchDevice()),
+        safeFetch(() => sensorRepository.fetchSensor()),
+        safeFetch(() => acpRepository.getAcpSummary()),
+        safeFetch(() => breakBindingRepository.getPneumaticStatus()),
       ]);
 
-      final trains = results[0] as List;
-      final coaches = results[1] as List;
-      final devices = results[2] as List;
-      final sensors = results[3] as List;
-      final acpLogs = results[4] as List<AcpLogData>;
-      final pneumaticResponse = results[5] as PneumaticStatusResponse;
-      final pneumaticLogs = pneumaticResponse.history?.data ?? [];
+      // If all failed and we have no old data, THEN show error
+      if (results.every((element) => element == null) && prevState is! DashboardDataLoaded) {
+        emit(DashboardError("Failed to connect to server. Please check your internet."));
+        return;
+      }
+
+      // If some failed but we have previous data, we can blend or just fallback
+      // For simplicity, if we have old data and new fetch failed significantly, we keep old
+      if (results.any((e) => e == null) && prevState is DashboardDataLoaded) {
+        // You could also emit a 'partial success' or snackbar here
+        emit(prevState); 
+        return;
+      }
+
+      final trains = (results[0] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.totalTrains, null) : []);
+      final coaches = (results[1] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.smartCoaches, null) : []);
+      final devices = (results[2] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.activeDevices, null) : []);
+      final sensors = (results[3] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.activeSensors, null) : []);
+      final acpLogs = (results[4] as List<AcpLogData>?) ?? (prevState is DashboardDataLoaded ? prevState.recentAlerts : []);
+      final pneumaticResponse = results[5] as PneumaticStatusResponse?;
+      final pneumaticLogs = pneumaticResponse?.history?.data ?? (prevState is DashboardDataLoaded ? prevState.recentPneumaticAlerts : []);
 
       // Simple alert categorization logic
       int critical = 0;
@@ -76,7 +104,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         }
       }
 
-      // Add pneumatic faults to critical counts if status is active
       for (var pLog in pneumaticLogs) {
         final fault = pLog.brakeFault?.toString().toLowerCase() ?? "";
         final status = pLog.brakeStatus?.toString().toLowerCase() ?? "";
@@ -102,7 +129,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         ),
       );
     } catch (e) {
-      emit(DashboardError("Failed to load dashboard data: ${e.toString()}"));
+      if (prevState is DashboardDataLoaded) {
+        emit(prevState);
+      } else {
+        emit(DashboardError("Failed to load dashboard data: ${e.toString()}"));
+      }
     }
   }
 

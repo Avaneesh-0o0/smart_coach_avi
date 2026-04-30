@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import '../../../../core/utils/app_dimensions.dart';
-import '../../../../core/utils/app_strings.dart';
-import '../../../../core/utils/app_text_styles.dart';
-import '../../../../core/utils/color_constants.dart';
-import '../../../../core/widgets/period_filter.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
+import 'package:smart_coach_new/core/utils/app_dimensions.dart';
+import 'package:smart_coach_new/core/utils/app_strings.dart';
+import 'package:smart_coach_new/core/utils/app_text_styles.dart';
+import 'package:smart_coach_new/core/utils/color_constants.dart';
+import 'package:smart_coach_new/core/widgets/period_filter.dart';
+import 'data/models/fsds_model.dart';
 
 class FsdsChartView extends StatefulWidget {
-  final List<AcpCoachModel> coaches;
-  const FsdsChartView({super.key, required this.coaches});
+  final List<FsdsAssetModel> assets;
+  const FsdsChartView({super.key, required this.assets});
 
   @override
   State<FsdsChartView> createState() => _FsdsChartViewState();
@@ -22,28 +21,29 @@ class _FsdsChartViewState extends State<FsdsChartView> {
   String selectedChartType = AppStrings.timeSeries;
   DateTimeRange? customRange;
 
-  List<AcpCoachModel> get filteredCoaches {
-    if (selectedPeriod == 'Live') return widget.coaches;
+  List<FsdsAssetModel> get filteredAssets {
+    if (selectedPeriod == 'Live') return widget.assets;
     DateTime now = DateTime.now();
     DateTime? startDate;
     if (selectedPeriod == '7 Days') startDate = now.subtract(const Duration(days: 7));
     else if (selectedPeriod == '30 Days') startDate = now.subtract(const Duration(days: 30));
     else if (selectedPeriod == 'Custom' && customRange != null) startDate = customRange!.start;
-    if (startDate == null) return widget.coaches;
-    return widget.coaches.where((c) {
+    
+    if (startDate == null) return widget.assets;
+    return widget.assets.where((a) {
       try {
-        final updateTime = DateTime.parse(c.updateTime);
+        final updateTime = DateTime.parse(a.timestamp);
         return updateTime.isAfter(startDate!);
       } catch (_) { return false; }
     }).toList();
   }
 
-  int get onlineCount => filteredCoaches.where((c) => c.isOn).length;
-  int get offlineCount => filteredCoaches.where((c) => !c.isOn).length;
-  int get total => filteredCoaches.length;
+  int get alertCount => filteredAssets.where((a) => a.isSmokeDetected).length;
+  int get normalCount => filteredAssets.where((a) => !a.isSmokeDetected).length;
+  int get total => filteredAssets.length;
 
   List<FlSpot> get timeSeriesData {
-    final count = filteredCoaches.where((c) => c.isRecent).length;
+    final count = filteredAssets.where((a) => a.isRecent).length;
     if (selectedPeriod == 'Live') {
       return [
         const FlSpot(0, 0), const FlSpot(1, 1), const FlSpot(2, 0), const FlSpot(3, 2),
@@ -63,15 +63,14 @@ class _FsdsChartViewState extends State<FsdsChartView> {
 
   Future<void> _pickCustomRange() async {
     final range = await showDateRangePicker(
-      context: context, firstDate: DateTime(2026, 1, 1), lastDate: DateTime(2026, 3, 12),
-      initialDateRange: DateTimeRange(start: DateTime(2026, 3, 1), end: DateTime(2026, 3, 12)),
+      context: context, firstDate: DateTime(2026, 1, 1), lastDate: DateTime.now(),
     );
     if (range != null) setState(() { customRange = range; selectedPeriod = 'Custom'; });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.coaches.isEmpty) return const SizedBox.shrink();
+    if (widget.assets.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -83,7 +82,7 @@ class _FsdsChartViewState extends State<FsdsChartView> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: Text('Fire Alerts Timeline', style: AppTextStyles.header2)),
+            Expanded(child: Text('Smoke Level Timeline', style: AppTextStyles.header2)),
             _chartTypeToggle(AppStrings.timeSeries),
             const SizedBox(width: 8),
             _chartTypeToggle(AppStrings.pieChart),
@@ -122,8 +121,8 @@ class _FsdsChartViewState extends State<FsdsChartView> {
             alignment: Alignment.center,
             children: [
               PieChart(PieChartData(sectionsSpace: 3, centerSpaceRadius: 56, sections: [
-                PieChartSectionData(value: onlineCount.toDouble(), color: const Color(0xFF34C700), radius: 60, showTitle: false),
-                PieChartSectionData(value: offlineCount.toDouble(), color: const Color(0xFFFF3B30), radius: 60, showTitle: false),
+                PieChartSectionData(value: alertCount.toDouble(), color: const Color(0xFFFF3B30), radius: 60, showTitle: false),
+                PieChartSectionData(value: normalCount.toDouble(), color: const Color(0xFF34C700), radius: 60, showTitle: false),
               ])),
               Column(mainAxisSize: MainAxisSize.min, children: [
                 Text('$total', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700)),
@@ -134,8 +133,8 @@ class _FsdsChartViewState extends State<FsdsChartView> {
         ),
         const SizedBox(height: 12),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _legend(const Color(0xFF34C700), 'Online ($onlineCount)'), const SizedBox(width: 20),
-          _legend(const Color(0xFFFF3B30), 'Offline ($offlineCount)'),
+          _legend(const Color(0xFFFF3B30), 'Alerts ($alertCount)'), const SizedBox(width: 20),
+          _legend(const Color(0xFF34C700), 'Normal ($normalCount)'),
         ]),
       ],
     );
@@ -155,7 +154,7 @@ class _FsdsChartViewState extends State<FsdsChartView> {
         height: 220,
         child: LineChart(LineChartData(
           clipData: const FlClipData.all(),
-          gridData: FlGridData(show: true, drawVerticalLine: true, horizontalInterval: 1),
+          gridData: const FlGridData(show: true, drawVerticalLine: true, horizontalInterval: 1),
           titlesData: FlTitlesData(
             show: true, rightTitles: const AxisTitles(), topTitles: const AxisTitles(),
             bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: selectedPeriod == 'Live' ? 1 : 5, getTitlesWidget: (v, m) {
@@ -170,9 +169,9 @@ class _FsdsChartViewState extends State<FsdsChartView> {
           minX: 0, maxX: selectedPeriod == 'Live' ? 7 : (selectedPeriod == '7 Days' ? 7 : 30), minY: 0,
           maxY: (spots.isEmpty ? 5 : (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1).toDouble().clamp(5, 100)),
           lineBarsData: [LineChartBarData(
-            spots: spots, isCurved: true, gradient: const LinearGradient(colors: [ColorConstants.primary, Color(0xFF64B5F6)]),
+            spots: spots, isCurved: true, gradient: const LinearGradient(colors: [Colors.red, Colors.orange]),
             barWidth: 3, dotData: FlDotData(show: spots.length < 10),
-            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [ColorConstants.primary.withValues(alpha: 0.3), Colors.transparent], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.red.withOpacity(0.3), Colors.transparent], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
           )],
         )),
       ),
@@ -180,19 +179,18 @@ class _FsdsChartViewState extends State<FsdsChartView> {
   }
 
   Widget _buildSummaryCard() {
-    final onPct = total > 0 ? (onlineCount / total * 100).toStringAsFixed(1) : '0';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
       child: Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Total Coaches', style: AppTextStyles.bodyMedium),
+          Text('Total Assets', style: AppTextStyles.bodyMedium),
           Text('$total', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
         ]),
         const SizedBox(height: 8),
-        _buildStatRow('Online', '$onlineCount ($onPct%)', const Color(0xFF34C700)),
+        _buildStatRow('Alert Status', '$alertCount', const Color(0xFFFF3B30)),
         const SizedBox(height: 8),
-        _buildStatRow('Offline', '$offlineCount', const Color(0xFFFF3B30)),
+        _buildStatRow('Normal Status', '$normalCount', const Color(0xFF34C700)),
       ]),
     );
   }

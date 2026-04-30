@@ -6,7 +6,7 @@ import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/data/models/hot_axle_model.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/presentation/widgets/hot_axle_coach_card.dart';
-import 'hot_axle_detail_screen.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/presentation/widgets/hot_axle_modal.dart';
 
 class HotAxleCoachesView extends StatelessWidget {
   final List<HotAxleCoachModel> coaches;
@@ -46,9 +46,9 @@ class HotAxleCoachesView extends StatelessWidget {
                 width: cardWidth,
                 child: HotAxleCoachCard(
                   coach: coach,
-                  onEyeIconTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => HotAxleDetailScreen(coach: coach)),
+                  onEyeIconTap: () => showDialog(
+                    context: context,
+                    builder: (_) => HotAxleModal(coach: coach),
                   ),
                 ),
               )).toList(),
