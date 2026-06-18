@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Smart Coach — Status Report</title>
+<style>
+  body{font-family:'Segoe UI',Arial,sans-serif;margin:30px;color:#1a1a1a;font-size:14px}
+  h1{color:#1a56db;font-size:22px}
+  h2{font-size:16px;color:#374151;border-bottom:1px solid #ddd;padding-bottom:5px}
+  .g{color:#059669;font-weight:700}.r{color:#dc2626;font-weight:700}.y{color:#d97706;font-weight:700}.b{color:#2563eb;font-weight:700}
+  table{width:100%;border-collapse:collapse;margin:10px 0}
+  th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #eee;font-size:13px}
+  th{background:#f3f4f6}
+  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;color:#fff}
+  .tg{background:#059669}.tr{background:#dc2626}.ty{background:#d97706}.tb{background:#2563eb}
+  ul{margin:5px 0;padding-left:18px}li{margin:3px 0}
+</style>
+</head>
+<body>
+
+<h1>Smart Coach — Issues Status Report</h1>
+<p><script>document.write(new Date().toLocaleString());</script></p>
+
+<!-- ============================================================ -->
+<h2>✅ 4 Fixed</h2>
+<table>
+  <tr><th>Module</th><th>Fix</th></tr>
+  <tr><td>BC Pressure</td><td>Timestamps (DateTime.now()), colors swapped, PeriodFilter, stats cards</td></tr>
+  <tr><td>Water Level Indicator</td><td>Alerts engine, filter logic, dynamic dropdowns, timestamps</td></tr>
+  <tr><td>Bad Odour Dashboard</td><td>Full redesign: CoachToiletGroup model, 4 toilets/coach, 3 views rewritten</td></tr>
+  <tr><td>Configuration (Partial)</td><td><code>seriel_number</code> typo fixed, sensor device mock data removed, itemIdBuilder null safety</td></tr>
+  <tr><td colspan="2">ACP dummy data deleted (unused, already had real APIs)</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>❌ 5 Blocked — Need Backend APIs</h2>
+<table>
+  <tr><th>Module</th><th>Dummy File</th><th>Needed API</th></tr>
+  <tr><td>BC Pressure</td><td><code>bc_dummy_data.dart</code> (used in 5 files)</td><td><code>GET /pressure/status</code></td></tr>
+  <tr><td>Hot Axle</td><td><code>hot_axle_dummy_data.dart</code> (used in 3 files + inline)</td><td><code>GET /hotaxle/status</code></td></tr>
+  <tr><td>Water Level</td><td><code>wli_dummy_data.dart</code> (water_level_screen.dart)</td><td><code>GET /wli/status</code></td></tr>
+  <tr><td>Odour</td><td>Inline in 2 files</td><td><code>GET /odour/logs</code></td></tr>
+  <tr><td colspan="3"><em>All 4 only have POST /{module}/receive-data — no GET retrieval endpoint exists</em></td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2>⏳ 3 Pending — Need Backend Data</h2>
+<ul>
+  <li><strong>Coach detail</strong> — shows only module count, API must return module list</li>
+  <li><strong>Master module table</strong> — shows device count only, API must populate <code>devices</code> array</li>
+  <li><strong>Sensor device table</strong> — entity has module fields but table doesn't show them</li>
+  <li><strong>PDF/Excel reports</strong> — blocked until dummy data is replaced with real API data</li>
+  <li><strong>Global timestamp fix</strong> — pointless to fix dates in dummy files that will be replaced</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2>🧊 2 Blocked — Awaiting Input</h2>
+<ul>
+  <li><strong>SMS OTP</strong> — skipped per your instruction</li>
+  <li><strong>Notification format</strong> — waiting for Saniya's confirmation</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2>✅ 14+ Modules on Real APIs (Working)</h2>
+<p>Configuration (Train, Coach, Master Module, Sensor Device, Device, Sensor Type, Rule) + Break Binding, Level Indicator, FSDS, Login, Register, Profile, User Management, Dropdown Values, ACP</p>
+
+<!-- ============================================================ -->
+<h2>🎯 Priorities</h2>
+<table>
+  <tr><th>P</th><th>Action</th><th>Who</th></tr>
+  <tr><td><span class="tag tr">P1</span></td><td>Create GET endpoints for BC/HotAxle/WLI/Odour</td><td>Backend</td></tr>
+  <tr><td><span class="tag ty">P2</span></td><td>Update reports after APIs ready + <code>flutter analyze</code></td><td>Frontend</td></tr>
+  <tr><td><span class="tag tb">P3</span></td><td>Coach detail device list, sensor table module ref</td><td>Frontend (after API)</td></tr>
+  <tr><td><span class="tag">P4</span></td><td>Notifications + SMS OTP</td><td>Saniya + You</td></tr>
+</table>
+
+</body>
+</html>
