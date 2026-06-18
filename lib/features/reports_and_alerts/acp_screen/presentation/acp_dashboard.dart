@@ -198,7 +198,14 @@ class _AcpDashboardState extends State<AcpDashboard> {
       
       for (var logEntry in logs) {
         final sensorId = logEntry.techCoachNo ?? 'Unknown';
-        final coachName = logEntry.commCoachNo ?? 'Unknown';
+        // Parse actual coach number: rawAssetName format "TYPE NUMBER ACP DEVICE" → "B1"
+        String coachName = logEntry.techCoachNo ?? 'Unknown';
+        if (logEntry.rawAssetName != null && logEntry.rawAssetName!.isNotEmpty) {
+          final parts = logEntry.rawAssetName!.split(' ');
+          if (parts.length >= 2) {
+            coachName = parts[1];
+          }
+        }
         final countVal = int.tryParse(logEntry.acpStatus ?? '0') ?? 0;
         
         // 5-minute rule for RECENT pulls
@@ -249,6 +256,9 @@ class _AcpDashboardState extends State<AcpDashboard> {
   }
 
   void _sendAlerts() {
+    final offCoaches = _filteredCoaches.where((c) => !c.isOn).toList();
+    final offCoachNames = offCoaches.map((c) => c.coachNumber).join(', ');
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -258,37 +268,19 @@ class _AcpDashboardState extends State<AcpDashboard> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Alert will be sent to:', style: GoogleFonts.poppins(fontSize: 13, color: ColorConstants.textSecondary)),
-            const SizedBox(height: 12),
-            _alertRecipient(Icons.person, 'Train Guard - Ramesh Kumar'),
-            _alertRecipient(Icons.support_agent, 'Station Master - Ujjain'),
-            _alertRecipient(Icons.security, 'RPF Control Room'),
-            const SizedBox(height: 12),
-            Text(
-              '4 coaches currently OFF: Coach 4, 7, 11, 20',
-              style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFFD32F2F), fontWeight: FontWeight.w500),
-            ),
+            Text('Offline coaches (${offCoaches.length}):',
+              style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFFD32F2F), fontWeight: FontWeight.w500)),
+            if (offCoachNames.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(offCoachNames, style: GoogleFonts.poppins(fontSize: 12, color: ColorConstants.textSecondary)),
+              ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: GoogleFonts.poppins(color: ColorConstants.textSecondary)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: ColorConstants.primary),
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('✅ Alert sent to 3 recipients', style: GoogleFonts.poppins(fontSize: 13)),
-                  backgroundColor: Colors.green[700],
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              );
-            },
-            child: Text('Send Now', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+            child: Text('Close', style: GoogleFonts.poppins(color: ColorConstants.textSecondary)),
           ),
         ],
       ),

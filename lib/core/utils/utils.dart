@@ -125,9 +125,13 @@ class Utils {
     if (date == null) {
       return date;
     }
-    final DateTime parsedDate = DateTime.parse(date).toLocal();
-    final DateFormat formatter = DateFormat(dateFormat);
-    return formatter.format(parsedDate);
+    try {
+      DateTime parsedDate = DateTime.parse(date).toLocal();
+      final DateFormat formatter = DateFormat(dateFormat);
+      return formatter.format(parsedDate);
+    } catch (_) {
+      return date;
+    }
   }
 
   static String? setTextInOneLine(String? text) {
@@ -153,7 +157,7 @@ class Utils {
     return validValues
         .where((val) => val.toLowerCase() == input.toLowerCase())
         .cast<String?>()
-        .firstWhere((_) => true, orElse: () => null);
+        .firstWhere((_) => true, orElse: () => input);
   }
 
   static String convertToIsoDate(String inputDate) {

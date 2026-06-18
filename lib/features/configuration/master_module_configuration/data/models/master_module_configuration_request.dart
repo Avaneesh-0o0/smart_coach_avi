@@ -10,7 +10,7 @@ abstract class MasterModuleConfigurationRequest with _$MasterModuleConfiguration
     @JsonKey(name: 'module_unique_id') String? moduleUniqueId,
     @JsonKey(name: 'make_model') String? makeModel,
     @JsonKey(name: 'firmware_version') String? firmwareVersion,
-    @JsonKey(name: 'seriel_number') String? serielNumber,
+    @JsonKey(name: 'serial_number') String? serialNumber,
     @JsonKey(name: 'installation_date') String? installationDate,
     @JsonKey(name: 'location') String? location,
     @JsonKey(name: 'placement_type') String? placementType,
@@ -28,6 +28,8 @@ abstract class MasterModuleConfigurationRequest with _$MasterModuleConfiguration
     @JsonKey(name: 'battery_capacity') int? batteryCapacity,
     @JsonKey(name: 'battery_type') String? batteryType,
     @JsonKey(name: 'device_ids') List<String>? deviceIds,
+    @JsonKey(name: 'specify_placement_location') String? specifyPlacementLocation,
+    @JsonKey(name: 'power_supply_available') String? powerSupplyAvailable,
   }) = _MasterModuleConfigurationRequest;
 
   factory MasterModuleConfigurationRequest.fromJson(Map<String, dynamic> json) =>

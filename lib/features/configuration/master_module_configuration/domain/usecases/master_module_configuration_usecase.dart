@@ -31,4 +31,7 @@ class MasterModuleConfigurationUseCase {
 
   Future<List<CoachEntity>> getAllCoachesList() =>
       repository.getAllCoachesList();
+
+  Future<void> increaseCoachModuleLimit(int coachId) =>
+      repository.increaseCoachModuleLimit(coachId);
 }

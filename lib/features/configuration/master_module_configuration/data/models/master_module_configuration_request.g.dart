@@ -33,6 +33,8 @@ _MasterModuleConfigurationRequest _$MasterModuleConfigurationRequestFromJson(
   deviceIds: (json['device_ids'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
+  specifyPlacementLocation: json['specify_placement_location'] as String?,
+  powerSupplyAvailable: json['power_supply_available'] as String?,
 );
 
 Map<String, dynamic> _$MasterModuleConfigurationRequestToJson(
@@ -60,4 +62,6 @@ Map<String, dynamic> _$MasterModuleConfigurationRequestToJson(
   'battery_capacity': instance.batteryCapacity,
   'battery_type': instance.batteryType,
   'device_ids': instance.deviceIds,
+  'specify_placement_location': instance.specifyPlacementLocation,
+  'power_supply_available': instance.powerSupplyAvailable,
 };

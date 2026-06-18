@@ -1,0 +1,55 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'fsds_status_response.dart';
+
+FsdsStatusResponse _$FsdsStatusResponseFromJson(Map<String, dynamic> json) =>
+    FsdsStatusResponse(
+      success: json['success'] as bool,
+      message: json['message'] as String,
+      data: (json['data'] as List<dynamic>?)
+          ?.map((e) => FsdsBypassData.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$FsdsStatusResponseToJson(FsdsStatusResponse instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'message': instance.message,
+      'data': instance.data?.map((e) => e.toJson()).toList(),
+    };
+
+FsdsBypassData _$FsdsBypassDataFromJson(Map<String, dynamic> json) =>
+    FsdsBypassData(
+      deviceId: json['device_id'] as String?,
+      deviceName: json['device_name'] as String?,
+      coachUniqueId: json['coach_unique_id'] as String?,
+      coachDisplayId: json['coach_display_id'] as String?,
+      coachNumber: json['coach_number'] as String?,
+      trainId: (json['train_id'] as num?)?.toInt(),
+      trainNo: json['train_no'] as String?,
+      trainName: json['train_name'] as String?,
+      location: json['location'] as String?,
+      bypassStatus: json['bypass_status'] as bool?,
+      alertStatus: json['alert_status'] as bool?,
+      timestamp: json['timestamp'] as String?,
+      remarks: json['remarks'] as String?,
+      sensorId: json['sensor_id'] as String?,
+    );
+
+Map<String, dynamic> _$FsdsBypassDataToJson(FsdsBypassData instance) =>
+    <String, dynamic>{
+      'device_id': instance.deviceId,
+      'device_name': instance.deviceName,
+      'coach_unique_id': instance.coachUniqueId,
+      'coach_display_id': instance.coachDisplayId,
+      'coach_number': instance.coachNumber,
+      'train_id': instance.trainId,
+      'train_no': instance.trainNo,
+      'train_name': instance.trainName,
+      'location': instance.location,
+      'bypass_status': instance.bypassStatus,
+      'alert_status': instance.alertStatus,
+      'timestamp': instance.timestamp,
+      'remarks': instance.remarks,
+      'sensor_id': instance.sensorId,
+    };

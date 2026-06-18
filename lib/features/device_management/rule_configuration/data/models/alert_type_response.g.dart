@@ -6,6 +6,14 @@ part of 'alert_type_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 AlertTypeResponse _$AlertTypeResponseFromJson(Map<String, dynamic> json) =>
     AlertTypeResponse(
       success: json['success'] as bool,
@@ -24,7 +32,7 @@ Map<String, dynamic> _$AlertTypeResponseToJson(AlertTypeResponse instance) =>
 
 AlertTypeItem _$AlertTypeItemFromJson(Map<String, dynamic> json) =>
     AlertTypeItem(
-      alertTypeId: (json['alert_type_id'] as num?)?.toInt(),
+      alertTypeId: _parseInt(json['alert_type_id']),
       alertTypeName: json['alert_type_name'] as String?,
     );
 

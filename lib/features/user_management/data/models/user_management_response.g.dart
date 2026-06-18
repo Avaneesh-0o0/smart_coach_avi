@@ -1,0 +1,61 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'user_management_response.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+UserManagementResponse _$UserManagementResponseFromJson(
+  Map<String, dynamic> json,
+) => UserManagementResponse(
+  success: json['success'] as bool,
+  message: json['message'] as String,
+  data: (json['data'] as List<dynamic>?)
+      ?.map((e) => UserItem.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
+
+Map<String, dynamic> _$UserManagementResponseToJson(
+  UserManagementResponse instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'message': instance.message,
+  'data': instance.data,
+};
+
+UserItem _$UserItemFromJson(Map<String, dynamic> json) => UserItem(
+  userId: (json['userId'] as num?)?.toInt(),
+  name: json['name'] as String?,
+  email: json['email'] as String?,
+  mobile: json['mobile'] as String?,
+  roleName: json['roleName'] as String?,
+  status: json['status'] as String?,
+  createdAt: json['createdAt'] as String?,
+  firstName: json['firstName'] as String?,
+  lastName: json['lastName'] as String?,
+  organization: json['organization'] as String?,
+  jobRole: json['jobRole'] as String?,
+  employeeId: json['employeeId'] as String?,
+  pan: json['pan'] as String?,
+  aadhaar: json['aadhaar'] as String?,
+  photo: json['photo'] as String?,
+);
+
+Map<String, dynamic> _$UserItemToJson(UserItem instance) => <String, dynamic>{
+  'userId': instance.userId,
+  'name': instance.name,
+  'email': instance.email,
+  'mobile': instance.mobile,
+  'roleName': instance.roleName,
+  'status': instance.status,
+  'createdAt': instance.createdAt,
+  'firstName': instance.firstName,
+  'lastName': instance.lastName,
+  'organization': instance.organization,
+  'jobRole': instance.jobRole,
+  'employeeId': instance.employeeId,
+  'pan': instance.pan,
+  'aadhaar': instance.aadhaar,
+  'photo': instance.photo,
+};

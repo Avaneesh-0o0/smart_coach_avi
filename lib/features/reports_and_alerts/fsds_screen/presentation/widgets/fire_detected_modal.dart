@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/fsds_screen/data/models/fsds_model.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/fsds_screen/fsds_history_screen.dart';
 
+class FsdsBypassModal extends StatelessWidget {
+  final FsdsAssetModel asset;
 
-class FireDetectedModal extends StatelessWidget {
-  final AcpCoachModel coach;
-
-  const FireDetectedModal({super.key, required this.coach});
+  const FsdsBypassModal({super.key, required this.asset});
 
   @override
   Widget build(BuildContext context) {
-    const redColor = Color(0xFFD32F2F);
+    final isAlert = asset.isAlertActive;
+    final isBypassOn = asset.isBypassOn;
+    const alertColor = Color(0xFFD32F2F);
     const pinkBg = Color(0xFFFFEBEB);
 
     return Container(
@@ -37,18 +38,18 @@ class FireDetectedModal extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: pinkBg,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
+            decoration: BoxDecoration(
+              color: isAlert ? pinkBg : const Color(0xFFE8F5E9),
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
             ),
             margin: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
               child: Text(
-                'Fire Detected',
+                isAlert ? 'FSDS Bypass Alert' : 'FSDS Bypass Normal',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: redColor,
+                  color: isAlert ? alertColor : const Color(0xFF2E7D32),
                 ),
               ),
             ),
@@ -65,13 +66,13 @@ class FireDetectedModal extends StatelessWidget {
                   width: 34,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: pinkBg,
+                    color: isAlert ? pinkBg : const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
-                      Icons.local_fire_department,
-                      color: Color(0xFFEF5350),
+                      isAlert ? Icons.warning_amber_rounded : Icons.check_circle_outline,
+                      color: isAlert ? const Color(0xFFEF5350) : const Color(0xFF2E7D32),
                       size: 20,
                     ),
                   ),
@@ -79,7 +80,7 @@ class FireDetectedModal extends StatelessWidget {
                 const SizedBox(width: 10),
 
                 Text(
-                  coach.coachNumber,
+                  asset.deviceName.isNotEmpty ? asset.deviceName : asset.coachDisplayId,
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -90,10 +91,9 @@ class FireDetectedModal extends StatelessWidget {
                 const Spacer(),
 
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: redColor.withValues(alpha: 0.12),
+                    color: (isBypassOn ? Colors.orange : Colors.green).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
@@ -102,18 +102,18 @@ class FireDetectedModal extends StatelessWidget {
                       Container(
                         width: 7,
                         height: 7,
-                        decoration: const BoxDecoration(
-                          color: redColor,
+                        decoration: BoxDecoration(
+                          color: isBypassOn ? Colors.orange : Colors.green,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        coach.status,
+                        asset.bypassStatusText,
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: redColor,
+                          color: isBypassOn ? Colors.orange : Colors.green,
                         ),
                       ),
                     ],
@@ -128,11 +128,11 @@ class FireDetectedModal extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
-                _buildDividerRow('Sensor ID', coach.sensorId),
-                _buildDividerRow('Last pull', coach.lastPull),
-                _buildDividerRow('Reset', coach.reset),
-                _buildDividerRow('Train Speed', coach.trainSpeed),
-                _buildDividerRow('Location', coach.location, isLast: true),
+                _buildDividerRow('Device ID', asset.deviceId),
+                _buildDividerRow('Train No', asset.trainNo),
+                _buildDividerRow('Coach', asset.coachDisplayId.isNotEmpty ? asset.coachDisplayId : asset.coachNumber),
+                _buildDividerRow('Location', asset.location),
+                _buildDividerRow('Alert Status', asset.alertStatusText, isLast: true),
               ],
             ),
           ),
@@ -173,7 +173,7 @@ class FireDetectedModal extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => FsdsHistoryScreen(coach: coach),
+                          builder: (_) => FsdsHistoryScreen(asset: asset),
                         ),
                       );
                     },

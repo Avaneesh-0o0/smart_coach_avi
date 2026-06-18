@@ -6,11 +6,19 @@ part of 'sensor_device_configuration_request.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 _SensorDeviceConfigurationRequest _$SensorDeviceConfigurationRequestFromJson(
   Map<String, dynamic> json,
 ) => _SensorDeviceConfigurationRequest(
-  coachId: (json['coach_id'] as num?)?.toInt(),
-  masterModuleId: (json['master_module_id'] as num?)?.toInt(),
+  coachId: _parseInt(json['coach_id']),
+  masterModuleId: _parseInt(json['master_module_id']),
   deviceId: json['device_id'] as String?,
   sensors: (json['sensors'] as List<dynamic>?)
       ?.map((e) => SensorRequest.fromJson(e as Map<String, dynamic>))
@@ -29,7 +37,7 @@ Map<String, dynamic> _$SensorDeviceConfigurationRequestToJson(
 _SensorRequest _$SensorRequestFromJson(Map<String, dynamic> json) =>
     _SensorRequest(
       sensorId: json['sensor_id'] as String?,
-      sensorMakeId: (json['sensor_make_id'] as num?)?.toInt(),
+      sensorMakeId: _parseInt(json['sensor_make_id']),
       installDate: json['install_date'] as String?,
       placement: json['placement'] as String?,
       location: json['location'] as String?,

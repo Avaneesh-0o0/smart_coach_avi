@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CoachConfigurationRequest {
 
-@JsonKey(name: 'entity_type') String? get entityType;@JsonKey(name: 'coach_unique_id') String? get coachUniqueId;@JsonKey(name: 'coach_display_id') String? get coachDisplayId;@JsonKey(name: 'manufacturing_year') String? get manufacturingYear;@JsonKey(name: 'make_of_coach') String? get makeOfCoach;@JsonKey(name: 'type_of_coach') String? get typeOfCoach;@JsonKey(name: 'no_of_master_module') int? get noOfMasterModule;@JsonKey(name: 'coach_status') String? get coachStatus;@JsonKey(name: 'position') int? get position;
+@JsonKey(name: 'entity_type') String? get entityType;@JsonKey(name: 'coach_unique_id') String? get coachUniqueId;@JsonKey(name: 'coach_display_id') String? get coachDisplayId;@JsonKey(name: 'manufacturing_year') String? get manufacturingYear;@JsonKey(name: 'make_of_coach_id') String? get makeOfCoach;@JsonKey(name: 'type_of_coach_id') String? get typeOfCoach;@JsonKey(name: 'no_of_master_module') int? get noOfMasterModule;@JsonKey(name: 'coach_status') String? get coachStatus;@JsonKey(name: 'position') int? get position;
 /// Create a copy of CoachConfigurationRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $CoachConfigurationRequestCopyWith<$Res>  {
   factory $CoachConfigurationRequestCopyWith(CoachConfigurationRequest value, $Res Function(CoachConfigurationRequest) _then) = _$CoachConfigurationRequestCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'entity_type') String? entityType,@JsonKey(name: 'coach_unique_id') String? coachUniqueId,@JsonKey(name: 'coach_display_id') String? coachDisplayId,@JsonKey(name: 'manufacturing_year') String? manufacturingYear,@JsonKey(name: 'make_of_coach') String? makeOfCoach,@JsonKey(name: 'type_of_coach') String? typeOfCoach,@JsonKey(name: 'no_of_master_module') int? noOfMasterModule,@JsonKey(name: 'coach_status') String? coachStatus,@JsonKey(name: 'position') int? position
+@JsonKey(name: 'entity_type') String? entityType,@JsonKey(name: 'coach_unique_id') String? coachUniqueId,@JsonKey(name: 'coach_display_id') String? coachDisplayId,@JsonKey(name: 'manufacturing_year') String? manufacturingYear,@JsonKey(name: 'make_of_coach_id') String? makeOfCoach,@JsonKey(name: 'type_of_coach_id') String? typeOfCoach,@JsonKey(name: 'no_of_master_module') int? noOfMasterModule,@JsonKey(name: 'coach_status') String? coachStatus,@JsonKey(name: 'position') int? position
 });
 
 
@@ -161,7 +161,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'entity_type')  String? entityType, @JsonKey(name: 'coach_unique_id')  String? coachUniqueId, @JsonKey(name: 'coach_display_id')  String? coachDisplayId, @JsonKey(name: 'manufacturing_year')  String? manufacturingYear, @JsonKey(name: 'make_of_coach')  String? makeOfCoach, @JsonKey(name: 'type_of_coach')  String? typeOfCoach, @JsonKey(name: 'no_of_master_module')  int? noOfMasterModule, @JsonKey(name: 'coach_status')  String? coachStatus, @JsonKey(name: 'position')  int? position)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'entity_type')  String? entityType, @JsonKey(name: 'coach_unique_id')  String? coachUniqueId, @JsonKey(name: 'coach_display_id')  String? coachDisplayId, @JsonKey(name: 'manufacturing_year')  String? manufacturingYear, @JsonKey(name: 'make_of_coach_id')  String? makeOfCoach, @JsonKey(name: 'type_of_coach_id')  String? typeOfCoach, @JsonKey(name: 'no_of_master_module')  int? noOfMasterModule, @JsonKey(name: 'coach_status')  String? coachStatus, @JsonKey(name: 'position')  int? position)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CoachConfigurationRequest() when $default != null:
 return $default(_that.entityType,_that.coachUniqueId,_that.coachDisplayId,_that.manufacturingYear,_that.makeOfCoach,_that.typeOfCoach,_that.noOfMasterModule,_that.coachStatus,_that.position);case _:
@@ -182,7 +182,7 @@ return $default(_that.entityType,_that.coachUniqueId,_that.coachDisplayId,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'entity_type')  String? entityType, @JsonKey(name: 'coach_unique_id')  String? coachUniqueId, @JsonKey(name: 'coach_display_id')  String? coachDisplayId, @JsonKey(name: 'manufacturing_year')  String? manufacturingYear, @JsonKey(name: 'make_of_coach')  String? makeOfCoach, @JsonKey(name: 'type_of_coach')  String? typeOfCoach, @JsonKey(name: 'no_of_master_module')  int? noOfMasterModule, @JsonKey(name: 'coach_status')  String? coachStatus, @JsonKey(name: 'position')  int? position)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'entity_type')  String? entityType, @JsonKey(name: 'coach_unique_id')  String? coachUniqueId, @JsonKey(name: 'coach_display_id')  String? coachDisplayId, @JsonKey(name: 'manufacturing_year')  String? manufacturingYear, @JsonKey(name: 'make_of_coach_id')  String? makeOfCoach, @JsonKey(name: 'type_of_coach_id')  String? typeOfCoach, @JsonKey(name: 'no_of_master_module')  int? noOfMasterModule, @JsonKey(name: 'coach_status')  String? coachStatus, @JsonKey(name: 'position')  int? position)  $default,) {final _that = this;
 switch (_that) {
 case _CoachConfigurationRequest():
 return $default(_that.entityType,_that.coachUniqueId,_that.coachDisplayId,_that.manufacturingYear,_that.makeOfCoach,_that.typeOfCoach,_that.noOfMasterModule,_that.coachStatus,_that.position);case _:
@@ -202,7 +202,7 @@ return $default(_that.entityType,_that.coachUniqueId,_that.coachDisplayId,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'entity_type')  String? entityType, @JsonKey(name: 'coach_unique_id')  String? coachUniqueId, @JsonKey(name: 'coach_display_id')  String? coachDisplayId, @JsonKey(name: 'manufacturing_year')  String? manufacturingYear, @JsonKey(name: 'make_of_coach')  String? makeOfCoach, @JsonKey(name: 'type_of_coach')  String? typeOfCoach, @JsonKey(name: 'no_of_master_module')  int? noOfMasterModule, @JsonKey(name: 'coach_status')  String? coachStatus, @JsonKey(name: 'position')  int? position)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'entity_type')  String? entityType, @JsonKey(name: 'coach_unique_id')  String? coachUniqueId, @JsonKey(name: 'coach_display_id')  String? coachDisplayId, @JsonKey(name: 'manufacturing_year')  String? manufacturingYear, @JsonKey(name: 'make_of_coach_id')  String? makeOfCoach, @JsonKey(name: 'type_of_coach_id')  String? typeOfCoach, @JsonKey(name: 'no_of_master_module')  int? noOfMasterModule, @JsonKey(name: 'coach_status')  String? coachStatus, @JsonKey(name: 'position')  int? position)?  $default,) {final _that = this;
 switch (_that) {
 case _CoachConfigurationRequest() when $default != null:
 return $default(_that.entityType,_that.coachUniqueId,_that.coachDisplayId,_that.manufacturingYear,_that.makeOfCoach,_that.typeOfCoach,_that.noOfMasterModule,_that.coachStatus,_that.position);case _:
@@ -217,15 +217,15 @@ return $default(_that.entityType,_that.coachUniqueId,_that.coachDisplayId,_that.
 @JsonSerializable()
 
 class _CoachConfigurationRequest implements CoachConfigurationRequest {
-  const _CoachConfigurationRequest({@JsonKey(name: 'entity_type') this.entityType, @JsonKey(name: 'coach_unique_id') this.coachUniqueId, @JsonKey(name: 'coach_display_id') this.coachDisplayId, @JsonKey(name: 'manufacturing_year') this.manufacturingYear, @JsonKey(name: 'make_of_coach') this.makeOfCoach, @JsonKey(name: 'type_of_coach') this.typeOfCoach, @JsonKey(name: 'no_of_master_module') this.noOfMasterModule, @JsonKey(name: 'coach_status') this.coachStatus, @JsonKey(name: 'position') this.position});
+  const _CoachConfigurationRequest({@JsonKey(name: 'entity_type') this.entityType, @JsonKey(name: 'coach_unique_id') this.coachUniqueId, @JsonKey(name: 'coach_display_id') this.coachDisplayId, @JsonKey(name: 'manufacturing_year') this.manufacturingYear, @JsonKey(name: 'make_of_coach_id') this.makeOfCoach, @JsonKey(name: 'type_of_coach_id') this.typeOfCoach, @JsonKey(name: 'no_of_master_module') this.noOfMasterModule, @JsonKey(name: 'coach_status') this.coachStatus, @JsonKey(name: 'position') this.position});
   factory _CoachConfigurationRequest.fromJson(Map<String, dynamic> json) => _$CoachConfigurationRequestFromJson(json);
 
 @override@JsonKey(name: 'entity_type') final  String? entityType;
 @override@JsonKey(name: 'coach_unique_id') final  String? coachUniqueId;
 @override@JsonKey(name: 'coach_display_id') final  String? coachDisplayId;
 @override@JsonKey(name: 'manufacturing_year') final  String? manufacturingYear;
-@override@JsonKey(name: 'make_of_coach') final  String? makeOfCoach;
-@override@JsonKey(name: 'type_of_coach') final  String? typeOfCoach;
+@override@JsonKey(name: 'make_of_coach_id') final  String? makeOfCoach;
+@override@JsonKey(name: 'type_of_coach_id') final  String? typeOfCoach;
 @override@JsonKey(name: 'no_of_master_module') final  int? noOfMasterModule;
 @override@JsonKey(name: 'coach_status') final  String? coachStatus;
 @override@JsonKey(name: 'position') final  int? position;
@@ -263,7 +263,7 @@ abstract mixin class _$CoachConfigurationRequestCopyWith<$Res> implements $Coach
   factory _$CoachConfigurationRequestCopyWith(_CoachConfigurationRequest value, $Res Function(_CoachConfigurationRequest) _then) = __$CoachConfigurationRequestCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'entity_type') String? entityType,@JsonKey(name: 'coach_unique_id') String? coachUniqueId,@JsonKey(name: 'coach_display_id') String? coachDisplayId,@JsonKey(name: 'manufacturing_year') String? manufacturingYear,@JsonKey(name: 'make_of_coach') String? makeOfCoach,@JsonKey(name: 'type_of_coach') String? typeOfCoach,@JsonKey(name: 'no_of_master_module') int? noOfMasterModule,@JsonKey(name: 'coach_status') String? coachStatus,@JsonKey(name: 'position') int? position
+@JsonKey(name: 'entity_type') String? entityType,@JsonKey(name: 'coach_unique_id') String? coachUniqueId,@JsonKey(name: 'coach_display_id') String? coachDisplayId,@JsonKey(name: 'manufacturing_year') String? manufacturingYear,@JsonKey(name: 'make_of_coach_id') String? makeOfCoach,@JsonKey(name: 'type_of_coach_id') String? typeOfCoach,@JsonKey(name: 'no_of_master_module') int? noOfMasterModule,@JsonKey(name: 'coach_status') String? coachStatus,@JsonKey(name: 'position') int? position
 });
 
 

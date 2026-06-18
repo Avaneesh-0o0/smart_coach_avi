@@ -3,6 +3,8 @@ class HotAxleCoachModel {
   final String coachNumber;
   final String coachType;
   final String owningRly;
+  final String trainNo;
+  final String trainName;
   final String timestamp;
   final double a11Temp;
   final double a12Temp;
@@ -20,6 +22,8 @@ class HotAxleCoachModel {
     required this.coachNumber,
     required this.coachType,
     required this.owningRly,
+    this.trainNo = '',
+    this.trainName = '',
     required this.timestamp,
     required this.a11Temp,
     required this.a12Temp,
@@ -66,6 +70,8 @@ class HotAxleCoachModel {
       coachNumber: json['coach_number'] ?? '',
       coachType: json['coach_type'] ?? '',
       owningRly: json['owning_rly'] ?? '',
+      trainNo: json['train_no'] ?? '',
+      trainName: json['train_name'] ?? '',
       timestamp: json['timestamp'] ?? '',
       a11Temp: (json['a11_temp'] ?? 0.0).toDouble(),
       a12Temp: (json['a12_temp'] ?? 0.0).toDouble(),

@@ -237,17 +237,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       );
                                     }),
                                     
-                                    // Pneumatic Alerts
+                                    // Pneumatic Alerts (Brake Binding & DV/BC Defect)
                                     ...state.recentPneumaticAlerts.map((alert) {
                                       final fault = alert.brakeFault?.toString().toLowerCase() ?? "";
                                       final statusText = alert.brakeStatus?.toString().toUpperCase() ?? "N/A";
                                       final isCritical = (fault.isNotEmpty && fault != "null" && fault != "none");
                                       
+                                      // Determine alert label
+                                      String alertLabel;
+                                      if (fault.contains('brake binding') || statusText.contains('BRAKE BINDING')) {
+                                        alertLabel = 'Brake Binding';
+                                      } else if (fault.contains('dv/bc') || fault.contains('bc defect') || statusText.contains('DV/BC')) {
+                                        alertLabel = 'DV/BC Defect';
+                                      } else {
+                                        alertLabel = 'Brake System';
+                                      }
+                                      
                                       return Padding(
                                         padding: EdgeInsets.only(top: 1.h),
                                         child: _buildAlertCard(
                                           context,
-                                          title: 'Brake - Train: ${alert.trainNo ?? "N/A"}',
+                                          title: '$alertLabel - Train: ${alert.trainNo ?? "N/A"}',
                                           subtitle: 'Coach: ${alert.coachNo ?? "N/A"} (Device: ${alert.deviceId ?? "N/A"})',
                                           status: statusText,
                                           isCritical: isCritical,

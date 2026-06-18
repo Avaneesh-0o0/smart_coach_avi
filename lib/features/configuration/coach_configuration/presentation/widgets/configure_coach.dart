@@ -69,11 +69,15 @@ class _ConfigureCoachState extends State<ConfigureCoach> {
     if (item == null) return;
     coachUniqueIdController.text = item.coachUniqueId?.toString() ?? '';
     coachDisplayIdController.text = item.coachDisplayId?.toString() ?? '';
-    manufacturingYearController.text = item.manufacturingYear.toString();
+    manufacturingYearController.text = item.manufacturingYear?.toString() ?? '';
     selectedEntityType = entityTypeList.contains(item.entityType) ? item.entityType : null;
-    selectedMakeOfId = item.makeOfCoachId;
-    selectedTypeOfId = item.typeOfCoachId;
-    selectedMasterModule = masterModuleList.contains(item.noOfMasterModule) ? item.noOfMasterModule : null;
+    final rawMakeId = item.makeOfCoachId;
+    selectedMakeOfId = rawMakeId is int ? rawMakeId : int.tryParse(rawMakeId?.toString() ?? '');
+    final rawTypeId = item.typeOfCoachId;
+    selectedTypeOfId = rawTypeId is int ? rawTypeId : int.tryParse(rawTypeId?.toString() ?? '');
+    final rawModules = item.noOfMasterModule;
+    final parsedModules = rawModules is int ? rawModules : int.tryParse(rawModules?.toString() ?? '');
+    selectedMasterModule = masterModuleList.contains(parsedModules) ? parsedModules : null;
     selectedCoachStatus = item.coachStatus;
     setState(() {});
   }
@@ -284,10 +288,12 @@ class _ConfigureCoachState extends State<ConfigureCoach> {
       coachStatus: selectedCoachStatus,
     );
 
+    final rawId = widget.selectedCoachItem?.coachId;
+    final coachId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
     _coachConfigurationBloc.add(
       CreateEditCoachConfiguration(
         request,
-        coachId: widget.selectedCoachItem?.coachId,
+        coachId: coachId,
       ),
     );
   }

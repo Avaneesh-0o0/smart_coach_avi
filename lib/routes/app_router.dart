@@ -110,7 +110,7 @@ class AppRouter {
         builder: (context, state) {
           return BlocProvider(
             create: (_) => GetIt.I<UserManagementBloc>(),
-            child: UserManagementScreen(),
+            child: UserRegistrationManagementScreen(),
           );
         },
       ),

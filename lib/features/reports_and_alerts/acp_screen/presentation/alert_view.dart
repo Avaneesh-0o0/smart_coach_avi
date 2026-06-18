@@ -104,8 +104,8 @@ class _AcpAlertsViewState extends State<AcpAlertsView> {
     // Current mapping (emergency is the default for metrics logs)
     final isEmergency = log.acpStatus == '1';
     
-    // Parse coach number: [Coach_Code] [Coach_Number] ACP [Device_ID]
-    String coachName = log.commCoachNo ?? 'Unknown';
+    // Parse coach number: rawAssetName format "TYPE NUMBER ACP DEVICE" → "B1"
+    String coachName = log.techCoachNo ?? 'Unknown';
     if (log.rawAssetName != null && log.rawAssetName!.isNotEmpty) {
       final parts = log.rawAssetName!.split(' ');
       if (parts.length >= 2) {
@@ -168,10 +168,10 @@ class _AcpAlertsViewState extends State<AcpAlertsView> {
                   '$coachName  |  $timeStr',
                   style: GoogleFonts.poppins(fontSize: 11, color: isEmergency ? const Color(0xFFE53935) : const Color(0xFF388E3C)),
                 ),
-                // Text(
-                //   'Location: ${log.locName ?? 'N/A'}',
-                //   style: GoogleFonts.poppins(fontSize: 11, color: isEmergency ? const Color(0xFFE53935) : const Color(0xFF388E3C)),
-                // ),
+                Text(
+                  'Location: ${log.trainLocation ?? 'N/A'}',
+                  style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                ),
               ],
             ),
           ),

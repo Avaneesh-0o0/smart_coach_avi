@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_coach_new/core/utils/app_dimensions.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import '../../data/models/fsds_model.dart';
-
 import 'fsds_modal.dart';
 
 class FsdsCoachCard extends StatelessWidget {
@@ -14,7 +13,8 @@ class FsdsCoachCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isAlert = coach.isSmokeDetected;
+    final bool isBypassOn = coach.isBypassOn;
+    final bool isAlert = coach.isAlertActive;
 
     return InkWell(
       onTap: () {
@@ -42,31 +42,69 @@ class FsdsCoachCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              coach.assetName,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: ColorConstants.primary,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    coach.deviceName.isNotEmpty ? coach.deviceName : coach.coachDisplayId,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: ColorConstants.primary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isBypassOn ? Colors.orange : Colors.green,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
             Text(
-              'Loc: ${coach.locName}',
+              'Device: ${coach.deviceId}',
               style: GoogleFonts.poppins(
                 fontSize: 9,
                 color: ColorConstants.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Loc: ${coach.location}',
+              style: GoogleFonts.poppins(
+                fontSize: 9,
+                color: ColorConstants.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Train: ${coach.trainNo} - ${coach.trainName}',
+              style: GoogleFonts.poppins(
+                fontSize: 9,
+                color: ColorConstants.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildMetric("Smoke", "${coach.smokeLevel}", isAlert ? Colors.red : Colors.green),
-                _buildMetric("Light", "${coach.lightValue}", Colors.blue),
+                _buildMetric("Bypass", coach.bypassStatusText, isBypassOn ? Colors.orange : Colors.green),
+                _buildMetric("Alert", coach.alertStatusText, isAlert ? Colors.red : Colors.green),
               ],
             ),
           ],

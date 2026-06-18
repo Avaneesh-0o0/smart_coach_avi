@@ -9,6 +9,7 @@ import 'package:smart_coach_new/core/widgets/chip_view.dart';
 import 'package:smart_coach_new/core/widgets/custom_button.dart';
 import 'package:smart_coach_new/core/widgets/custom_drop_down.dart';
 import 'package:smart_coach_new/core/widgets/custom_multi_select_field.dart';
+import 'package:smart_coach_new/core/widgets/field_label_text_view.dart';
 import 'package:smart_coach_new/core/widgets/custom_switch.dart';
 import 'package:smart_coach_new/core/widgets/custom_text_field.dart';
 import 'package:smart_coach_new/core/widgets/positive_integer_input_formatter.dart';
@@ -55,18 +56,32 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
       TextEditingController();
 
   int? selectedCoachId;
+  CoachEntity? _selectedCoach;
   String? selectedLocation;
   String? selectedPlacementType;
+  final TextEditingController placementOtherController = TextEditingController();
   String? selectedProviderPrimary;
   String? selectedProviderSecondary;
   String? selectedSimStatus;
   String? selectedBatteryType;
 
+  String? selectedPowerSupply;
   bool isDualProfileSupported = false;
   bool isLoraEnabled = false;
   bool isESimEnabled = false;
 
   List<String> selectedApplicableDevices = [];
+
+  List<DeviceEntity> _getFilteredDevices(List<DeviceEntity> allDevices) {
+    final coachUniqueId = _selectedCoach?.coachUniqueId;
+    if (coachUniqueId != null) {
+      final filtered = allDevices
+          .where((d) => d.coachUniqueId == coachUniqueId)
+          .toList();
+      if (filtered.isNotEmpty) return filtered;
+    }
+    return allDevices;
+  }
 
   @override
   void dispose() {
@@ -81,6 +96,7 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
     batteryRechargeDateController.dispose();
     batteryReplacementDateController.dispose();
     batteryCapacityController.dispose();
+    placementOtherController.dispose();
     super.dispose();
   }
 
@@ -92,7 +108,8 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
       lastDate: DateTime(2100),
     );
     if (picked != null) {
-      controller.text = picked.toString();
+      controller.text = Utils.convertToIsoDate(
+          '${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}');
       setState(() {});
     }
   }
@@ -109,6 +126,7 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
     final item = widget.selectedMasterModuleItem;
     if (item == null) return;
     selectedCoachId = item.coach?.coachId;
+    _selectedCoach = item.coach;
     moduleIdController.text = item.moduleUniqueId ?? '';
     makeModelController.text = item.makeModel ?? '';
     firmwareVersionController.text = item.firmwareVersion ?? '';
@@ -116,6 +134,7 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
     installationDateController.text = item.installationDate ?? '';
     selectedLocation = item.location;
     selectedPlacementType = item.placementType;
+    placementOtherController.text = item.specifyPlacementLocation ?? '';
     simNumberController.text = item.simNo ?? '';
     isESimEnabled = item.esimEnabled ?? false;
     isDualProfileSupported = item.dualProfileSupported ?? false;
@@ -125,11 +144,12 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
     rechargeDateController.text = item.rechargeDate ?? '';
     selectedSimStatus = item.simStatus;
     selectedApplicableDevices =
-        (item.devices ?? []).map((d) => d.deviceId!).toList();
+        (item.devices ?? []).map((d) => d.deviceId ?? '').where((id) => id.isNotEmpty).toList();
     batteryReplacementDateController.text = item.batteryReplacementDate ?? '';
     batteryRechargeDateController.text = item.batteryRechargeDate ?? '';
     batteryCapacityController.text = item.batteryCapacity?.toString() ?? '';
     selectedBatteryType = item.batteryType;
+    selectedPowerSupply = item.powerSupplyAvailable;
     isLoraEnabled = item.loraEnabled ?? false;
     setState(() {});
   }
@@ -195,20 +215,7 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
                   color: Colors.grey.shade300,
                   margin: EdgeInsets.symmetric(vertical: 1.5.h),
                 ),
-                CustomDropDown<CoachEntity>(
-                  label: 'Coach ID',
-                  hintText: 'Select coach ID',
-                  value: selectedCoachId,
-                  items: state.coachList,
-                  getValue: (e) => e.coachId,
-                  displayText: (e) => e.coachUniqueId ?? '',
-                  isRequired: true,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedCoachId = value;
-                    });
-                  },
-                ),
+                _buildCoachSearchField(state.coachList),
                 SizedBox(height: 2.h),
                 CustomTextField(
                   controller: moduleIdController,
@@ -268,7 +275,10 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
                   hintText: 'Select Location',
                   value: selectedLocation,
                   isRequired: true,
-                  items: Constants.locationList,
+                  items: selectedLocation != null &&
+                          !Constants.locationList.contains(selectedLocation)
+                      ? [selectedLocation!, ...Constants.locationList]
+                      : Constants.locationList,
                   onChanged: (value) {
                     setState(() {
                       selectedLocation = value;
@@ -281,13 +291,28 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
                   hintText: 'Select placement type',
                   value: selectedPlacementType,
                   isRequired: true,
-                  items: Constants.placementTypeList,
+                  items: selectedPlacementType != null &&
+                          !Constants.placementTypeList.contains(selectedPlacementType)
+                      ? [selectedPlacementType!, ...Constants.placementTypeList]
+                      : Constants.placementTypeList,
                   onChanged: (value) {
                     setState(() {
                       selectedPlacementType = value;
+                      if (value != 'Other') {
+                        placementOtherController.clear();
+                      }
                     });
                   },
                 ),
+                if (selectedPlacementType == 'Other') ...[
+                  SizedBox(height: 2.h),
+                  CustomTextField(
+                    controller: placementOtherController,
+                    labelText: 'Specify Placement Location',
+                    hintText: 'Enter placement location',
+                    isRequired: true,
+                  ),
+                ],
                 SizedBox(height: 2.5.h),
                 Text(
                   'SIM Details',
@@ -431,27 +456,33 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
                   label: 'Device(s)',
                   title: 'Select Devices',
                   hintText: 'Select device',
-                  items: state.deviceList,
+                  items: _getFilteredDevices(state.deviceList),
                   selectedItems: selectedApplicableDevices,
                   isRequired: true,
                   onSelectionDone: (newSelected) {
                     selectedApplicableDevices = newSelected;
                     setState(() {});
                   },
-                  itemIdBuilder: (d) => d.deviceId ?? '',
+                  itemIdBuilder: (d) => d.deviceId ?? d.deviceUniqueId ?? '',
                   itemLabelBuilder: (d) => (d.fullName != null && d.fullName!.isNotEmpty)
                       ? d.fullName!
                       : (d.shortName != null && d.shortName!.isNotEmpty)
                           ? d.shortName!
-                          : d.deviceUniqueId ?? '---',
+                          : d.deviceUniqueId ?? d.deviceId ?? '',
                 ),
                 SizedBox(height: 1.h),
                 _buildChips(
-                    state.deviceList
+                    _getFilteredDevices(state.deviceList)
                         .where((device) =>
                             selectedApplicableDevices.contains(device.deviceId))
-                        .map((device) =>
-                            ChipModel(device.deviceId, device.fullName))
+                        .map((device) => ChipModel(
+                              device.deviceId,
+                              (device.fullName != null && device.fullName!.isNotEmpty)
+                                  ? device.fullName!
+                                  : (device.shortName != null && device.shortName!.isNotEmpty)
+                                      ? device.shortName!
+                                      : device.deviceUniqueId ?? device.deviceId ?? '',
+                            ))
                         .toList(), (ChipModel item) {
                   selectedApplicableDevices.removeWhere((ee) {
                     return ee == item.id;
@@ -495,11 +526,22 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
                   ),
                 ),
                 SizedBox(height: 1.h),
+                CustomDropDown<String>(
+                  label: 'Power Supply Available',
+                  hintText: 'Select',
+                  value: selectedPowerSupply,
+                  items: const ['Yes', 'No'],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedPowerSupply = value;
+                    });
+                  },
+                ),
+                SizedBox(height: 1.h),
                 CustomTextField(
                   controller: batteryCapacityController,
                   labelText: 'Battery Capacity',
                   hintText: 'Enter Battery Capacity',
-                  isRequired: true,
                   textInputType: TextInputType.number,
                   inputFormatters: [PositiveIntegerInputFormatter()],
                 ),
@@ -509,7 +551,6 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
                   hintText: 'Select Battery Type',
                   value: selectedBatteryType,
                   items: Constants.batteryTypeList,
-                  isRequired: true,
                   onChanged: (value) {
                     setState(() {
                       selectedBatteryType = value;
@@ -567,7 +608,7 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
       moduleUniqueId: moduleIdController.text.trim(),
       makeModel: makeModelController.text.trim(),
       firmwareVersion: firmwareVersionController.text.trim(),
-      serielNumber: serialNumberController.text.trim(),
+      serialNumber: serialNumberController.text.trim(),
       installationDate: installationDateController.text.trim(),
       location: selectedLocation,
       placementType: selectedPlacementType,
@@ -581,25 +622,42 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
       dualProfileSupported: isDualProfileSupported,
       loraEnabled: isLoraEnabled,
       esimEnabled: isESimEnabled,
-      batteryCapacity: int.tryParse(batteryCapacityController.text.trim()) ?? 0,
+      batteryCapacity: batteryCapacityController.text.trim().isEmpty
+          ? null
+          : int.tryParse(batteryCapacityController.text.trim()),
       batteryType: selectedBatteryType,
+      powerSupplyAvailable: selectedPowerSupply,
       batteryRechargeDate: batteryRechargeDateController.text.trim(),
       deviceIds: selectedApplicableDevices,
+      specifyPlacementLocation: selectedPlacementType == 'Other'
+          ? placementOtherController.text.trim()
+          : null,
     );
 
     _masterModuleConfigurationBloc.add(
       CreateEditMasterModuleConfiguration(
         request,
         moduleId: widget.selectedMasterModuleItem?.moduleId,
+        coachId: selectedCoachId,
       ),
     );
   }
 
   bool _doValidate() {
     if (selectedCoachId == null) {
-      ToastMessageUtils.showMessage(context, 'Please select Coach ID');
+      ToastMessageUtils.showMessage(context, 'Please select Coach');
       return false;
-    } else if (moduleIdController.text.trim().isEmpty) {
+    }
+    if (_selectedCoach != null) {
+      final limit = _selectedCoach!.noOfMasterModule;
+      if (limit == null || limit == 0) {
+        ToastMessageUtils.showMessage(
+          context,
+          'Module limit is 0 for this coach. The app will automatically update the coach limit to 99 and retry.',
+        );
+      }
+    }
+    if (moduleIdController.text.trim().isEmpty) {
       ToastMessageUtils.showMessage(context, 'Please enter Master Module ID');
       return false;
     } else if (makeModelController.text.trim().isEmpty) {
@@ -616,6 +674,9 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
       return false;
     } else if (selectedPlacementType == null) {
       ToastMessageUtils.showMessage(context, 'Please select Placement Type');
+      return false;
+    } else if (selectedPlacementType == 'Other' && placementOtherController.text.trim().isEmpty) {
+      ToastMessageUtils.showMessage(context, 'Please specify placement location');
       return false;
     } else if (simNumberController.text.trim().isEmpty) {
       ToastMessageUtils.showMessage(context, 'Please enter SIM Number');
@@ -634,14 +695,8 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
     } else if (rechargeDateController.text.trim().isEmpty) {
       ToastMessageUtils.showMessage(context, 'Please select Recharge Date');
       return false;
-    } else if (batteryCapacityController.text.trim().isEmpty) {
-      ToastMessageUtils.showMessage(context, 'Please enter battery capacity');
-      return false;
     } else if (selectedSimStatus == null) {
       ToastMessageUtils.showMessage(context, 'Please select SIM Status');
-      return false;
-    } else if (selectedBatteryType == null) {
-      ToastMessageUtils.showMessage(context, 'Please select battery type');
       return false;
     } else if (selectedApplicableDevices.isEmpty) {
       ToastMessageUtils.showMessage(
@@ -675,5 +730,136 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
       return '';
     }
     return Utils.formatReadableDate(activationDateController.text.trim()) ?? '';
+  }
+
+  Widget _buildCoachSearchField(List<CoachEntity> coachList) {
+    final selectedCoach = coachList.cast<CoachEntity?>().firstWhere(
+      (c) => c?.coachId == selectedCoachId,
+      orElse: () => null,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FieldLabelTextView(labelText: 'Coach Display', isRequired: true),
+        SizedBox(height: 1.h),
+        GestureDetector(
+          onTap: () => _showCoachSearchDialog(coachList),
+          child: AbsorbPointer(
+            child: Container(
+              height: 6.2.h,
+              padding: EdgeInsets.symmetric(horizontal: 2.w),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300, width: 0.4.w),
+                borderRadius: BorderRadius.circular(2.5.w),
+                color: Colors.white,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      selectedCoach?.coachUniqueId ?? 'Select coach ID',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: selectedCoach != null ? Colors.black : Colors.grey,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Icon(Icons.search, color: Colors.grey, size: 5.w),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCoachSearchDialog(List<CoachEntity> coachList) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(2.h)),
+      ),
+      builder: (ctx) {
+        final searchController = TextEditingController();
+        List<CoachEntity> filteredList = List.from(coachList);
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            top: 2.h,
+            left: 4.w,
+            right: 4.w,
+          ),
+          child: StatefulBuilder(builder: (context, setModalState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Select Coach',
+                    style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold)),
+                SizedBox(height: 1.h),
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search coach...',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(2.5.w),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.5.h),
+                  ),
+                  onChanged: (query) {
+                    setModalState(() {
+                      if (query.isEmpty) {
+                        filteredList = List.from(coachList);
+                      } else {
+                        filteredList = coachList
+                            .where((c) => (c.coachUniqueId ?? '')
+                                .toLowerCase()
+                                .contains(query.toLowerCase()))
+                            .toList();
+                      }
+                    });
+                  },
+                ),
+                SizedBox(height: 1.h),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(ctx).size.height * 0.4,
+                  ),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: filteredList.map((coach) {
+                      final isSelected = coach.coachId == selectedCoachId;
+                      return ListTile(
+                        title: Text(coach.coachUniqueId ?? ''),
+                        trailing: isSelected
+                            ? Icon(Icons.check, color: Colors.blue)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            selectedCoachId = coach.coachId;
+                            _selectedCoach = coach;
+                          });
+                          Navigator.pop(ctx);
+                          if (coach.noOfMasterModule == null || coach.noOfMasterModule == 0) {
+                            ToastMessageUtils.showMessage(
+                              context,
+                              'Warning: This coach has a module limit of 0. Update the coach configuration to increase the limit.',
+                            );
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+              ],
+            );
+          }),
+        );
+      },
+    );
   }
 }

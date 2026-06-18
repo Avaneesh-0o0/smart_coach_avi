@@ -6,6 +6,14 @@ part of 'role_list_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 RoleListResponse _$RoleListResponseFromJson(Map<String, dynamic> json) =>
     RoleListResponse(
       success: json['success'] as bool,
@@ -38,9 +46,9 @@ Map<String, dynamic> _$RoleListDataToJson(RoleListData instance) =>
     };
 
 RoleItem _$RoleItemFromJson(Map<String, dynamic> json) => RoleItem(
-  roleId: (json['role_id'] as num?)?.toInt(),
+  roleId: _parseInt(json['role_id']),
   name: json['name'] as String?,
-  isActive: (json['is_active'] as num?)?.toInt(),
+  isActive: _parseInt(json['is_active']),
   scope: json['scope'] as String?,
 );
 

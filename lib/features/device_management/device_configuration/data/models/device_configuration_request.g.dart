@@ -6,6 +6,22 @@ part of 'device_configuration_request.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
+double? _parseDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
+}
+
 _DeviceConfigurationRequest _$DeviceConfigurationRequestFromJson(
   Map<String, dynamic> json,
 ) => _DeviceConfigurationRequest(
@@ -14,10 +30,10 @@ _DeviceConfigurationRequest _$DeviceConfigurationRequestFromJson(
   timeUnit: json['time_unit'] as String?,
   description: json['description'] as String?,
   isActive: json['is_active'] as bool?,
-  frequency: (json['frequency_secs'] as num?)?.toDouble(),
+  frequency: _parseDouble(json['frequency_secs']),
   fullName: json['full_name'] as String?,
   shortName: json['short_name'] as String?,
-  numberOfSensors: (json['no_of_sensors'] as num?)?.toInt(),
+  numberOfSensors: _parseInt(json['no_of_sensors']),
 );
 
 Map<String, dynamic> _$DeviceConfigurationRequestToJson(

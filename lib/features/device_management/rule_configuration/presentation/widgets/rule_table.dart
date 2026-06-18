@@ -209,7 +209,7 @@ class TableDataSource extends DataGridSource {
         DataGridCell<String>(columnName: 'Devices', value: '${(sensorItem.deviceNames).length.toString()} devices'),
         DataGridCell<String>(columnName: 'Sensor Types', value: '${(sensorItem.sensorTypeNames).length.toString()} sensors'),
         DataGridCell<String>(columnName: 'Evaluation Freq', value: '${sensorItem.evaluationFrequency?.toString() ?? emptyText} ${sensorItem.evaluationUnit ?? emptyText}'),
-        DataGridCell<String>(columnName: 'Status', value: DeviceStatusHelper.fromBool(sensorItem.isActive).name),
+        DataGridCell<String>(columnName: 'Status', value: DeviceStatusHelper.fromId(sensorItem.isActive).name),
         DataGridCell<String>(columnName: 'Created', value: sensorItem.createdAt ?? emptyText),
         DataGridCell<String>(columnName: 'Created By', value: sensorItem.createdBy?.toString() ?? emptyText),
         DataGridCell<String>(columnName: 'Updated', value: sensorItem.updatedAt ?? emptyText),

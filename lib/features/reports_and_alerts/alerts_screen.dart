@@ -80,15 +80,26 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     SizedBox(height: 3.h),
                   ],
                   if (pneumaticAlerts.isNotEmpty) ...[
-                    _buildSectionHeader('Brake Binding Faults'),
+                    _buildSectionHeader('Brake Binding & DV/BC Defect'),
                     ...pneumaticAlerts.map((alert) {
                       final fault = alert.brakeFault?.toString().toLowerCase() ?? "";
+                      final statusText = alert.brakeStatus?.toString().toUpperCase() ?? "N/A";
                       final isCritical = (fault.isNotEmpty && fault != "null" && fault != "none");
+                      
+                      String alertLabel;
+                      if (fault.contains('brake binding') || statusText.contains('BRAKE BINDING')) {
+                        alertLabel = 'Brake Binding';
+                      } else if (fault.contains('dv/bc') || fault.contains('bc defect') || statusText.contains('DV/BC')) {
+                        alertLabel = 'DV/BC Defect';
+                      } else {
+                        alertLabel = 'Brake System';
+                      }
+                      
                       return _buildAlertCard(
                         context,
-                        title: 'Train: ${alert.trainNo ?? "N/A"}',
+                        title: '$alertLabel - Train: ${alert.trainNo ?? "N/A"}',
                         subtitle: 'Coach: ${alert.coachNo ?? "N/A"} (Device: ${alert.deviceId ?? "N/A"})',
-                        status: alert.brakeStatus?.toString().toUpperCase() ?? "N/A",
+                        status: statusText,
                         isCritical: isCritical,
                         icon: Icons.settings_input_component_outlined,
                         onTap: () => context.push(AppRouter.breakBinding),

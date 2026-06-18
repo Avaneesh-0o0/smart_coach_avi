@@ -77,6 +77,35 @@ class _MasterModuleListState extends State<MasterModuleList> {
                 }
               },
               builder: (context, state) {
+                if (state.errorMessage != null && state.masterModuleList.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                        SizedBox(height: 1.h),
+                        Text(
+                          state.errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.red[700], fontSize: 12.sp),
+                        ),
+                        SizedBox(height: 2.h),
+                        ElevatedButton.icon(
+                          onPressed: () => _deviceConfigurationBloc
+                              .add(LoadMasterModuleConfigurationList()),
+                          icon: Icon(Icons.refresh, size: 16),
+                          label: Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                if (state.masterModuleList.isEmpty && !state.isLoading) {
+                  return Center(
+                    child: Text('No master modules found',
+                        style: TextStyle(color: Colors.grey, fontSize: 12.sp)),
+                  );
+                }
                 return MasterModuleTable(
                   items: state.masterModuleList,
                   onTapEdit: (MasterModuleEntity masterModuleEntity) {

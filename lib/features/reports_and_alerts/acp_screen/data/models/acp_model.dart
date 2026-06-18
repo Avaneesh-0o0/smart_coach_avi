@@ -32,6 +32,9 @@ class AcpCoachModel {
     this.trainNo = 'N/A',
     this.deviceId = 'N/A',
   });
+
+  /// Number of ACP activations (parsed from totalCount)
+  int get deployedCount => int.tryParse(totalCount) ?? 0;
 }
 
 class AcpHistoryEntry {

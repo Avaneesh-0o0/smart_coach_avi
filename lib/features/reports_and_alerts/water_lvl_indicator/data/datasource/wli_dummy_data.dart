@@ -1,7 +1,12 @@
+import 'package:intl/intl.dart';
 import '../models/water_tank_model.dart';
 
 class WliDummyData {
+  static const String trainNumber = '12615 Grand Trunk';
+
   static List<WaterTankModel> generateCoaches() {
+    final now = DateTime.now();
+    final timestamp = DateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(now);
     return List.generate(20, (index) {
       final id = index + 1;
       final percent = id == 7 || id == 20 ? 15.0 : (id == 4 || id == 11 ? 35.0 : 85.0);
@@ -14,10 +19,10 @@ class WliDummyData {
         ),
         location: WliLocation(
           coachId: "COACH_B$id",
-          coachName: "B$id - AC 3 Tier",
+          coachName: "Coach $id",
         ),
         messageType: "METRICS",
-        timestamp: "2026-04-23T15:00:00Z",
+        timestamp: timestamp,
         placement: WliPlacement(
           type: "UNDERSLUNG",
           sensorCount: 1,

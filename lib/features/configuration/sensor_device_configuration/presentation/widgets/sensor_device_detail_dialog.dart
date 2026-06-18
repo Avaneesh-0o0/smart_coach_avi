@@ -128,10 +128,10 @@ class _SensorDeviceDetailDialogState extends State<SensorDeviceDetailDialog> {
             ),
           ),
           SizedBox(height: 2.h),
-          _buildTwoCols("Coach ID", entity.coachUniqueId?.toString(), "Master Module",
+          _buildTwoCols("Coach Display", entity.coachUniqueId?.toString(), "Master Module",
               entity.moduleUniqueId?.toString()),
-          _buildTwoCols("Total Devices", entity.totalDevicesAttached.toString(),
-              "Sensor ID", entity.noOfSensors.toString()),
+          _buildTwoCols("Total Devices", entity.totalDevicesAttached?.toString() ?? 'N/A',
+              "Sensor ID", entity.noOfSensors?.toString() ?? 'N/A'),
         ],
       ),
     );

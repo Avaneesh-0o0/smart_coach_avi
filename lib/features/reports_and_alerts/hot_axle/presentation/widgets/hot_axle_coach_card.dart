@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:smart_coach_new/core/utils/app_icons.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/data/models/hot_axle_model.dart';
@@ -28,6 +29,14 @@ class HotAxleCoachCard extends StatelessWidget {
     }
   }
 
+  String _formatTimestamp(String ts) {
+    try {
+      return DateFormat('dd/MM/yy HH:mm').format(DateTime.parse(ts));
+    } catch (_) {
+      return ts;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor(coach.status);
@@ -46,16 +55,19 @@ class HotAxleCoachCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Coach ${coach.coachNumber}',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: ColorConstants.primary,
+              Expanded(
+                child: Text(
+                  'Coach ${coach.coachNumber}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: ColorConstants.primary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 4),
               GestureDetector(
                 onTap: onEyeIconTap,
                 child: SvgPicture.asset(
@@ -67,9 +79,28 @@ class HotAxleCoachCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
+          Text(
+            'Train: ${coach.trainNo}',
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: ColorConstants.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Device: ${coach.deviceId}',
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: ColorConstants.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 10),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Column(
@@ -95,10 +126,11 @@ class HotAxleCoachCard extends StatelessWidget {
               _buildStatusBadge(coach.status, statusColor),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
-            coach.timestamp,
+            _formatTimestamp(coach.timestamp),
             style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textTertiary),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

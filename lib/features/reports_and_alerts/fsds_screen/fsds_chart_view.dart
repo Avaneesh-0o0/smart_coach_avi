@@ -18,7 +18,7 @@ class FsdsChartView extends StatefulWidget {
 
 class _FsdsChartViewState extends State<FsdsChartView> {
   String selectedPeriod = 'Live';
-  String selectedChartType = AppStrings.timeSeries;
+  String selectedChartType = AppStrings.pieChart;
   DateTimeRange? customRange;
 
   List<FsdsAssetModel> get filteredAssets {
@@ -38,32 +38,13 @@ class _FsdsChartViewState extends State<FsdsChartView> {
     }).toList();
   }
 
-  int get alertCount => filteredAssets.where((a) => a.isSmokeDetected).length;
-  int get normalCount => filteredAssets.where((a) => !a.isSmokeDetected).length;
+  int get bypassOnCount => filteredAssets.where((a) => a.isBypassOn).length;
+  int get bypassOffCount => filteredAssets.where((a) => !a.isBypassOn).length;
   int get total => filteredAssets.length;
-
-  List<FlSpot> get timeSeriesData {
-    final count = filteredAssets.where((a) => a.isRecent).length;
-    if (selectedPeriod == 'Live') {
-      return [
-        const FlSpot(0, 0), const FlSpot(1, 1), const FlSpot(2, 0), const FlSpot(3, 2),
-        const FlSpot(4, 1), const FlSpot(5, 3), const FlSpot(6, 2), FlSpot(7, count.toDouble()),
-      ];
-    } else {
-      int days = selectedPeriod == '7 Days' ? 7 : 30;
-      List<FlSpot> spots = [];
-      for (int i = 0; i <= days; i++) {
-        double val = (i % 5 == 0) ? 4.0 : (i % 3 == 0) ? 2.0 : 1.0;
-        if (i == days) val = count.toDouble(); 
-        spots.add(FlSpot(i.toDouble(), val));
-      }
-      return spots;
-    }
-  }
 
   Future<void> _pickCustomRange() async {
     final range = await showDateRangePicker(
-      context: context, firstDate: DateTime(2026, 1, 1), lastDate: DateTime.now(),
+      context: context, firstDate: DateTime.now().subtract(const Duration(days: 365)), lastDate: DateTime.now(),
     );
     if (range != null) setState(() { customRange = range; selectedPeriod = 'Custom'; });
   }
@@ -82,14 +63,12 @@ class _FsdsChartViewState extends State<FsdsChartView> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: Text('Smoke Level Timeline', style: AppTextStyles.header2)),
-            _chartTypeToggle(AppStrings.timeSeries),
-            const SizedBox(width: 8),
+            Expanded(child: Text('FSDS Bypass Status', style: AppTextStyles.header2)),
             _chartTypeToggle(AppStrings.pieChart),
           ],
         ),
         const SizedBox(height: 16),
-        selectedChartType == AppStrings.pieChart ? _buildPieChart() : _buildTimeSeriesChart(),
+        selectedChartType == AppStrings.pieChart ? _buildPieChart() : _buildStatusBarChart(),
         const SizedBox(height: 16),
         _buildSummaryCard(),
       ],
@@ -113,6 +92,14 @@ class _FsdsChartViewState extends State<FsdsChartView> {
   }
 
   Widget _buildPieChart() {
+    if (total == 0) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32),
+          child: Text('No Data', style: GoogleFonts.poppins(fontSize: 16, color: ColorConstants.textTertiary)),
+        ),
+      );
+    }
     return Column(
       children: [
         SizedBox(
@@ -121,8 +108,8 @@ class _FsdsChartViewState extends State<FsdsChartView> {
             alignment: Alignment.center,
             children: [
               PieChart(PieChartData(sectionsSpace: 3, centerSpaceRadius: 56, sections: [
-                PieChartSectionData(value: alertCount.toDouble(), color: const Color(0xFFFF3B30), radius: 60, showTitle: false),
-                PieChartSectionData(value: normalCount.toDouble(), color: const Color(0xFF34C700), radius: 60, showTitle: false),
+                PieChartSectionData(value: bypassOnCount.toDouble(), color: Colors.orange, radius: 60, showTitle: false),
+                PieChartSectionData(value: bypassOffCount.toDouble(), color: Colors.green, radius: 60, showTitle: false),
               ])),
               Column(mainAxisSize: MainAxisSize.min, children: [
                 Text('$total', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700)),
@@ -133,8 +120,8 @@ class _FsdsChartViewState extends State<FsdsChartView> {
         ),
         const SizedBox(height: 12),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _legend(const Color(0xFFFF3B30), 'Alerts ($alertCount)'), const SizedBox(width: 20),
-          _legend(const Color(0xFF34C700), 'Normal ($normalCount)'),
+          _legend(Colors.orange, 'Bypass ON ($bypassOnCount)'), const SizedBox(width: 20),
+          _legend(Colors.green, 'Bypass OFF ($bypassOffCount)'),
         ]),
       ],
     );
@@ -145,36 +132,49 @@ class _FsdsChartViewState extends State<FsdsChartView> {
     const SizedBox(width: 6), Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500)),
   ]);
 
-  Widget _buildTimeSeriesChart() {
-    final spots = timeSeriesData;
+  Widget _buildStatusBarChart() {
+    if (total == 0) {
+      return const SizedBox.shrink();
+    }
     return Container(
-      padding: const EdgeInsets.only(top: 24, right: 24, bottom: 12, left: 12),
-      decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
-      child: SizedBox(
-        height: 220,
-        child: LineChart(LineChartData(
-          clipData: const FlClipData.all(),
-          gridData: const FlGridData(show: true, drawVerticalLine: true, horizontalInterval: 1),
-          titlesData: FlTitlesData(
-            show: true, rightTitles: const AxisTitles(), topTitles: const AxisTitles(),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: selectedPeriod == 'Live' ? 1 : 5, getTitlesWidget: (v, m) {
-              if (selectedPeriod == 'Live') {
-                final h = (DateTime.now().hour - (7 - v.toInt())) % 24;
-                return Text('${h.toString().padLeft(2, '0')}:00', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary));
-              }
-              return Text('D ${v.toInt()}', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary));
-            })),
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 1, reservedSize: 28)),
-          ),
-          minX: 0, maxX: selectedPeriod == 'Live' ? 7 : (selectedPeriod == '7 Days' ? 7 : 30), minY: 0,
-          maxY: (spots.isEmpty ? 5 : (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1).toDouble().clamp(5, 100)),
-          lineBarsData: [LineChartBarData(
-            spots: spots, isCurved: true, gradient: const LinearGradient(colors: [Colors.red, Colors.orange]),
-            barWidth: 3, dotData: FlDotData(show: spots.length < 10),
-            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.red.withOpacity(0.3), Colors.transparent], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
-          )],
-        )),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ColorConstants.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
       ),
+      child: Column(
+        children: [
+          _buildBinaryBar('Bypass ON', bypassOnCount, total, Colors.orange),
+          const SizedBox(height: 12),
+          _buildBinaryBar('Bypass OFF', bypassOffCount, total, Colors.green),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBinaryBar(String label, int count, int total, Color color) {
+    final fraction = total > 0 ? count / total : 0.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: AppTextStyles.bodyMedium),
+            Text('$count / $total', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: fraction,
+            backgroundColor: ColorConstants.divider,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 12,
+          ),
+        ),
+      ],
     );
   }
 
@@ -184,13 +184,15 @@ class _FsdsChartViewState extends State<FsdsChartView> {
       decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
       child: Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Total Assets', style: AppTextStyles.bodyMedium),
+          Text('Total Devices', style: AppTextStyles.bodyMedium),
           Text('$total', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
         ]),
         const SizedBox(height: 8),
-        _buildStatRow('Alert Status', '$alertCount', const Color(0xFFFF3B30)),
+        _buildStatRow('Bypass ON', '$bypassOnCount', Colors.orange),
         const SizedBox(height: 8),
-        _buildStatRow('Normal Status', '$normalCount', const Color(0xFF34C700)),
+        _buildStatRow('Bypass OFF', '$bypassOffCount', Colors.green),
+        const SizedBox(height: 8),
+        _buildStatRow('Active Alerts', '${filteredAssets.where((a) => a.isAlertActive).length}', Colors.red),
       ]),
     );
   }

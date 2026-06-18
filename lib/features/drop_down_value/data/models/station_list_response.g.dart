@@ -38,6 +38,7 @@ StationItem _$StationItemFromJson(Map<String, dynamic> json) => StationItem(
   name: json['name'] as String?,
   isActive: (json['is_active'] as num?)?.toInt(),
   createdDate: json['created_date'] as String?,
+  stationId: (json['station_id'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$StationItemToJson(StationItem instance) =>
@@ -46,4 +47,5 @@ Map<String, dynamic> _$StationItemToJson(StationItem instance) =>
       'name': instance.name,
       'is_active': instance.isActive,
       'created_date': instance.createdDate,
+      'station_id': instance.stationId,
     };

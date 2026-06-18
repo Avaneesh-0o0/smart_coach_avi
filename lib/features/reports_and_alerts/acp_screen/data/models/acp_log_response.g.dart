@@ -6,10 +6,18 @@ part of 'acp_log_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 AcpLogResponse _$AcpLogResponseFromJson(Map<String, dynamic> json) =>
     AcpLogResponse(
       success: json['success'] as bool?,
-      count: (json['count'] as num?)?.toInt(),
+      count: _parseInt(json['count']),
       totalRegisteredDevices: (json['total_registered_devices'] as num?)
           ?.toInt(),
       data: (json['data'] as List<dynamic>?)
@@ -26,7 +34,7 @@ Map<String, dynamic> _$AcpLogResponseToJson(AcpLogResponse instance) =>
     };
 
 AcpLogData _$AcpLogDataFromJson(Map<String, dynamic> json) => AcpLogData(
-  logId: (json['log_id'] as num?)?.toInt(),
+  logId: _parseInt(json['log_id']),
   lastUpdated: json['last_updated'] as String?,
   rawAssetName: json['raw_asset_name'] as String?,
   acpStatus: json['acp_status'] as String?,

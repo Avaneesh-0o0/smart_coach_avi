@@ -50,11 +50,6 @@ class TrainDetailDialog extends StatelessWidget {
                       'Train Name',
                       trainEntity.trainName),
                   _buildTwoCols(
-                      'Origination Region',
-                      trainEntity.originationRegionName?.toString(),
-                      'Region Name',
-                      trainEntity.regionName?.toString()),
-                  _buildTwoCols(
                       'Departure Station',
                       trainEntity.departureStationName?.toString(),
                       'Destination Station',
@@ -62,7 +57,7 @@ class TrainDetailDialog extends StatelessWidget {
                   _buildTwoCols('Line', trainEntity.line, 'Train Operator',
                       trainEntity.trainOperator),
                   _buildTwoCols(
-                      'Engine Number',
+                      'Loco Number',
                       trainEntity.engineNumber,
                       'Number of Coaches',
                       trainEntity.coaches?.length.toString() ?? 'N/A'),

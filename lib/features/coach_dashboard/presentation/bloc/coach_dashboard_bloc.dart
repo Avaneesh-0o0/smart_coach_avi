@@ -19,19 +19,31 @@ class CoachDashboardBloc extends Bloc<CoachDashboardEvent, CoachDashboardState> 
     try {
       final coaches = await coachConfigurationUseCase.fetchCoachList();
       final devices = await coachConfigurationUseCase.fetchDevice();
-      
+
+      final selectedCoach = state.selectedCoach;
+      final List<DeviceEntity> filtered = selectedCoach != null
+          ? _filterDevices(devices, selectedCoach)
+          : [];
+
       emit(state.copyWith(
         isLoading: false,
         coachList: coaches,
         allDevices: devices,
+        filteredDevices: filtered,
       ));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
   }
 
+  List<DeviceEntity> _filterDevices(List<DeviceEntity> devices, CoachEntity coach) {
+    return devices.where((d) =>
+        d.coachUniqueId == coach.coachUniqueId
+    ).toList();
+  }
+
   void _onSelectCoach(SelectCoach event, Emitter<CoachDashboardState> emit) {
-    final filtered = state.allDevices.where((d) => d.coachUniqueId == event.coach.coachUniqueId).toList();
+    final filtered = _filterDevices(state.allDevices, event.coach);
     emit(state.copyWith(
       selectedCoach: event.coach,
       filteredDevices: filtered,
@@ -40,15 +52,17 @@ class CoachDashboardBloc extends Bloc<CoachDashboardEvent, CoachDashboardState> 
 
   void _onSearchCoach(SearchCoachById event, Emitter<CoachDashboardState> emit) {
     if (event.query.isEmpty) return;
-    
-    try {
-      final coach = state.coachList.firstWhere(
-        (c) => (c.coachUniqueId ?? "").toLowerCase().contains(event.query.toLowerCase()) || 
-               (c.coachDisplayId ?? "").toLowerCase().contains(event.query.toLowerCase()),
-      );
-      add(SelectCoach(coach));
-    } catch (e) {
+
+    final q = event.query.toLowerCase();
+    final matches = state.coachList.where(
+      (c) => (c.coachUniqueId ?? "").toLowerCase().contains(q) ||
+             (c.coachDisplayId ?? "").toLowerCase().contains(q),
+    ).toList();
+
+    if (matches.isEmpty) {
       emit(state.copyWith(errorMessage: "No coach found matching '${event.query}'"));
+      return;
     }
+    add(SelectCoach(matches.first));
   }
 }

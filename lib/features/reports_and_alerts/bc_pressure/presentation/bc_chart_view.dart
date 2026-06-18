@@ -62,43 +62,54 @@ class _BCChartViewState extends State<BCChartView> {
   }
 
   Widget _buildStatsCards() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            _statItem('Highest', '${_data['highest']} kg/cm²', ColorConstants.primary),
-            const SizedBox(width: 12),
-            _statItem('Lowest',  '${_data['lowest']} kg/cm²',  const Color(0xFFD32F2F)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _statItem('Average', '${_data['average']} kg/cm²', ColorConstants.primary),
-            const SizedBox(width: 12),
-            _statItem('Brake Count', '${_data['brakeCount']} times', ColorConstants.primary),
-          ],
-        ),
-      ],
+    const suffix = 'kg/cm²';
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: ColorConstants.cardBackground,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _statItem('Highest', '${_data['highest']}', suffix, ColorConstants.primary),
+              const SizedBox(width: 12),
+              _statItem('Lowest',  '${_data['lowest']}',  suffix,  const Color(0xFFD32F2F)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _statItem('Average', '${_data['average']}', suffix, ColorConstants.primary),
+              const SizedBox(width: 12),
+              _statItem('Brake Count', '${_data['brakeCount']}', 'times', ColorConstants.primary),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _statItem(String label, String value, Color valueColor) {
+  Widget _statItem(String label, String value, String unit, Color valueColor) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: ColorConstants.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(child: Text(label, style: AppTextStyles.bodyMedium)),
-            const SizedBox(width: 4),
-            Text(value, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: valueColor)),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTextStyles.bodySmall.copyWith(color: ColorConstants.textSecondary, fontSize: 10)),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: valueColor)),
+              const SizedBox(width: 2),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(unit, style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary)),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

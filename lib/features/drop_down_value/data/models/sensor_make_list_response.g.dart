@@ -6,6 +6,14 @@ part of 'sensor_make_list_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 SensorMakeListResponse _$SensorMakeListResponseFromJson(
   Map<String, dynamic> json,
 ) => SensorMakeListResponse(
@@ -26,7 +34,7 @@ Map<String, dynamic> _$SensorMakeListResponseToJson(
 
 SensorMakeItem _$SensorMakeItemFromJson(Map<String, dynamic> json) =>
     SensorMakeItem(
-      sensorMakeId: (json['sensor_make_id'] as num?)?.toInt(),
+      sensorMakeId: _parseInt(json['sensor_make_id']),
       name: json['make_name'] as String?,
     );
 

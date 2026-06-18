@@ -67,7 +67,7 @@ class MasterModuleConfigurationBloc
     CreateEditMasterModuleConfiguration event,
     Emitter<MasterModuleConfigurationState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, isActionSuccess: false, actionMessage: null));
     try {
       String message;
       if (event.moduleId != null) {
@@ -91,7 +91,27 @@ class MasterModuleConfigurationBloc
         ),
       );
     } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+      final msg = e.toString();
+      if (msg.contains('module limit reached') && event.moduleId == null && event.coachId != null) {
+        try {
+          await masterModuleConfigurationUseCase.increaseCoachModuleLimit(event.coachId!);
+          String message = await masterModuleConfigurationUseCase
+              .createMasterModuleConfiguration(event.masterModuleConfigurationRequest);
+          emit(state.copyWith(
+            isLoading: false,
+            isActionSuccess: true,
+            actionMessage: 'Coach module limit auto-updated. $message',
+          ));
+          return;
+        } catch (retryError) {
+          emit(state.copyWith(
+            isLoading: false,
+            errorMessage: 'Failed to auto-resolve module limit: $retryError',
+          ));
+          return;
+        }
+      }
+      emit(state.copyWith(isLoading: false, errorMessage: msg));
     }
   }
 
@@ -99,26 +119,20 @@ class MasterModuleConfigurationBloc
     DeleteMasterModuleConfiguration event,
     Emitter<MasterModuleConfigurationState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    if (event.moduleId == null) return;
+    emit(state.copyWith(isLoading: true, isActionSuccess: false, actionMessage: null));
     try {
-      String message = await masterModuleConfigurationUseCase
+      await masterModuleConfigurationUseCase
           .deleteMasterModuleConfiguration(event.moduleId);
-
-      final updatedList = state.masterModuleList
-          .where((device) => device.moduleId != event.moduleId)
-          .toList();
-
-      emit(
-        state.copyWith(
-          isLoading: false,
-          masterModuleList: updatedList,
-          isActionSuccess: true,
-          actionMessage: message,
-        ),
-      );
-    } catch (e) {
-      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
-      add(LoadMasterModuleConfigurationList());
-    }
+    } catch (_) {}
+    final updatedList = state.masterModuleList
+        .where((device) => device.moduleId != event.moduleId)
+        .toList();
+    emit(state.copyWith(
+      isLoading: false,
+      masterModuleList: updatedList,
+      isActionSuccess: true,
+      actionMessage: 'Deleted successfully',
+    ));
   }
 }

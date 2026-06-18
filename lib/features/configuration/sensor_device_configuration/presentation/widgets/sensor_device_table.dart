@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:smart_coach_new/core/utils/enums.dart';
 import 'package:smart_coach_new/core/utils/utils.dart';
 import 'package:smart_coach_new/core/widgets/custom_text_field.dart';
 import 'package:smart_coach_new/features/configuration/sensor_device_configuration/domain/entities/sensor_device_entity.dart';
@@ -19,15 +18,20 @@ class SearchParams {
 
 List<SensorDeviceEntity> _filterSensorDevice(SearchParams params) {
   final query = params.query.toLowerCase();
-  return params.sensorDeviceList.where((coachItem) {
+  return params.sensorDeviceList.where((item) {
     return [
-      coachItem.coachUniqueId,
-      coachItem.moduleUniqueId,
-      coachItem.deviceUniqueId,
-      coachItem.sensorTypeName,
-      coachItem.createdBy,
-      coachItem.updatedBy,
-    ].any((field) => field.toString().toLowerCase().contains(query) ?? false);
+      item.techCoachNo,
+      item.commCoachNo,
+      item.sensorTypeName,
+      item.deviceId,
+      item.trainNo,
+      item.location,
+      item.status,
+      item.createdDate,
+      item.createdBy,
+      item.updatedDate,
+      item.updatedBy,
+    ].any((field) => field.toString().toLowerCase().contains(query));
   }).toList();
 }
 
@@ -165,10 +169,14 @@ class _SensorDeviceTableState extends State<SensorDeviceTable> {
                     gridLinesVisibility: GridLinesVisibility.both,
                     headerGridLinesVisibility: GridLinesVisibility.both,
                     columns: [
-                      Utils.gridColumn(label: 'Coach ID'),
-                      Utils.gridColumn(label: 'Master Module'),
-                      Utils.gridColumn(label: 'Device'),
-                      Utils.gridColumn(label: 'Sensors'),
+                      Utils.gridColumn(label: 'Tech Coach No'),
+                      Utils.gridColumn(label: 'Comm Coach No'),
+                      Utils.gridColumn(label: 'Sensor ID'),
+                      Utils.gridColumn(label: 'Device Name'),
+                      Utils.gridColumn(label: 'Train No'),
+                      Utils.gridColumn(label: 'Location'),
+                      Utils.gridColumn(label: 'Status'),
+                      Utils.gridColumn(label: 'Install Date'),
                       Utils.gridColumn(label: 'Created'),
                       Utils.gridColumn(label: 'Created By'),
                       Utils.gridColumn(label: 'Updated'),
@@ -206,30 +214,51 @@ class TableDataSource extends DataGridSource {
     required this.onTapView,
   }) {
     String emptyText = '----';
-    _rows = items.map((coachItem) {
+    _rows = items.map((item) {
+      final deviceName = item.shortName?.isNotEmpty == true
+          ? item.shortName!
+          : item.fullName?.isNotEmpty == true
+              ? item.fullName!
+              : item.name?.isNotEmpty == true
+                  ? item.name!
+                  : item.deviceId ?? emptyText;
       return DataGridRow(cells: [
         DataGridCell<String>(
-            columnName: 'Coach ID',
-            value: coachItem.coachUniqueId?.toString() ?? emptyText),
+            columnName: 'Tech Coach No',
+            value: item.techCoachNo?.toString() ?? emptyText),
         DataGridCell<String>(
-            columnName: 'Master Module',
-            value: coachItem.moduleUniqueId?.toString() ?? emptyText),
+            columnName: 'Comm Coach No',
+            value: item.commCoachNo?.toString() ?? emptyText),
         DataGridCell<String>(
-            columnName: 'Device',
-            value: coachItem.deviceUniqueId?.toString() ?? emptyText),
+            columnName: 'Sensor ID',
+            value: item.sensorTypeName?.toString() ?? emptyText),
         DataGridCell<String>(
-            columnName: 'Sensors',
-            value: coachItem.sensorTypeName?.toString() ?? emptyText),
+            columnName: 'Device Name',
+            value: deviceName),
         DataGridCell<String>(
-            columnName: 'Created', value: coachItem.createdAt ?? emptyText),
+            columnName: 'Train No',
+            value: item.trainNo?.toString() ?? emptyText),
+        DataGridCell<String>(
+            columnName: 'Location',
+            value: item.location?.toString() ?? emptyText),
+        DataGridCell<String>(
+            columnName: 'Status',
+            value: item.status?.toString() ?? emptyText),
+        DataGridCell<String>(
+            columnName: 'Install Date',
+            value: item.installDate?.toString() ?? emptyText),
+        DataGridCell<String>(
+            columnName: 'Created',
+            value: item.createdDate?.toString() ?? emptyText),
         DataGridCell<String>(
             columnName: 'Created By',
-            value: coachItem.createdBy?.toString() ?? emptyText),
+            value: item.createdBy?.toString() ?? emptyText),
         DataGridCell<String>(
-            columnName: 'Updated', value: coachItem.updatedAt ?? emptyText),
+            columnName: 'Updated',
+            value: item.updatedDate?.toString() ?? emptyText),
         DataGridCell<String>(
             columnName: 'Updated By',
-            value: coachItem.updatedBy?.toString() ?? emptyText),
+            value: item.updatedBy?.toString() ?? emptyText),
         DataGridCell<String>(columnName: 'Actions', value: null),
       ]);
     }).toList();
@@ -243,22 +272,12 @@ class TableDataSource extends DataGridSource {
       color: _selectedRows.contains(row) ? Colors.grey.shade200 : null,
       cells: row.getCells().map((cell) {
         if (cell.columnName == 'Status') {
-          bool isActive = cell.value.toLowerCase() ==
-              DeviceStatus.active.name.toLowerCase();
-          bool isUnderMaintenance = cell.value.toLowerCase() ==
-              DeviceStatus.underMaintenance.name.toLowerCase();
-          bool isRetired = cell.value.toLowerCase() ==
-              DeviceStatus.retired.name.toLowerCase();
-          Color textColor = Colors.black;
-
-          if (isActive) {
-            textColor = Colors.green;
-          } else if (isUnderMaintenance) {
-            textColor = Color(0xFFC0AF6A);
-          } else if (isRetired) {
-            textColor = Colors.red.shade900;
-          }
-
+          final cellStatus = cell.value.toString().toLowerCase().replaceAll(' ', '');
+          final isOnline = cellStatus == 'online' || cellStatus == 'active';
+          final Color bgColor = isOnline
+              ? Colors.green.withValues(alpha: 0.13)
+              : Colors.red.shade900.withValues(alpha: 0.13);
+          final Color textColor = isOnline ? Colors.green : Colors.red.shade900;
           return Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -268,15 +287,15 @@ class TableDataSource extends DataGridSource {
                   padding:
                       EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
                   decoration: BoxDecoration(
-                    color: textColor.withValues(alpha: 0.13),
+                    color: bgColor,
                     borderRadius: BorderRadius.circular(2.h),
                   ),
                   child: Text(
-                    cell.value,
+                    cell.value.toString(),
                     style: TextStyle(
                       fontSize: 9.5.sp,
                       color: textColor,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),

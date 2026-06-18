@@ -62,12 +62,15 @@ class _TrainCoachGridState extends State<TrainCoachGrid> {
       ),
       itemBuilder: (context, index) {
         final coach = sortedCoaches[index];
+        final int displayPosition = (coach.position != null && coach.position != 0)
+            ? coach.position!
+            : index + 1;
         return GestureDetector(
           onTap: () async {
             final updated = await showDialog<CoachConfig>(
               context: context,
               builder: (_) => TrainCoachConfigDialog(
-                coachIndex: index + 1,
+                  coachIndex: displayPosition,
                 config: coach,
               ),
             );
@@ -101,7 +104,7 @@ class _TrainCoachGridState extends State<TrainCoachGrid> {
                 ),
                 Text(
                   coach.isConfigured
-                      ? coach.displayId!
+                      ? (coach.displayId ?? '${coach.entityType} ${index + 1}')
                       : '${coach.entityType} ${index + 1}',
                   style: TextStyle(
                     fontSize: 10.sp,
@@ -126,7 +129,7 @@ class _TrainCoachGridState extends State<TrainCoachGrid> {
                   Padding(
                     padding: EdgeInsets.only(top: 0.3.h),
                     child: Text(
-                      'Position ${coach.position}',
+                      'Position $displayPosition',
                       style: TextStyle(
                         fontSize: 10.5.sp,
                         fontWeight: FontWeight.w500,

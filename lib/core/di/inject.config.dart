@@ -135,12 +135,12 @@ import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/data
     as _i201;
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/repository/acp_repository.dart'
     as _i626;
-import 'package:smart_coach_new/features/reports_and_alerts/break_binding/data/datasource/break_binding_remote_data_source.dart'
-    as _i406;
-import 'package:smart_coach_new/features/reports_and_alerts/break_binding/domain/repositories/break_binding_repository_impl.dart'
-    as _i352;
+import 'package:smart_coach_new/features/reports_and_alerts/break_binding/data/datasources/break_binding_remote_data_source.dart'
+    as _i244;
 import 'package:smart_coach_new/features/reports_and_alerts/break_binding/domain/repositories/break_bindinng_repository.dart'
     as _i790;
+import 'package:smart_coach_new/features/reports_and_alerts/break_binding/domain/repositories/break_bindinng_repository_impl.dart'
+    as _i650;
 import 'package:smart_coach_new/features/reports_and_alerts/break_binding/domain/usecases/break_binding_usecases.dart'
     as _i902;
 import 'package:smart_coach_new/features/reports_and_alerts/break_binding/presentation/bloc/break_binding_bloc.dart'
@@ -155,8 +155,8 @@ import 'package:smart_coach_new/features/reports_and_alerts/level_indicator/doma
     as _i122;
 import 'package:smart_coach_new/features/reports_and_alerts/level_indicator/presentation/bloc/train_list_bloc.dart'
     as _i33;
-import 'package:smart_coach_new/features/user_management/data/datasources/user_manaagement_remote_data_source.dart'
-    as _i536;
+import 'package:smart_coach_new/features/user_management/data/datasources/user_management_remote_data_source.dart'
+    as _i1037;
 import 'package:smart_coach_new/features/user_management/domain/repositories/user_management_repository.dart'
     as _i737;
 import 'package:smart_coach_new/features/user_management/domain/repositories/user_management_repository_impl.dart'
@@ -203,6 +203,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i914.RegisterRemoteDataSourceImpl>(
       () => _i914.RegisterRemoteDataSourceImpl(gh<_i100.RestClient>()),
     );
+    gh.factory<_i691.SensorTypeConfigurationRemoteDataSourceImpl>(
+      () => _i691.SensorTypeConfigurationRemoteDataSourceImpl(
+        gh<_i100.RestClient>(),
+      ),
+    );
+    gh.factory<_i244.BreakBindingRemoteDataSourceImpl>(
+      () => _i244.BreakBindingRemoteDataSourceImpl(gh<_i100.RestClient>()),
+    );
+    gh.factory<_i1037.UserManagementRemoteDataSourceImpl>(
+      () => _i1037.UserManagementRemoteDataSourceImpl(gh<_i100.RestClient>()),
+    );
     gh.factory<_i495.SensorDeviceConfigurationRemoteDataSourceImpl>(
       () => _i495.SensorDeviceConfigurationRemoteDataSourceImpl(
         gh<_i100.RestClient>(),
@@ -239,20 +250,8 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1038.Prefs>(),
       ),
     );
-    gh.factory<_i691.SensorTypeConfigurationRemoteDataSourceImpl>(
-      () => _i691.SensorTypeConfigurationRemoteDataSourceImpl(
-        gh<_i100.RestClient>(),
-        gh<_i1038.Prefs>(),
-      ),
-    );
     gh.factory<_i159.DropDownValueRemoteDataSourceImpl>(
       () => _i159.DropDownValueRemoteDataSourceImpl(
-        gh<_i100.RestClient>(),
-        gh<_i1038.Prefs>(),
-      ),
-    );
-    gh.factory<_i406.BreakBindingRemoteDataSourceImpl>(
-      () => _i406.BreakBindingRemoteDataSourceImpl(
         gh<_i100.RestClient>(),
         gh<_i1038.Prefs>(),
       ),
@@ -263,10 +262,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1038.Prefs>(),
       ),
     );
-    gh.factory<_i536.UserManagementRemoteDataSourceImpl>(
-      () => _i536.UserManagementRemoteDataSourceImpl(
-        gh<_i100.RestClient>(),
-        gh<_i1038.Prefs>(),
+    gh.factory<_i790.BreakBindinngRepository>(
+      () => _i650.BreakBindinngRepositoryImpl(
+        remoteDataSource: gh<_i244.BreakBindingRemoteDataSourceImpl>(),
       ),
     );
     gh.factory<_i954.LoginRepository>(
@@ -306,11 +304,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i550.MasterModuleConfigurationRepository>(),
       ),
     );
-    gh.factory<_i737.UserManagementRepository>(
-      () => _i491.UserManagementRepositoryRepositoryImpl(
-        remoteDataSource: gh<_i536.UserManagementRemoteDataSourceImpl>(),
-      ),
-    );
     gh.factory<_i953.CoachConfigurationRepository>(
       () => _i793.TrainConfigurationRepositoryImpl(
         remoteDataSource: gh<_i519.CoachConfigurationRemoteDataSourceImpl>(),
@@ -319,6 +312,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i580.DeviceConfigurationRepository>(
       () => _i901.DeviceConfigurationRepositoryImpl(
         remoteDataSource: gh<_i983.DeviceConfigurationRemoteDataSourceImpl>(),
+      ),
+    );
+    gh.factory<_i902.BreakBindingUsecases>(
+      () => _i902.BreakBindingUsecases(
+        repository: gh<_i790.BreakBindinngRepository>(),
       ),
     );
     gh.factory<_i781.CoachConfigurationUseCase>(
@@ -338,6 +336,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i258.DeviceConfigurationUseCase>(
       () => _i258.DeviceConfigurationUseCase(
         gh<_i580.DeviceConfigurationRepository>(),
+      ),
+    );
+    gh.factory<_i737.UserManagementRepository>(
+      () => _i491.UserManagementRepositoryRepositoryImpl(
+        remoteDataSource: gh<_i1037.UserManagementRemoteDataSourceImpl>(),
       ),
     );
     gh.factory<_i626.AcpRepository>(
@@ -389,20 +392,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i259.LoginUseCase>(
       () => _i259.LoginUseCase(gh<_i954.LoginRepository>()),
     );
-    gh.factory<_i790.BreakBindinngRepository>(
-      () => _i352.TrainListRepositoryImpl(
-        bindingRemoteDataSourceImpl:
-            gh<_i406.BreakBindingRemoteDataSourceImpl>(),
-      ),
-    );
     gh.factory<_i489.ProfileUseCase>(
       () => _i489.ProfileUseCase(gh<_i713.ProfileRepository>()),
-    );
-    gh.factory<_i115.CoachDashboardBloc>(
-      () => _i115.CoachDashboardBloc(
-        coachConfigurationUseCase: gh<_i781.CoachConfigurationUseCase>(),
-        acpRepository: gh<_i626.AcpRepository>(),
-      ),
     );
     gh.factory<_i849.SensorTypeConfigurationUseCase>(
       () => _i849.SensorTypeConfigurationUseCase(
@@ -422,9 +413,25 @@ extension GetItInjectableX on _i174.GetIt {
         permissionBloc: gh<_i416.PermissionBloc>(),
       ),
     );
+    gh.factory<_i115.CoachDashboardBloc>(
+      () => _i115.CoachDashboardBloc(
+        coachConfigurationUseCase: gh<_i781.CoachConfigurationUseCase>(),
+      ),
+    );
     gh.factory<_i603.CoachConfigurationBloc>(
       () => _i603.CoachConfigurationBloc(
         coachConfigurationUseCase: gh<_i781.CoachConfigurationUseCase>(),
+      ),
+    );
+    gh.factory<_i209.BrakeBindingBloc>(
+      () => _i209.BrakeBindingBloc(
+        breakBindingUsecases: gh<_i902.BreakBindingUsecases>(),
+      ),
+    );
+    gh.factory<_i615.UserManagementBloc>(
+      () => _i615.UserManagementBloc(
+        userManagementUseCase: gh<_i99.UserManagementUseCase>(),
+        prefs: gh<_i1038.Prefs>(),
       ),
     );
     gh.factory<_i406.CoachConfigurationUseCase>(
@@ -440,11 +447,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i580.DeviceConfigurationRepository>(),
         gh<_i718.SensorTypeConfigurationRepository>(),
         gh<_i790.BreakBindinngRepository>(),
-      ),
-    );
-    gh.factory<_i902.BreakBindingUsecases>(
-      () => _i902.BreakBindingUsecases(
-        repository: gh<_i790.BreakBindinngRepository>(),
       ),
     );
     gh.factory<_i225.SensorDeviceConfigurationBloc>(
@@ -475,17 +477,6 @@ extension GetItInjectableX on _i174.GetIt {
         profileUseCase: gh<_i489.ProfileUseCase>(),
         prefs: gh<_i1038.Prefs>(),
         permissionBloc: gh<_i416.PermissionBloc>(),
-      ),
-    );
-    gh.factory<_i615.UserManagementBloc>(
-      () => _i615.UserManagementBloc(
-        userManagementUseCase: gh<_i99.UserManagementUseCase>(),
-        dropDownValueUseCase: gh<_i685.DropDownValueUseCase>(),
-      ),
-    );
-    gh.factory<_i209.BrakeBindingBloc>(
-      () => _i209.BrakeBindingBloc(
-        breakBindingUsecases: gh<_i902.BreakBindingUsecases>(),
       ),
     );
     gh.factory<_i596.RegisterBloc>(

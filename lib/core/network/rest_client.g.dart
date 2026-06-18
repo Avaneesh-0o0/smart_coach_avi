@@ -1577,7 +1577,7 @@ class _RestClient implements RestClient {
 
   @override
   Future<DeleteSensorDeviceConfigurationResponse>
-  deleteSensorDeviceConfiguration(int? sensorId) async {
+  deleteSensorDeviceConfiguration(int? sensorConfigId) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     queryParameters.removeWhere((k, v) => v == null);
@@ -1587,7 +1587,7 @@ class _RestClient implements RestClient {
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/sensors/sensors-configs',
+            '/sensors/sensors-configs/$sensorConfigId',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -1950,6 +1950,33 @@ class _RestClient implements RestClient {
     late CoachConfigResponse _value;
     try {
       _value = CoachConfigResponse.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<FsdsStatusResponse> getFsdsStatus() async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<FsdsStatusResponse>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/fsds/status',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late FsdsStatusResponse _value;
+    try {
+      _value = FsdsStatusResponse.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options);
       rethrow;

@@ -2,10 +2,16 @@ import 'package:smart_coach_new/features/reports_and_alerts/bc_pressure/data/mod
 
 class BCDummyData {
   static const String trainName = '12615/6 Grand Trunk Express';
-  static const String lastUpdated = '10:46 AM';
+
+  static String get lastUpdated {
+    final now = DateTime.now();
+    final h = now.hour.toString().padLeft(2, '0');
+    final m = now.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 
   static List<BCPressureModel> generateCoaches() {
-    final now = DateTime(2026, 3, 12, 10, 34);
+    final now = DateTime.now();
     return [
       BCPressureModel(coachNumber: 'Coach 1',  pressure: 5.0, status: 'Good',     brakeApplied: '10:32:12', brakeReleased: '10:32:18', lastUpdated: now.subtract(const Duration(minutes: 12))),
       BCPressureModel(coachNumber: 'Coach 2',  pressure: 5.0, status: 'Good',     brakeApplied: '10:32:12', brakeReleased: '10:32:18', lastUpdated: now.subtract(const Duration(minutes: 10))),
@@ -125,7 +131,7 @@ class BCDummyData {
 
 
   static List<BCHistoryEntry> getHistory(String coachNumber, String period, {DateTime? from, DateTime? to}) {
-    final now = DateTime(2026, 3, 12);
+    final now = DateTime.now();
     final all = _allHistory[coachNumber] ?? _defaultHistory(coachNumber);
     DateTime cutoff;
     if (period == '7 Days') {
@@ -142,7 +148,7 @@ class BCDummyData {
   static List<BCHistoryEntry> _defaultHistory(String coachNumber) {
     final id = int.tryParse(coachNumber.replaceAll('Coach ', '')) ?? 1;
     return [
-      BCHistoryEntry(coachNumber: coachNumber, sensorId: 'BC-B7-${id.toString().padLeft(2,'0')}', pressure: 5.0, status: 'Good', brakeApplied: '10:32:12', brakeReleased: '10:32:18', brakeResponseTime: '6 sec', location: 'Ratlam', date: DateTime(2026, 3, 12, 10, 32)),
+      BCHistoryEntry(coachNumber: coachNumber, sensorId: 'BC-B7-${id.toString().padLeft(2,'0')}', pressure: 5.0, status: 'Good', brakeApplied: '10:32:12', brakeReleased: '10:32:18', brakeResponseTime: '6 sec', location: 'Ratlam', date: DateTime.now()),
     ];
   }
 

@@ -100,21 +100,20 @@ class ChainPulledModal extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildDetailRow('Tech Coach #', coach.sensorId, showTopBorder: false),
+                        _buildDetailRow('Coach', coach.coachNumber, showTopBorder: false),
                         _buildDetailRow('Device ID', coach.deviceId),
                         _buildDetailRow('Train No', coach.trainNo),
                         _buildDetailRow('Location', coach.location),
-                        _buildDetailRow('COUNT', '${coach.status} nos'),
-                        _buildDetailRow('TOTAL', '${coach.totalCount} nos'),
+                        _buildDetailRow('Deployed Count', '${coach.deployedCount}'),
                         _buildDetailRow(
-                          'STATUS', 
+                          'Status',
                           coach.isChainPulled ? 'PULLED' : 'NOT PULLED',
                           valueColor: coach.isChainPulled ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32),
                         ),
                         _buildDetailRow(
-                          'RECENT', 
-                          coach.isRecent ? 'RECENTLY TRIGGERED' : 'NOT RECENTLY TRIGGERED', 
-                          valueColor: coach.isRecent ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32)
+                          'Recent',
+                          coach.isRecent ? 'RECENTLY TRIGGERED' : 'NOT RECENTLY TRIGGERED',
+                          valueColor: coach.isRecent ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32),
                         ),
                         _buildDetailRow('Last Updated', coach.updateTime),
                       ],

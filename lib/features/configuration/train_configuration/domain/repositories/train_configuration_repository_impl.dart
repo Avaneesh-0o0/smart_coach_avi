@@ -63,7 +63,52 @@ class TrainConfigurationRepositoryImpl implements CoachConfigurationRepository {
   Future<List<TrainConfigsEntity>> fetchTrainList() async {
     final models = await remoteDataSource.fetchTrainList();
     return models.map((m) {
-      return TrainConfigsEntity.fromModel(m);
+      final createdAt = Utils.formatReadableDate(
+        m.createdAt,
+        dateFormat: Constants.dateTimeFormatToShowInTable,
+      );
+      final updatedAt = Utils.formatReadableDate(
+        m.updatedAt,
+        dateFormat: Constants.dateTimeFormatToShowInTable,
+      );
+      final entity = TrainConfigsEntity.fromModel(m);
+      final Map<String, dynamic> formattedRawJson =
+          Map<String, dynamic>.from(m.rawJson ?? {});
+      if (createdAt != null) {
+        formattedRawJson['created_at'] = createdAt;
+      }
+      if (updatedAt != null) {
+        formattedRawJson['updated_at'] = updatedAt;
+      }
+      final int actualCoachCount = entity.coaches?.length ?? 0;
+      if (actualCoachCount > 0) {
+        formattedRawJson['no_of_coaches'] = actualCoachCount;
+      }
+      return TrainConfigsEntity(
+        trainId: entity.trainId,
+        trainNumber: entity.trainNumber,
+        trainName: entity.trainName,
+        originationRegionId: entity.originationRegionId,
+        regionId: entity.regionId,
+        departureStationId: entity.departureStationId,
+        destinationStationId: entity.destinationStationId,
+        numberOfCoaches: entity.numberOfCoaches,
+        line: entity.line,
+        trainOperator: entity.trainOperator,
+        engineNumber: entity.engineNumber,
+        coaches: entity.coaches,
+        originationRegionName: entity.originationRegionName,
+        regionName: entity.regionName,
+        departureStationName: entity.departureStationName,
+        destinationStationName: entity.destinationStationName,
+        entityType: entity.entityType,
+        isMapped: entity.isMapped,
+        createdAt: createdAt,
+        createdBy: m.createdBy,
+        updatedAt: updatedAt,
+        updatedBy: m.updatedBy,
+        rawJson: formattedRawJson,
+      );
     }).toList();
   }
 

@@ -50,7 +50,7 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
   void _applyFilters() {
     setState(() {
       _filteredCoaches = _allCoaches.where((coach) {
-        final matchesTrain = selectedTrainNumber == 'All Trains' || coach.owningRly.contains(selectedTrainNumber);
+        final matchesTrain = selectedTrainNumber == 'All Trains' || coach.trainNo.contains(selectedTrainNumber);
         final matchesType = selectedCoachType == 'All Types' || coach.coachType == selectedCoachType;
         final matchesCoach = selectedCoachNumber == 'All Unique IDs' || coach.coachNumber == selectedCoachNumber;
         final matchesStatus = selectedStatus == 'All' || coach.status.toUpperCase() == selectedStatus.toUpperCase();
@@ -72,7 +72,9 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
           coachNumber: "100676",
           coachType: "LHB_AC_2TIER",
           owningRly: "SEC",
-          timestamp: "2026-04-21T22:15:00.000Z",
+          trainNo: "12615",
+          trainName: "Grand Trunk Express",
+          timestamp: DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String(),
           a11Temp: 45.2,
           a12Temp: 46.8,
           a21Temp: 82.5,
@@ -89,7 +91,9 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
           coachNumber: "100677",
           coachType: "LHB_AC_3TIER",
           owningRly: "SEC",
-          timestamp: "2026-04-21T22:20:00.000Z",
+          trainNo: "12615",
+          trainName: "Grand Trunk Express",
+          timestamp: DateTime.now().subtract(const Duration(minutes: 10)).toIso8601String(),
           a11Temp: 40.2,
           a12Temp: 41.8,
           a21Temp: 42.5,
@@ -105,10 +109,10 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
 
       setState(() {
         isRefreshing = false;
-        lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
+        lastUpdated = DateFormat('dd/MM/yy HH:mm:ss').format(DateTime.now());
         _allCoaches = mockData;
         
-        trainNumbers = ['All Trains', ...mockData.map((e) => e.owningRly).toSet()];
+        trainNumbers = ['All Trains', ...mockData.map((e) => e.trainNo).where((n) => n.isNotEmpty).toSet()];
         coachTypes = ['All Types', ...mockData.map((e) => e.coachType).toSet()];
         coachNumbers = ['All Unique IDs', ...mockData.map((e) => e.coachNumber).toSet()];
         

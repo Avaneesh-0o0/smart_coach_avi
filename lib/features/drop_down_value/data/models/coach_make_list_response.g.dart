@@ -6,6 +6,14 @@ part of 'coach_make_list_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 CoachMakeListResponse _$CoachMakeListResponseFromJson(
   Map<String, dynamic> json,
 ) => CoachMakeListResponse(
@@ -26,7 +34,7 @@ Map<String, dynamic> _$CoachMakeListResponseToJson(
 
 CoachMakeItem _$CoachMakeItemFromJson(Map<String, dynamic> json) =>
     CoachMakeItem(
-      id: (json['id'] as num?)?.toInt(),
+      id: _parseInt(json['id']),
       name: json['name'] as String?,
     );
 

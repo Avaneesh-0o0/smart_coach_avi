@@ -9,11 +9,12 @@ class LoadMasterModuleConfigurationList
 
 class CreateEditMasterModuleConfiguration
     extends MasterModuleConfigurationEvent {
-  final int? moduleId; //for edit
+  final int? moduleId;
+  final int? coachId;
   final MasterModuleConfigurationRequest masterModuleConfigurationRequest;
 
   CreateEditMasterModuleConfiguration(this.masterModuleConfigurationRequest,
-      {this.moduleId});
+      {this.moduleId, this.coachId});
 }
 
 class DeleteMasterModuleConfiguration extends MasterModuleConfigurationEvent {

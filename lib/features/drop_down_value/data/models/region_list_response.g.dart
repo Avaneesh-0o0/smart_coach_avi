@@ -6,6 +6,14 @@ part of 'region_list_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 RegionListResponse _$RegionListResponseFromJson(Map<String, dynamic> json) =>
     RegionListResponse(
       success: json['success'] as bool,
@@ -39,10 +47,10 @@ Map<String, dynamic> _$RegionListDataToJson(RegionListData instance) =>
     };
 
 RegionItem _$RegionItemFromJson(Map<String, dynamic> json) => RegionItem(
-  regionId: (json['region_id'] as num?)?.toInt(),
+  regionId: _parseInt(json['region_id']),
   name: json['name'] as String?,
-  divisionId: (json['division_id'] as num?)?.toInt(),
-  isActive: (json['is_active'] as num?)?.toInt(),
+  divisionId: _parseInt(json['division_id']),
+  isActive: _parseInt(json['is_active']),
   createdDate: json['created_date'] as String?,
   updatedDate: json['updated_date'] as String?,
 );

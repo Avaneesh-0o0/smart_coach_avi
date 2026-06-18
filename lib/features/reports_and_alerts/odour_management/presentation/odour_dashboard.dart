@@ -34,15 +34,15 @@ class _OdourDashboardState extends State<OdourDashboard> {
   String selectedViewType = 'Coaches';
   String lastUpdated = 'Never';
   bool isRefreshing = false;
-  bool showRecentOnly = false;
   Timer? _refreshTimer;
 
   List<String> trainNumbers = ['All Trains'];
   List<String> coachTypes = ['All Types'];
   List<String> coachNumbers = ['All Unique IDs'];
 
-  List<OdourCoachModel> _allCoaches = [];
-  List<OdourCoachModel> _filteredCoaches = [];
+  List<OdourCoachModel> _allRecords = [];
+  List<OdourCoachModel> _filteredRecords = [];
+  List<CoachToiletGroup> _groupedCoaches = [];
 
   @override
   void initState() {
@@ -58,10 +58,8 @@ class _OdourDashboardState extends State<OdourDashboard> {
   }
 
   void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (mounted) {
-        _refreshData(isBackgroundRefresh: true);
-      }
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) _refreshData(isBackgroundRefresh: true);
     });
   }
 
@@ -71,73 +69,102 @@ class _OdourDashboardState extends State<OdourDashboard> {
       selectedCoachType = 'All Types';
       selectedCoachNumber = 'All Unique IDs';
       selectedStatus = 'All';
-      showRecentOnly = false;
     });
     _applyFilters();
   }
 
   void _applyFilters() {
     setState(() {
-      _filteredCoaches = _allCoaches.where((coach) {
-        final matchesTrain = selectedTrainNumber == 'All Trains' || coach.trainNumber == selectedTrainNumber;
-        final matchesType = selectedCoachType == 'All Types' || coach.coachType == selectedCoachType;
-        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || coach.coachNumber == selectedCoachNumber;
-        final matchesStatus = selectedStatus == 'All' || 
-                             (selectedStatus == 'ON' && coach.isActive) ||
-                             (selectedStatus == 'OFF' && !coach.isActive);
-        final matchesRecent = !showRecentOnly || coach.isRecent;
-        
-        return matchesTrain && matchesType && matchesCoach && matchesStatus && matchesRecent;
+      _filteredRecords = _allRecords.where((r) {
+        final matchesTrain = selectedTrainNumber == 'All Trains' || r.trainNumber == selectedTrainNumber;
+        final matchesType = selectedCoachType == 'All Types' || r.coachType == selectedCoachType;
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || r.coachNumber == selectedCoachNumber;
+        final matchesStatus = selectedStatus == 'All' ||
+            (selectedStatus == 'ON' && r.isActive) ||
+            (selectedStatus == 'OFF' && !r.isActive);
+        return matchesTrain && matchesType && matchesCoach && matchesStatus;
       }).toList();
+      _groupedCoaches = CoachToiletGroup.groupByCoach(_filteredRecords);
     });
+  }
+
+  List<Map<String, dynamic>> _generateRichData() {
+    final now = DateTime.now();
+    final ts = DateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(now);
+    final data = <Map<String, dynamic>>[];
+
+    final trains = {
+      '12952': {'name': 'Rajdhani Express', 'route': 'NDLS-BCT'},
+      '12002': {'name': 'Shatabdi Express', 'route': 'NDLS-HBJ'},
+    };
+
+    for (final tEntry in trains.entries) {
+      final tNo = tEntry.key;
+      final tInfo = tEntry.value;
+      final coachCount = tNo == '12952' ? 2 : 1;
+      for (int c = 1; c <= coachCount; c++) {
+        final coachLabel = tNo == '12952' ? (c == 1 ? 'B1' : 'A1') : 'C1';
+        final coachType = tNo == '12952' ? (c == 1 ? '3AC' : '2AC') : 'CC';
+        final positions = ['L-Side-Front', 'R-Side-Front', 'L-Side-Rear', 'R-Side-Rear'];
+        for (int p = 0; p < positions.length; p++) {
+          final readings = tNo == '12952' && coachLabel == 'B1'
+              ? [85, 15, 72, 10]
+              : tNo == '12952' && coachLabel == 'A1'
+                  ? [12, 88, 0, 45]
+                  : [70, 55, 5, 30];
+          final isActive = readings[p] > 20;
+          data.add({
+            'coach_number': coachLabel,
+            'coach_type': coachType,
+            'toilet_position': positions[p],
+            'status': isActive ? 'Active' : 'Inactive',
+            'reading': readings[p],
+            'timestamp': ts,
+            'sensor_id': 'SENS-${coachLabel}-T${p + 1}',
+            'device_id': 'ODM-${coachLabel}-T${p + 1}',
+            'train_number': tNo,
+            'train_name': tInfo['name'],
+            'route': tInfo['route'],
+            'battery_level': [85, 92, 0, 78][p],
+            'refill_level': [42, 75, 10, 60][p],
+            'usage_count': [18, 4, 25, 2][p],
+            'cleanliness': ['Needs Cleaning', 'Clean', 'Unknown', 'Clean'][p],
+            'malfunction_alerts': p == 2 ? ['Power Failure', 'Refill Low'] : <String>[],
+          });
+        }
+      }
+    }
+    return data;
   }
 
   Future<void> _refreshData({bool isBackgroundRefresh = false}) async {
     if (!isBackgroundRefresh) {
       if (mounted) setState(() => isRefreshing = true);
     }
-
     try {
-      // Mocking data based on provided payload
       await Future.delayed(const Duration(milliseconds: 500));
-      
-      final List<OdourCoachModel> mockData = [
-        OdourCoachModel(
-          coachNumber: "B1",
-          coachType: "3AC",
-          toiletPosition: "L-Side-Front",
-          status: "Active",
-          reading: 85,
-          timestamp: DateTime.now().toIso8601String(),
-          sensorId: "SENS-001",
-          deviceId: "OMD-MASTER-01",
-          trainNumber: "12952",
-          trainName: "Rajdhani Express",
-          route: "NDLS-BCT",
-          isRecent: true,
-        ),
-        OdourCoachModel(
-          coachNumber: "B2",
-          coachType: "3AC",
-          toiletPosition: "R-Side-Rear",
-          status: "Inactive",
-          reading: 20,
-          timestamp: DateTime.now().subtract(const Duration(hours: 2)).toIso8601String(),
-          sensorId: "SENS-002",
-          deviceId: "OMD-MASTER-02",
-          trainNumber: "12952",
-          trainName: "Rajdhani Express",
-          route: "NDLS-BCT",
-        ),
-      ];
+      final rawData = _generateRichData();
+      final records = rawData.map((d) => OdourCoachModel(
+        coachNumber: d['coach_number'],
+        coachType: d['coach_type'],
+        toiletPosition: d['toilet_position'],
+        status: d['status'],
+        reading: d['reading'],
+        timestamp: d['timestamp'],
+        sensorId: d['sensor_id'],
+        deviceId: d['device_id'],
+        trainNumber: d['train_number'],
+        trainName: d['train_name'],
+        route: d['route'],
+        isRecent: true,
+      )).toList();
 
       if (mounted) {
         setState(() {
-          _allCoaches = mockData;
-          trainNumbers = ['All Trains', ...mockData.map((e) => e.trainNumber).toSet()];
-          coachTypes = ['All Types', ...mockData.map((e) => e.coachType).toSet()];
-          coachNumbers = ['All Unique IDs', ...mockData.map((e) => e.coachNumber).toSet()];
-          
+          _allRecords = records;
+          trainNumbers = ['All Trains', ...records.map((e) => e.trainNumber).toSet()];
+          coachTypes = ['All Types', ...records.map((e) => e.coachType).toSet()];
+          coachNumbers = ['All Unique IDs', ...records.map((e) => e.coachNumber).toSet()];
           _applyFilters();
           lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
           if (!isBackgroundRefresh) isRefreshing = false;
@@ -145,9 +172,7 @@ class _OdourDashboardState extends State<OdourDashboard> {
       }
     } catch (e) {
       log('Error refreshing odour data: $e');
-      if (mounted && !isBackgroundRefresh) {
-        setState(() => isRefreshing = false);
-      }
+      if (mounted && !isBackgroundRefresh) setState(() => isRefreshing = false);
     }
   }
 
@@ -170,17 +195,14 @@ class _OdourDashboardState extends State<OdourDashboard> {
               padding: const EdgeInsets.only(right: 16),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: ColorConstants.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                decoration: BoxDecoration(color: ColorConstants.white, borderRadius: BorderRadius.circular(8)),
                 child: Text('Last Updated: $lastUpdated', style: AppTextStyles.bodySmall),
               ),
             ),
           ),
         ],
       ),
-      body: isRefreshing && _allCoaches.isEmpty
+      body: isRefreshing && _allRecords.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _refreshData,
@@ -195,11 +217,11 @@ class _OdourDashboardState extends State<OdourDashboard> {
                     _buildSectionCard(child: _buildViewTypeSection()),
                     const SizedBox(height: 8),
                     if (selectedViewType == 'Coaches')
-                      _buildSectionCard(child: OdourCoachesView(coaches: _filteredCoaches))
+                      _buildSectionCard(child: OdourCoachesView(coaches: _filteredRecords, grouped: _groupedCoaches))
                     else if (selectedViewType == 'Chart View')
-                      _buildSectionCard(child: OdourChartView(coaches: _filteredCoaches))
+                      _buildSectionCard(child: OdourChartView(records: _allRecords))
                     else if (selectedViewType == 'Alerts')
-                      _buildSectionCard(child: const OdourAlertsView()),
+                      _buildSectionCard(child: OdourAlertsView(records: _allRecords)),
                   ],
                 ),
               ),
@@ -211,10 +233,7 @@ class _OdourDashboardState extends State<OdourDashboard> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-      decoration: BoxDecoration(
-        color: ColorConstants.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-      ),
+      decoration: BoxDecoration(color: ColorConstants.white, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
       child: child,
     );
   }
@@ -226,32 +245,17 @@ class _OdourDashboardState extends State<OdourDashboard> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              AppStrings.filters,
-              style: AppTextStyles.header2.copyWith(color: ColorConstants.primary),
-            ),
+            Text(AppStrings.filters, style: AppTextStyles.header2.copyWith(color: ColorConstants.primary)),
             GestureDetector(
               onTap: _clearFilters,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: ColorConstants.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.clear_all, size: 14, color: ColorConstants.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Clear Filters',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: ColorConstants.primary,
-                      ),
-                    ),
-                  ],
-                ),
+                decoration: BoxDecoration(color: ColorConstants.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                child: Row(children: [
+                  const Icon(Icons.clear_all, size: 14, color: ColorConstants.primary),
+                  const SizedBox(width: 4),
+                  Text('Clear Filters', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: ColorConstants.primary)),
+                ]),
               ),
             ),
           ],
@@ -259,32 +263,11 @@ class _OdourDashboardState extends State<OdourDashboard> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(
-              child: FilterDropdown(
-                label: AppStrings.trainNumber,
-                value: selectedTrainNumber,
-                items: trainNumbers,
-                onChanged: (v) => setState(() => selectedTrainNumber = v!),
-              ),
-            ),
+            Expanded(child: FilterDropdown(label: AppStrings.trainNumber, value: selectedTrainNumber, items: trainNumbers, onChanged: (v) { setState(() => selectedTrainNumber = v!); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(
-              child: FilterDropdown(
-                label: 'Coach Type',
-                value: selectedCoachType,
-                items: coachTypes,
-                onChanged: (v) => setState(() => selectedCoachType = v!),
-              ),
-            ),
+            Expanded(child: FilterDropdown(label: 'Coach Type', value: selectedCoachType, items: coachTypes, onChanged: (v) { setState(() => selectedCoachType = v!); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(
-              child: FilterDropdown(
-                label: 'Unique ID',
-                value: selectedCoachNumber,
-                items: coachNumbers,
-                onChanged: (v) => setState(() => selectedCoachNumber = v!),
-              ),
-            ),
+            Expanded(child: FilterDropdown(label: 'Unique ID', value: selectedCoachNumber, items: coachNumbers, onChanged: (v) { setState(() => selectedCoachNumber = v!); _applyFilters(); })),
           ],
         ),
         const SizedBox(height: 8),
@@ -311,57 +294,18 @@ class _OdourDashboardState extends State<OdourDashboard> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(
-              child: ActionButton(
-                label: AppStrings.sendAlerts,
-                svgIcon: AppIcons.alert,
-                onTap: () {}, // Implement Send Alert Dialog if needed
-                isPrimary: true,
-                isFullWidth: true,
-              ),
-            ),
+            Expanded(child: ActionButton(label: AppStrings.sendAlerts, svgIcon: AppIcons.alert, onTap: _sendAlerts, isPrimary: true, isFullWidth: true)),
             const SizedBox(width: 8),
-            Expanded(
-              child: ActionButton(
-                label: AppStrings.generateReport,
-                svgIcon: AppIcons.report,
-                onTap: () {
-                  OdourReportGenerator.generate(context, _allCoaches);
-                },
-                isFullWidth: true,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ActionButton(
-                label: 'Recent',
-                svgIcon: AppIcons.alert,
-                onTap: () {
-                  setState(() => showRecentOnly = !showRecentOnly);
-                  _applyFilters();
-                },
-                isPrimary: showRecentOnly,
-                isFullWidth: true,
-              ),
-            ),
+            Expanded(child: ActionButton(label: AppStrings.generateReport, svgIcon: AppIcons.report, onTap: () => OdourReportGenerator.generate(context, _allRecords), isFullWidth: true)),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: isRefreshing ? () {} : _refreshData,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: ColorConstants.cardBackground,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-                  border: Border.all(color: ColorConstants.divider),
-                ),
-                child: isRefreshing 
+                decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusMedium), border: Border.all(color: ColorConstants.divider)),
+                child: isRefreshing
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: ColorConstants.primary))
-                    : SvgPicture.asset(
-                        AppIcons.refresh,
-                        width: 18,
-                        height: 18,
-                        colorFilter: const ColorFilter.mode(ColorConstants.iconGrey, BlendMode.srcIn),
-                      ),
+                    : SvgPicture.asset(AppIcons.refresh, width: 18, height: 18, colorFilter: const ColorFilter.mode(ColorConstants.iconGrey, BlendMode.srcIn)),
               ),
             ),
           ],
@@ -370,21 +314,23 @@ class _OdourDashboardState extends State<OdourDashboard> {
     );
   }
 
+  void _sendAlerts() {
+    final alertCoaches = _allRecords.where((r) => r.hasAlert).map((r) => '${r.coachNumber} (${r.toiletPosition})').toSet().join(', ');
+    if (alertCoaches.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No active odour alerts.')));
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Alert sent for: $alertCoaches'), backgroundColor: ColorConstants.statusCritical));
+  }
+
   Widget _buildViewTypeSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text(AppStrings.viewType, style: AppTextStyles.header2),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: ViewTypeSelector(label: "Coaches", svgIcon: AppIcons.coaches, isSelected: selectedViewType == 'Coaches', onTap: () => setState(() => selectedViewType = 'Coaches'))),
-            const SizedBox(width: 8),
-            Expanded(child: ViewTypeSelector(label: "Chart View", svgIcon: AppIcons.graph, isSelected: selectedViewType == 'Chart View', onTap: () => setState(() => selectedViewType = 'Chart View'))),
-            const SizedBox(width: 8),
-            Expanded(child: ViewTypeSelector(label: "Alerts", svgIcon: AppIcons.alert, isSelected: selectedViewType == 'Alerts', onTap: () => setState(() => selectedViewType = 'Alerts'))),
-          ],
-        ),
+        Expanded(child: ViewTypeSelector(label: "Coaches", svgIcon: AppIcons.coaches, isSelected: selectedViewType == 'Coaches', onTap: () => setState(() => selectedViewType = 'Coaches'))),
+        const SizedBox(width: 8),
+        Expanded(child: ViewTypeSelector(label: "Chart View", svgIcon: AppIcons.graph, isSelected: selectedViewType == 'Chart View', onTap: () => setState(() => selectedViewType = 'Chart View'))),
+        const SizedBox(width: 8),
+        Expanded(child: ViewTypeSelector(label: "Alerts", svgIcon: AppIcons.alert, isSelected: selectedViewType == 'Alerts', onTap: () => setState(() => selectedViewType = 'Alerts'))),
       ],
     );
   }

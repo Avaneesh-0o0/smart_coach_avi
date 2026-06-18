@@ -15,6 +15,7 @@ class MasterModuleDetailDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deviceNames = masterModuleEntity.deviceNames;
+    final devices = masterModuleEntity.devices;
 
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
@@ -47,7 +48,7 @@ class MasterModuleDetailDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTwoCols('Module ID', masterModuleEntity.moduleUniqueId,
-                      'Coach ID', masterModuleEntity.coach?.coachUniqueId),
+                      'Coach Display', masterModuleEntity.coach?.coachUniqueId),
                   _buildTwoCols('Make/Model', masterModuleEntity.makeModel,
                       'Firmware Version', masterModuleEntity.firmwareVersion),
                   _buildTwoCols(
@@ -88,11 +89,24 @@ class MasterModuleDetailDialog extends StatelessWidget {
                     'Battery Recharge Date',
                     _formatDateTime(masterModuleEntity.batteryRechargeDate),
                   ),
+                  if (masterModuleEntity.placementType == 'Other')
+                    _buildTwoCols(
+                      'Specify Placement Location',
+                      masterModuleEntity.specifyPlacementLocation,
+                      '',
+                      '',
+                    ),
                   _buildTwoCols(
+                    'Power Supply',
+                    masterModuleEntity.powerSupplyAvailable ?? 'N/A',
                     'Lora Enabled',
                     masterModuleEntity.loraEnabled ? 'Yes' : 'No',
+                  ),
+                  _buildTwoCols(
                     'E-Sim Enabled',
                     masterModuleEntity.esimEnabled ? 'Yes' : 'No',
+                    '',
+                    '',
                   ),
                   _buildTwoCols(
                     'Dual Profile',
@@ -100,20 +114,30 @@ class MasterModuleDetailDialog extends StatelessWidget {
                     'Train No/Name',
                     '${masterModuleEntity.train?.trainNumber ?? 'N/A'} - ${masterModuleEntity.train?.trainName ?? ''}',
                   ),
-                  if (deviceNames.isNotEmpty)
+                  if (devices != null && devices.isNotEmpty)
+                    _buildTwoCols('Total Devices', devices.length.toString(),
+                        'Device Count', '${devices.length}'),
+                  if (devices != null && devices.isNotEmpty)
+                    SizedBox(height: 0.5.h),
+                  if (devices != null && devices.isNotEmpty)
                     Text('Attached Devices',
                         style: TextStyle(
                             fontSize: 11.sp, color: Colors.grey.shade700)),
-                  if (deviceNames.isNotEmpty) SizedBox(height: 0.5.h),
-                  if (deviceNames.isNotEmpty)
-                    Wrap(
-                      spacing: 2.w,
-                      runSpacing: 1.h,
-                      children: deviceNames
-                          .map((name) => _chipView(name,
-                              const Color(0xFFE4ECFD), const Color(0xFF1F56C3)))
-                          .toList(),
-                    ),
+                  if (devices != null && devices.isNotEmpty)
+                    SizedBox(height: 0.5.h),
+                  if (devices != null && devices.isNotEmpty)
+                    ...devices.map((device) => Padding(
+                      padding: EdgeInsets.only(bottom: 0.5.h),
+                      child:                       _buildTwoCols(
+                        'Device Name',
+                        (device.fullName != null && device.fullName!.isNotEmpty)
+                            ? device.fullName!
+                            : (device.shortName != null && device.shortName!.isNotEmpty)
+                                ? device.shortName!
+                                : (device.deviceUniqueId ?? device.deviceId ?? 'N/A'),
+                        'Status', device.isActive == 1 ? 'Active' : 'Inactive',
+                      ),
+                    )),
                   SizedBox(height: 1.h),
                   _buildTwoCols(
                     'Created By',

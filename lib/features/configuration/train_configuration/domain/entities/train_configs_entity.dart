@@ -65,7 +65,7 @@ class TrainConfigsEntity {
       destinationStationId: model.destinationStationId,
       numberOfCoaches: model.numberOfCoaches,
       line: Utils.normalizeDropDownValue(model.line, Constants.lineList),
-      trainOperator: Utils.normalizeDropDownValue(model.trainOperator, Constants.trainOperatorList),
+      trainOperator: model.trainOperator,
       engineNumber: model.engineNumber,
       createdAt: model.createdAt,
       createdBy: model.createdBy,

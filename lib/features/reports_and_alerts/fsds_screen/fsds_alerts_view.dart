@@ -18,7 +18,7 @@ class FsdsAlertsView extends StatefulWidget {
 class _FsdsAlertsViewState extends State<FsdsAlertsView> {
   @override
   Widget build(BuildContext context) {
-    final alerts = widget.assets.where((a) => a.isSmokeDetected).toList();
+    final alerts = widget.assets.where((a) => a.isAlertActive).toList();
 
     if (alerts.isEmpty) {
       return Center(
@@ -29,7 +29,7 @@ class _FsdsAlertsViewState extends State<FsdsAlertsView> {
               Icon(Icons.check_circle_outline, size: 48, color: Colors.green.withValues(alpha: 0.5)),
               const SizedBox(height: 12),
               Text(
-                'No active smoke/fire alerts',
+                'No active FSDS bypass alerts',
                 style: AppTextStyles.bodyMedium.copyWith(color: ColorConstants.textSecondary),
               ),
             ],
@@ -65,8 +65,11 @@ class _FsdsAlertsViewState extends State<FsdsAlertsView> {
   }
 
   Widget _buildAlertCard(FsdsAssetModel alert) {
-    final date = DateTime.parse(alert.timestamp);
-    final timeStr = DateFormat('MMM dd, HH:mm:ss').format(date);
+    String timeStr = 'N/A';
+    try {
+      final date = DateTime.parse(alert.timestamp);
+      timeStr = DateFormat('MMM dd, HH:mm:ss').format(date);
+    } catch (_) {}
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -90,17 +93,17 @@ class _FsdsAlertsViewState extends State<FsdsAlertsView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'SMOKE DETECTED',
+                  'FSDS BYPASS ACTIVE',
                   style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFD32F2F)),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${alert.assetName}  |  $timeStr',
+                  '${alert.deviceName.isNotEmpty ? alert.deviceName : alert.coachDisplayId}  |  $timeStr',
                   style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFE53935)),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Smoke Level: ${alert.smokeLevel}%  |  Light: ${alert.lightValue}',
+                  'Device: ${alert.deviceId}  |  Location: ${alert.location}',
                   style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: const Color(0xFFD32F2F)),
                 ),
               ],

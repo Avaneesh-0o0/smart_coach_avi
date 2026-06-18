@@ -44,7 +44,3 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# User specified exclusions
-lib/features/user_management/
-lib/features/device_management/sensor_type_configuration/
-lib/features/reports_and_alerts/break_binding/

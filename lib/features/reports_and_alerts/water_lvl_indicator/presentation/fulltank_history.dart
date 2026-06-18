@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'package:smart_coach_new/core/utils/app_dimensions.dart';
 import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
@@ -219,7 +220,7 @@ class _FullTankHistoryState extends State<FullTankHistory> {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              'Last Updated: 10:46 AM',
+              'Last Updated: ${DateFormat('HH:mm').format(DateTime.now())}',
               style: AppTextStyles.bodySmall,
             ),
           ),

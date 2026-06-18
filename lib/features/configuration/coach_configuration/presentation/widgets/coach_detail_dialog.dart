@@ -49,8 +49,8 @@ class CoachDetailDialog extends StatelessWidget {
 
               /// Coach Info Fields
               _buildTwoCols(
-                'Coach ID',
-                coachEntity.coachId?.toString(),
+                'Coach Display ID',
+                coachEntity.coachDisplayId,
                 'Entity Type',
                 coachEntity.entityType,
               ),
@@ -63,13 +63,12 @@ class CoachDetailDialog extends StatelessWidget {
               _buildTwoCols(
                 'Type',
                 coachEntity.typeOfCoach,
-                'Seating Capacity',
-                '24',
+                'Position',
+                coachEntity.position?.toString(),
               ),
-              // hardcoded as per screenshot
               _buildTwoCols(
                 'Manufacturing Year',
-                coachEntity.manufacturingYear.toString(),
+                coachEntity.manufacturingYear?.toString(),
                 '# Master Modules',
                 coachEntity.noOfMasterModule?.toString(),
               ),
@@ -77,11 +76,18 @@ class CoachDetailDialog extends StatelessWidget {
 
               SizedBox(height: 1.h),
               _buildTwoCols(
-                'Created By',
-                coachEntity.createdBy?.toString(),
+                'Created',
+                _formatDateTime(coachEntity.createdAt),
                 'Last Updated',
                 _formatDateTime(coachEntity.updatedAt),
               ),
+              if (coachEntity.createdBy != null || coachEntity.updatedBy != null)
+                _buildTwoCols(
+                  'Created By',
+                  coachEntity.createdBy?.toString(),
+                  'Updated By',
+                  coachEntity.updatedBy?.toString(),
+                ),
               SizedBox(height: 2.h),
 
               /// Action Button
@@ -171,17 +177,17 @@ class CoachDetailDialog extends StatelessWidget {
     required String label,
     required String? statusValue,
   }) {
-    bool isActive =
-        statusValue?.toLowerCase() == DeviceStatus.active.name.toLowerCase();
-    bool isUnderMaintenance =
-        statusValue?.toLowerCase() ==
-        DeviceStatus.underMaintenance.name.toLowerCase();
-    bool isRetired =
-        statusValue?.toLowerCase() == DeviceStatus.retired.name.toLowerCase();
+    final s = statusValue?.toLowerCase().replaceAll(' ', '') ?? '';
+    bool isActive = s == DeviceStatus.active.name;
+    bool isInactive = s == DeviceStatus.inactive.name;
+    bool isUnderMaintenance = s == DeviceStatus.underMaintenance.name;
+    bool isRetired = s == DeviceStatus.retired.name;
 
     Color color = Colors.black;
     if (isActive) {
       color = Colors.green;
+    } else if (isInactive) {
+      color = Colors.grey;
     } else if (isUnderMaintenance) {
       color = const Color(0xFFC0AF6A);
     } else if (isRetired) {

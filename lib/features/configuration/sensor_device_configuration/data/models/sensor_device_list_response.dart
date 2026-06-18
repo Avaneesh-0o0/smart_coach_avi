@@ -188,6 +188,17 @@ class SensorDeviceItem {
   @JsonKey(name: 'total_devices_attached')
   final int? totalDevicesAttached;
 
+  @JsonKey(name: 'tech_coach_no')
+  final String? techCoachNo;
+
+  @JsonKey(name: 'comm_coach_no')
+  final String? commCoachNo;
+
+  @JsonKey(name: 'train_no')
+  final String? trainNo;
+
+  final String? status;
+
   SensorDeviceItem({
     this.sensorConfigId,
     this.sensorTypeId,
@@ -246,7 +257,11 @@ class SensorDeviceItem {
     this.position,
     this.noOfMasterModule,
     this.coachStatus,
-    this.totalDevicesAttached
+    this.totalDevicesAttached,
+    this.techCoachNo,
+    this.commCoachNo,
+    this.trainNo,
+    this.status
   });
 
   factory SensorDeviceItem.fromJson(Map<String, dynamic> json) =>

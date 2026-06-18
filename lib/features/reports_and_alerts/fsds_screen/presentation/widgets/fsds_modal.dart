@@ -11,7 +11,8 @@ class FsdsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAlert = coach.isSmokeDetected;
+    final isBypassOn = coach.isBypassOn;
+    final isAlert = coach.isAlertActive;
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
@@ -36,7 +37,7 @@ class FsdsModal extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  isAlert ? 'Smoke Detected' : 'FSDS Status',
+                  isAlert ? 'FSDS Bypass Alert' : 'FSDS Bypass Status',
                   style: GoogleFonts.poppins(
                     fontSize: 16, 
                     fontWeight: FontWeight.w600, 
@@ -51,7 +52,7 @@ class FsdsModal extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      // Coach header
+                      // Device header
                       Row(
                         children: [
                           Container(
@@ -61,20 +62,33 @@ class FsdsModal extends StatelessWidget {
                               borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
                             ),
                             child: Icon(
-                              isAlert ? Icons.local_fire_department : Icons.check_circle_outline,
+                              isAlert ? Icons.warning_amber_rounded : Icons.check_circle_outline,
                               color: isAlert ? const Color(0xFFEF5350) : const Color(0xFF2E7D32),
                               size: 24,
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              coach.assetName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: ColorConstants.primary,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  coach.deviceName.isNotEmpty ? coach.deviceName : coach.coachDisplayId,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: ColorConstants.primary,
+                                  ),
+                                ),
+                                if (coach.coachNumber.isNotEmpty)
+                                  Text(
+                                    'Coach: ${coach.coachNumber}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: ColorConstants.textSecondary,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -85,7 +99,7 @@ class FsdsModal extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              '\u2022 ${isAlert ? "ALERT" : "NORMAL"}',
+                              '\u2022 ${isBypassOn ? "BYPASS" : "NORMAL"}',
                               style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: isAlert ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32)),
                             ),
                           ),
@@ -101,23 +115,33 @@ class FsdsModal extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            _buildDetailRow('Asset ID', coach.assetId, showTopBorder: false),
-                            _buildDetailRow('Sensor ID', coach.sensorId),
-                            _buildDetailRow('Location ID', coach.locId),
-                            _buildDetailRow('Location', coach.locName),
+                            _buildDetailRow('Device ID', coach.deviceId, showTopBorder: false),
+                            _buildDetailRow('Device Name', coach.deviceName),
+                            _buildDetailRow('Coach ID', coach.coachUniqueId),
+                            _buildDetailRow('Coach Number', coach.coachDisplayId.isNotEmpty ? coach.coachDisplayId : coach.coachNumber),
+                            _buildDetailRow('Train No', coach.trainNo),
+                            _buildDetailRow('Train Name', coach.trainName),
+                            _buildDetailRow('Location', coach.location),
                             _buildDetailRow(
-                              'SMOKE LEVEL', 
-                              '${coach.smokeLevel}',
+                              'FSDS Bypass', 
+                              coach.bypassStatusText,
+                              valueColor: isBypassOn ? Colors.orange : Colors.green,
+                            ),
+                            _buildDetailRow(
+                              'Alert Status', 
+                              coach.alertStatusText,
                               valueColor: isAlert ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32),
                             ),
-                            _buildDetailRow('LIGHT VALUE', '${coach.lightValue}'),
+                            _buildDetailRow('Sensor ID', coach.sensorId.isNotEmpty ? coach.sensorId : 'N/A'),
                             _buildDetailRow('Timestamp', coach.timestamp),
+                            if (coach.remarks.isNotEmpty)
+                              _buildDetailRow('Remarks', coach.remarks),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
 
-                      // Buttons
+                      // Close button
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton(

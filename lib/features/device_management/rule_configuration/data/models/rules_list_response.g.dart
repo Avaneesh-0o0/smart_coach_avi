@@ -6,6 +6,14 @@ part of 'rules_list_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 RulesListResponse _$RulesListResponseFromJson(Map<String, dynamic> json) =>
     RulesListResponse(
       success: json['success'] as bool,
@@ -23,9 +31,9 @@ Map<String, dynamic> _$RulesListResponseToJson(RulesListResponse instance) =>
     };
 
 RuleItem _$RuleItemFromJson(Map<String, dynamic> json) => RuleItem(
-  ruleId: (json['rule_id'] as num?)?.toInt(),
+  ruleId: _parseInt(json['rule_id']),
   ruleName: json['rule_name'] as String?,
-  evaluationFrequency: (json['evaluation_frequency'] as num?)?.toInt(),
+  evaluationFrequency: _parseInt(json['evaluation_frequency']),
   evaluationUnit: json['evaluation_unit'] as String?,
   createdBy: json['created_by'] as String?,
   updatedBy: json['updated_by'] as String?,
@@ -73,7 +81,7 @@ Map<String, dynamic> _$DeviceItemToJson(DeviceItem instance) =>
 
 SensorTypeItem _$SensorTypeItemFromJson(Map<String, dynamic> json) =>
     SensorTypeItem(
-      sensorTypeId: (json['sensor_type_id'] as num?)?.toInt(),
+      sensorTypeId: _parseInt(json['sensor_type_id']),
       name: json['name'] as String?,
     );
 
@@ -85,7 +93,7 @@ Map<String, dynamic> _$SensorTypeItemToJson(SensorTypeItem instance) =>
 
 ConditionItem _$ConditionItemFromJson(Map<String, dynamic> json) =>
     ConditionItem(
-      conditionId: (json['condition_id'] as num?)?.toInt(),
+      conditionId: _parseInt(json['condition_id']),
       valueType: json['value_type'] as String?,
       valueFormat: json['value_format'] as String?,
       connector: json['connector'] as String?,
@@ -100,9 +108,9 @@ ConditionItem _$ConditionItemFromJson(Map<String, dynamic> json) =>
       subConditions: (json['sub_conditions'] as List<dynamic>?)
           ?.map((e) => SubConditionItem.fromJson(e as Map<String, dynamic>))
           .toList(),
-      valueTypeId: (json['value_type_id'] as num?)?.toInt(),
-      unitId: (json['unit_id'] as num?)?.toInt(),
-      alertTypeId: (json['alert_type_id'] as num?)?.toInt(),
+      valueTypeId: _parseInt(json['value_type_id']),
+      unitId: _parseInt(json['unit_id']),
+      alertTypeId: _parseInt(json['alert_type_id']),
     );
 
 Map<String, dynamic> _$ConditionItemToJson(ConditionItem instance) =>
@@ -124,9 +132,9 @@ Map<String, dynamic> _$ConditionItemToJson(ConditionItem instance) =>
 SubConditionItem _$SubConditionItemFromJson(Map<String, dynamic> json) =>
     SubConditionItem(
       operator: json['operator'] as String?,
-      thresholdValue: (json['threshold_value'] as num?)?.toInt(),
+      thresholdValue: _parseInt(json['threshold_value']),
       connector: json['connector'] as String?,
-      sortOrder: (json['sort_order'] as num?)?.toInt(),
+      sortOrder: _parseInt(json['sort_order']),
     );
 
 Map<String, dynamic> _$SubConditionItemToJson(SubConditionItem instance) =>

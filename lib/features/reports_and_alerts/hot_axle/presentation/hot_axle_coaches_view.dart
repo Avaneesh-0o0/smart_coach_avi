@@ -38,10 +38,11 @@ class HotAxleCoachesView extends StatelessWidget {
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
-            final cardWidth = (constraints.maxWidth - 10) / 2;
+            final spacing = 10.0;
+            final cardWidth = (constraints.maxWidth - spacing) / 2;
             return Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: spacing,
+              runSpacing: spacing,
               children: coaches.map((coach) => SizedBox(
                 width: cardWidth,
                 child: HotAxleCoachCard(

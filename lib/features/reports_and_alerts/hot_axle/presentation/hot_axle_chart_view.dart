@@ -24,18 +24,12 @@ class _HotAxleChartViewState extends State<HotAxleChartView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Temperature Trends', style: AppTextStyles.header2),
-            Flexible(
-              child: PeriodFilter(
-                selected: selectedPeriod,
-                periods: const ['Live', '7 Days', '30 Days'],
-                onChanged: (v) => setState(() => selectedPeriod = v),
-              ),
-            ),
-          ],
+        Text('Temperature Trends', style: AppTextStyles.header2),
+        const SizedBox(height: 12),
+        PeriodFilter(
+          selected: selectedPeriod,
+          periods: const ['Live', '7 Days', '15 Days', '30 Days'],
+          onChanged: (v) => setState(() => selectedPeriod = v),
         ),
         const SizedBox(height: 24),
         SizedBox(
@@ -58,17 +52,17 @@ class _HotAxleChartViewState extends State<HotAxleChartView> {
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 30,
-                    interval: 1,
+                    interval: selectedPeriod == 'Live' ? 2 : (selectedPeriod == '7 Days' ? 1 : (selectedPeriod == '15 Days' ? 2 : 5)),
                     getTitlesWidget: (value, meta) {
                       String text = '';
                       if (selectedPeriod == 'Live') {
-                        text = '${value.toInt()}:00';
+                        text = '${value.toInt().toString().padLeft(2, '0')}:00';
                       } else {
-                        text = 'Day ${value.toInt()}';
+                        text = 'D${value.toInt()}';
                       }
                       return Padding(
                         padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(text, style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textTertiary)),
+                        child: Text(text, style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textTertiary)),
                       );
                     },
                   ),
@@ -79,14 +73,14 @@ class _HotAxleChartViewState extends State<HotAxleChartView> {
                     interval: 20,
                     reservedSize: 42,
                     getTitlesWidget: (value, meta) {
-                      return Text('${value.toInt()}°C', style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textTertiary));
+                      return Text('${value.toInt()}°C', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textTertiary));
                     },
                   ),
                 ),
               ),
               borderData: FlBorderData(show: false),
               minX: 0,
-              maxX: selectedPeriod == 'Live' ? 12 : (selectedPeriod == '7 Days' ? 7 : 30),
+              maxX: selectedPeriod == 'Live' ? 12 : (selectedPeriod == '7 Days' ? 7 : (selectedPeriod == '15 Days' ? 15 : 30)),
               minY: 0,
               maxY: 120,
               clipData: const FlClipData.all(),
@@ -118,7 +112,6 @@ class _HotAxleChartViewState extends State<HotAxleChartView> {
   }
 
   List<FlSpot> _generateSpots() {
-    // Dummy chronological data showing temperature fluctuations
     if (selectedPeriod == 'Live') {
       return const [
         FlSpot(0, 45), FlSpot(1, 48), FlSpot(2, 52), FlSpot(3, 50),
@@ -130,6 +123,13 @@ class _HotAxleChartViewState extends State<HotAxleChartView> {
         FlSpot(0, 40), FlSpot(1, 42), FlSpot(2, 60), FlSpot(3, 45),
         FlSpot(4, 38), FlSpot(5, 55), FlSpot(6, 40), FlSpot(7, 45),
       ];
+    } else if (selectedPeriod == '15 Days') {
+      return [
+        FlSpot(0, 40), FlSpot(1, 42), FlSpot(2, 38), FlSpot(3, 45),
+        FlSpot(4, 50), FlSpot(5, 55), FlSpot(6, 52), FlSpot(7, 48),
+        FlSpot(8, 45), FlSpot(9, 50), FlSpot(10, 55), FlSpot(11, 60),
+        FlSpot(12, 58), FlSpot(13, 52), FlSpot(14, 48), FlSpot(15, 45),
+      ];
     } else {
       return List.generate(31, (i) => FlSpot(i.toDouble(), 40 + (i % 10).toDouble() * 4));
     }
@@ -138,19 +138,22 @@ class _HotAxleChartViewState extends State<HotAxleChartView> {
   Widget _buildLegend() {
     return Row(
       children: [
-        _legendItem('Critical Temp', const Color(0xFFFF5252)),
+        _legendItem('Critical Temp (>80°C)', const Color(0xFFFF5252)),
         const SizedBox(width: 16),
-        _legendItem('Normal Temp', ColorConstants.primary),
+        _legendItem('Warning Temp (60-80°C)', const Color(0xFFBE8B22)),
+        const SizedBox(width: 16),
+        _legendItem('Normal Temp (<60°C)', ColorConstants.primary),
       ],
     );
   }
 
   Widget _legendItem(String label, Color color) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 4),
-        Text(label, style: AppTextStyles.bodySmall),
+        Flexible(child: Text(label, style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textTertiary))),
       ],
     );
   }

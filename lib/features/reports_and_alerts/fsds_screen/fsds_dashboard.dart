@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:smart_coach_new/core/di/inject.dart';
+import 'package:smart_coach_new/core/network/rest_client.dart';
 import 'package:smart_coach_new/core/utils/app_dimensions.dart';
 import 'package:smart_coach_new/core/utils/app_icons.dart';
 import 'package:smart_coach_new/core/utils/app_strings.dart';
@@ -13,6 +15,8 @@ import 'package:smart_coach_new/core/widgets/action_button.dart';
 import 'package:smart_coach_new/core/widgets/filter_dropdown.dart';
 import 'package:smart_coach_new/core/widgets/status_chip.dart';
 import 'package:smart_coach_new/core/widgets/view_type_selector.dart';
+import 'data/datasource/fsds_remote_data_source.dart';
+import 'data/repository/fsds_repository.dart';
 import 'data/models/fsds_model.dart';
 import 'presentation/widgets/fsds_report_generator.dart';
 import 'fsds_coaches_view.dart';
@@ -45,9 +49,14 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
   List<FsdsAssetModel> _allAssets = [];
   List<FsdsAssetModel> _filteredAssets = [];
 
+  late final FsdsRepository _repository;
+
   @override
   void initState() {
     super.initState();
+    final restClient = getIt<RestClient>();
+    final dataSource = FsdsRemoteDataSourceImpl(restClient);
+    _repository = FsdsRepository(dataSource);
     _refreshData();
     _startAutoRefresh();
   }
@@ -59,7 +68,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
   }
 
   void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (mounted) {
         _refreshData(isBackgroundRefresh: true);
       }
@@ -80,14 +89,15 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
   void _applyFilters() {
     setState(() {
       _filteredAssets = _allAssets.where((asset) {
-        final matchesTrain = selectedTrainNumber == 'All Trains' || asset.locName.contains(selectedTrainNumber);
-        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || asset.assetName.contains(selectedCoachNumber);
+        final matchesTrain = selectedTrainNumber == 'All Trains' || asset.trainNo.contains(selectedTrainNumber) || asset.trainName.contains(selectedTrainNumber);
+        final matchesCoachType = selectedCoachType == 'All Types' || asset.coachDisplayId.contains(selectedCoachType);
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || asset.coachUniqueId.contains(selectedCoachNumber) || asset.coachDisplayId.contains(selectedCoachNumber);
         final matchesStatus = selectedStatus == 'All' || 
-                             (selectedStatus == 'ON' && asset.isSmokeDetected) ||
-                             (selectedStatus == 'OFF' && !asset.isSmokeDetected);
+                             (selectedStatus == 'ON' && asset.isBypassOn) ||
+                             (selectedStatus == 'OFF' && !asset.isBypassOn);
         final matchesRecent = !showRecentOnly || asset.isRecent;
         
-        return matchesTrain && matchesCoach && matchesStatus && matchesRecent;
+        return matchesTrain && matchesCoachType && matchesCoach && matchesStatus && matchesRecent;
       }).toList();
     });
   }
@@ -98,47 +108,14 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
     }
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Mock data based on FSDS payload
-      final List<FsdsAssetModel> mockData = [
-        FsdsAssetModel(
-          assetId: "7d831f05-d38f-4c41-833a-1c43fa9a240a",
-          assetName: "GS 255386 FSDS 1",
-          timestamp: "2026-04-23T10:18:19.209Z",
-          lightValue: 1023,
-          smokeLevel: 45,
-          sensorId: "FSDS_TEST_001",
-          locName: "VASP FSDS Train 8",
-          locId: "be3c934f-28ed-4300-b278-aabfa8d1eca6",
-        ),
-        FsdsAssetModel(
-          assetId: "8e942f16-e49g-5d52-944b-2d54gb0b351b",
-          assetName: "GS 255387 FSDS 2",
-          timestamp: "2026-04-23T10:25:00.000Z",
-          lightValue: 100,
-          smokeLevel: 10,
-          sensorId: "FSDS_TEST_002",
-          locName: "VASP FSDS Train 8",
-          locId: "be3c934f-28ed-4300-b278-aabfa8d1eca6",
-        ),
-        FsdsAssetModel(
-          assetId: "9f053g27-f50h-6e63-055c-3e65hc1c462c",
-          assetName: "GS 255388 FSDS 3",
-          timestamp: "2026-04-23T10:30:00.000Z",
-          lightValue: 512,
-          smokeLevel: 65,
-          sensorId: "FSDS_TEST_003",
-          locName: "VASP FSDS Train 8",
-          locId: "be3c934f-28ed-4300-b278-aabfa8d1eca6",
-        ),
-      ];
+      final assets = await _repository.getFsdsStatus();
 
       if (mounted) {
         setState(() {
-          _allAssets = mockData;
-          trainNumbers = ['All Trains', ...mockData.map((e) => e.locName).toSet()];
-          coachNumbers = ['All Unique IDs', ...mockData.map((e) => e.assetName).toSet()];
+          _allAssets = assets;
+          trainNumbers = ['All Trains', ...assets.map((e) => e.trainNo).where((n) => n.isNotEmpty).toSet()];
+          coachTypes = ['All Types', ...assets.map((e) => e.coachDisplayId).where((c) => c.isNotEmpty).toSet()];
+          coachNumbers = ['All Unique IDs', ...assets.map((e) => e.coachUniqueId).where((c) => c.isNotEmpty).toSet()];
           
           _applyFilters();
           lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
@@ -165,7 +142,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
           icon: const Icon(Icons.arrow_back, color: ColorConstants.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(widget.title ?? "FSDS Dashboard", style: AppTextStyles.header1),
+        title: Text(widget.title ?? "FSDS Bypass Dashboard", style: AppTextStyles.header1),
         actions: [
           Center(
             child: Padding(
@@ -265,7 +242,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                 label: AppStrings.trainNumber,
                 value: selectedTrainNumber,
                 items: trainNumbers,
-                onChanged: (v) => setState(() => selectedTrainNumber = v!),
+                onChanged: (v) { setState(() => selectedTrainNumber = v!); _applyFilters(); },
               ),
             ),
             const SizedBox(width: 8),
@@ -274,7 +251,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                 label: 'Coach Type',
                 value: selectedCoachType,
                 items: coachTypes,
-                onChanged: (v) => setState(() => selectedCoachType = v!),
+                onChanged: (v) { setState(() => selectedCoachType = v!); _applyFilters(); },
               ),
             ),
             const SizedBox(width: 8),
@@ -283,7 +260,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
                 label: 'Unique ID',
                 value: selectedCoachNumber,
                 items: coachNumbers,
-                onChanged: (v) => setState(() => selectedCoachNumber = v!),
+                onChanged: (v) { setState(() => selectedCoachNumber = v!); _applyFilters(); },
               ),
             ),
           ],
@@ -295,9 +272,9 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
           children: [
             Expanded(child: StatusChip(label: AppStrings.all, isSelected: selectedStatus == 'All', onTap: () { setState(() => selectedStatus = 'All'); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(child: StatusChip(label: 'Alert', isSelected: selectedStatus == 'ON', onTap: () { setState(() => selectedStatus = 'ON'); _applyFilters(); })),
+            Expanded(child: StatusChip(label: 'Bypass ON', isSelected: selectedStatus == 'ON', onTap: () { setState(() => selectedStatus = 'ON'); _applyFilters(); })),
             const SizedBox(width: 8),
-            Expanded(child: StatusChip(label: 'Normal', isSelected: selectedStatus == 'OFF', onTap: () { setState(() => selectedStatus = 'OFF'); _applyFilters(); })),
+            Expanded(child: StatusChip(label: 'Bypass OFF', isSelected: selectedStatus == 'OFF', onTap: () { setState(() => selectedStatus = 'OFF'); _applyFilters(); })),
           ],
         ),
       ],
@@ -316,7 +293,7 @@ class _FsdsDashboardState extends State<FsdsDashboard> {
               child: ActionButton(
                 label: AppStrings.sendAlerts,
                 svgIcon: AppIcons.alert,
-                onTap: () {}, // Implement Send Alert Dialog if needed
+                onTap: () {},
                 isPrimary: true,
                 isFullWidth: true,
               ),

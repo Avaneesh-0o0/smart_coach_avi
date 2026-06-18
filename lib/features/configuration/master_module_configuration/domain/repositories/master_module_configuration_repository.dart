@@ -20,4 +20,6 @@ abstract class MasterModuleConfigurationRepository {
   Future<String> deleteMasterModuleConfiguration(int? moduleId);
 
   Future<List<CoachEntity>> getAllCoachesList();
+
+  Future<void> increaseCoachModuleLimit(int coachId);
 }

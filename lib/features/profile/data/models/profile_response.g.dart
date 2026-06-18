@@ -6,6 +6,14 @@ part of 'profile_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 ProfileResponse _$ProfileResponseFromJson(Map<String, dynamic> json) =>
     ProfileResponse(
       success: json['success'] as bool,
@@ -21,7 +29,7 @@ Map<String, dynamic> _$ProfileResponseToJson(ProfileResponse instance) =>
     };
 
 ProfileData _$ProfileDataFromJson(Map<String, dynamic> json) => ProfileData(
-  userId: (json['user_id'] as num?)?.toInt(),
+  userId: _parseInt(json['user_id']),
   firstName: json['first_name'] as String?,
   lastName: json['last_name'] as String?,
   email: json['email'] as String?,
@@ -29,10 +37,10 @@ ProfileData _$ProfileDataFromJson(Map<String, dynamic> json) => ProfileData(
   gender: json['gender'] as String?,
   organisationType: json['organisation_type'] as String?,
   organisationName: json['organisation_name'] as String?,
-  zoneId: (json['zone_id'] as num?)?.toInt(),
-  divisionId: (json['division_id'] as num?)?.toInt(),
-  regionId: (json['region_id'] as num?)?.toInt(),
-  roleId: (json['role_id'] as num?)?.toInt(),
+  zoneId: _parseInt(json['zone_id']),
+  divisionId: _parseInt(json['division_id']),
+  regionId: _parseInt(json['region_id']),
+  roleId: _parseInt(json['role_id']),
   status: json['status'] as String?,
   approvalStatus: json['approval_status'] as String?,
   employeeId: json['employee_id'] as String?,

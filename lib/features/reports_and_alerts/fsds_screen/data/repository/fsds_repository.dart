@@ -1,38 +1,29 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:smart_coach_new/core/network/api_constants.dart';
-import '../models/fsds_model.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/fsds_screen/data/datasource/fsds_remote_data_source.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/fsds_screen/data/models/fsds_model.dart';
 
 class FsdsRepository {
-  Future<List<FsdsAssetModel>> getFsdsData() async {
-    try {
-      await Future.delayed(const Duration(seconds: 1));
-      
-      return [
-        FsdsAssetModel(
-          assetId: "7d831f05-d38f-4c41-833a-1c43fa9a240a",
-          assetName: "GS 255386 FSDS 100685",
-          timestamp: "2026-04-23T10:18:19.209Z",
-          lightValue: 1023,
-          smokeLevel: 45,
-          sensorId: "FSDS_TEST_001",
-          locName: "VASP FSDS Train 8",
-          locId: "be3c934f-28ed-4300-b278-aabfa8d1eca6",
-        ),
-      ];
-    } catch (e) {
-      throw Exception('Failed to fetch FSDS data: $e');
-    }
-  }
+  final FsdsRemoteDataSource remoteDataSource;
 
-  Future<void> sendFsdsData(Map<String, dynamic> payload) async {
-    final response = await http.post(
-      Uri.parse(ApiConstants.fsdsReceiveDataApiEndpoint),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(payload),
-    );
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to send FSDS data');
-    }
+  FsdsRepository(this.remoteDataSource);
+
+  Future<List<FsdsAssetModel>> getFsdsStatus() async {
+    final response = await remoteDataSource.getFsdsStatus();
+    final data = response.data ?? [];
+    return data.map((d) => FsdsAssetModel(
+      deviceId: d.deviceId ?? '',
+      deviceName: d.deviceName ?? '',
+      coachUniqueId: d.coachUniqueId ?? '',
+      coachDisplayId: d.coachDisplayId ?? '',
+      coachNumber: d.coachNumber ?? '',
+      trainId: d.trainId ?? 0,
+      trainNo: d.trainNo ?? '',
+      trainName: d.trainName ?? '',
+      location: d.location ?? '',
+      bypassStatus: d.bypassStatus ?? false,
+      alertStatus: d.alertStatus ?? false,
+      timestamp: d.timestamp ?? '',
+      remarks: d.remarks ?? '',
+      sensorId: d.sensorId ?? '',
+    )).toList();
   }
 }

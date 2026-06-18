@@ -20,9 +20,9 @@ class BCPressureCard extends StatelessWidget {
       case 'good':
         return Colors.green;
       case 'warning':
-        return ColorConstants.statusCritical; 
-      case 'critical':
         return ColorConstants.statusWarning;
+      case 'critical':
+        return ColorConstants.statusCritical;
       default:
         return ColorConstants.iconGrey;
     }

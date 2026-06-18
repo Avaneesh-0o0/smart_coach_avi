@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:smart_coach_new/features/device_management/rule_configuration/data/models/alert_type_response.dart';
 import 'package:smart_coach_new/features/device_management/rule_configuration/domain/entities/rule_configuration_entity.dart';
+import 'package:smart_coach_new/features/device_management/device_configuration/domain/entities/device_entity.dart';
 import 'package:smart_coach_new/features/device_management/rule_configuration/domain/usecases/rule_configuration_usecase.dart';
 import 'package:smart_coach_new/features/device_management/rule_configuration/presentation/bloc/rule_configuration_event.dart';
 import 'package:smart_coach_new/features/device_management/rule_configuration/presentation/bloc/rule_configuration_state.dart';

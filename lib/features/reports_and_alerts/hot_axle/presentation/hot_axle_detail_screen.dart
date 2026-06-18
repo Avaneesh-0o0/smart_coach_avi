@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:smart_coach_new/core/utils/app_icons.dart';
 import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
@@ -30,11 +31,12 @@ class _HotAxleDetailScreenState extends State<HotAxleDetailScreen> {
   }
 
   Future<void> _pickCustomRange() async {
+    final now = DateTime.now();
     final range = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(2026, 1, 1),
-      lastDate: DateTime(2026, 3, 12),
-      initialDateRange: DateTimeRange(start: DateTime(2026, 2, 10), end: DateTime(2026, 3, 12)),
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now,
+      initialDateRange: DateTimeRange(start: now.subtract(const Duration(days: 30)), end: now),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: ColorConstants.primary)),
         child: child!,
@@ -97,6 +99,14 @@ class _HotAxleDetailScreenState extends State<HotAxleDetailScreen> {
     child: child,
   );
 
+  String _fmtDt(String ts) {
+    try {
+      return DateFormat('dd/MM/yy HH:mm').format(DateTime.parse(ts));
+    } catch (_) {
+      return ts;
+    }
+  }
+
   Widget _trainInfoCard() => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(16),
@@ -109,13 +119,23 @@ class _HotAxleDetailScreenState extends State<HotAxleDetailScreen> {
       Row(children: [
         SvgPicture.asset(AppIcons.train, width: 18, height: 18, colorFilter: const ColorFilter.mode(ColorConstants.primary, BlendMode.srcIn)),
         const SizedBox(width: 8),
-        Text(HotAxleDummyData.trainName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary)),
+        Text(widget.coach.trainName.isNotEmpty ? '${widget.coach.trainNo} - ${widget.coach.trainName}' : HotAxleDummyData.trainName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary)),
       ]),
       const SizedBox(height: 8),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(8)),
-        child: Text('Last Updated: ${HotAxleDummyData.lastUpdated}', style: AppTextStyles.bodySmall),
+      Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(8)),
+            child: Text('Device: ${widget.coach.deviceId}', style: AppTextStyles.bodySmall),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(8)),
+            child: Text('Updated: ${_fmtDt(widget.coach.timestamp)}', style: AppTextStyles.bodySmall),
+          ),
+        ],
       ),
     ]),
   );
@@ -129,23 +149,44 @@ class _HotAxleDetailScreenState extends State<HotAxleDetailScreen> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: statusColor.withValues(alpha: 0.2)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(widget.coach.coachNumber, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary)),
-            Text('Max Temp: ${widget.coach.maxTemp}', style: GoogleFonts.poppins(fontSize: 12, color: statusColor, fontWeight: FontWeight.w600)),
-          ]),
-          Row(children: [
-            _summaryPill('${widget.coach.axlesMonitored} Axles', ColorConstants.primary),
-            const SizedBox(width: 8),
-            if (widget.coach.axlesIssue > 0)
-              _summaryPill('${widget.coach.axlesIssue} Issues', const Color(0xFFD32F2F)),
-          ]),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(cross: CrossAxisAlignment.start, children: [
+                Text('Coach ${widget.coach.coachNumber}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary)),
+                Text('Max Temp: ${widget.coach.maxTemp.toStringAsFixed(1)}°C', style: GoogleFonts.poppins(fontSize: 12, color: statusColor, fontWeight: FontWeight.w600)),
+              ]),
+              Row(children: [
+                _summaryPill('${widget.coach.axlesMonitored} Axles', ColorConstants.primary),
+                const SizedBox(width: 8),
+                if (widget.coach.axlesIssue > 0)
+                  _summaryPill('${widget.coach.axlesIssue} Issues', const Color(0xFFD32F2F)),
+              ]),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _infoChip(widget.coach.coachType),
+              const SizedBox(width: 8),
+              _infoChip('${widget.coach.batteryPercentage}% Batt'),
+              const SizedBox(width: 8),
+              _infoChip('${widget.coach.signalStrength} dBm'),
+            ],
+          ),
         ],
       ),
     );
   }
+
+  Widget _infoChip(String label) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(4)),
+    child: Text(label, style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary)),
+  );
 
   Widget _summaryPill(String label, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

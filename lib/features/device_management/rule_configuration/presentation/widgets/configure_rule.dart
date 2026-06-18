@@ -12,6 +12,7 @@ import 'package:smart_coach_new/core/widgets/chip_view.dart';
 import 'package:smart_coach_new/core/widgets/custom_button.dart';
 import 'package:smart_coach_new/core/widgets/custom_drop_down.dart';
 import 'package:smart_coach_new/core/widgets/custom_multi_select_field.dart';
+import 'package:smart_coach_new/features/device_management/device_configuration/domain/entities/device_entity.dart';
 import 'package:smart_coach_new/core/widgets/custom_text_field.dart';
 import 'package:smart_coach_new/core/widgets/screen_card_padding.dart';
 import 'package:smart_coach_new/features/device_management/rule_configuration/data/models/alert_type_response.dart';

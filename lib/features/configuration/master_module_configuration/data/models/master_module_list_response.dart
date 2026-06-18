@@ -5,6 +5,26 @@ import 'package:smart_coach_new/features/device_management/device_configuration/
 
 part 'master_module_list_response.g.dart';
 
+bool? _parseBool(dynamic value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  if (value is int) return value == 1;
+  if (value is String) {
+    final lower = value.toLowerCase();
+    if (lower == 'true' || lower == '1') return true;
+    if (lower == 'false' || lower == '0') return false;
+  }
+  return null;
+}
+
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 @JsonSerializable(explicitToJson: true)
 class MasterModuleListResponse {
   final bool success;
@@ -25,7 +45,7 @@ class MasterModuleListResponse {
 
 @JsonSerializable(explicitToJson: true)
 class MasterModuleItem {
-  @JsonKey(name: 'module_id')
+  @JsonKey(name: 'module_id', fromJson: _parseInt)
   final int? moduleId;
 
   @JsonKey(name: 'module_unique_id')
@@ -47,6 +67,9 @@ class MasterModuleItem {
 
   @JsonKey(name: 'placement_type')
   final String? placementType;
+
+  @JsonKey(name: 'specify_placement_location')
+  final String? specifyPlacementLocation;
 
   @JsonKey(name: 'sim_no')
   final String? simNo;
@@ -72,28 +95,31 @@ class MasterModuleItem {
   @JsonKey(name: 'battery_replacement_date')
   final String? batteryReplacementDate;
 
-  @JsonKey(name: 'dual_profile_supported')
+  @JsonKey(name: 'dual_profile_supported', fromJson: _parseBool)
   final bool? dualProfileSupported;
 
-  @JsonKey(name: 'lora_enabled')
+  @JsonKey(name: 'lora_enabled', fromJson: _parseBool)
   final bool? loraEnabled;
 
-  @JsonKey(name: 'esim_enabled')
+  @JsonKey(name: 'power_supply_available')
+  final String? powerSupplyAvailable;
+
+  @JsonKey(name: 'esim_enabled', fromJson: _parseBool)
   final bool? esimEnabled;
 
-  @JsonKey(name: 'battery_capacity')
+  @JsonKey(name: 'battery_capacity', fromJson: _parseInt)
   final int? batteryCapacity;
 
   @JsonKey(name: 'battery_type')
   final String? batteryType;
 
-  @JsonKey(name: 'created_by')
+  @JsonKey(name: 'created_by', fromJson: _parseInt)
   final int? createdBy;
 
   @JsonKey(name: 'created_date')
   final String? createdDate;
 
-  @JsonKey(name: 'updated_by')
+  @JsonKey(name: 'updated_by', fromJson: _parseInt)
   final int? updatedBy;
 
   @JsonKey(name: 'updated_date')
@@ -119,6 +145,7 @@ class MasterModuleItem {
     this.installationDate,
     this.location,
     this.placementType,
+    this.specifyPlacementLocation,
     this.simNo,
     this.serviceProviderPrimary,
     this.serviceProviderSecondary,
@@ -129,6 +156,7 @@ class MasterModuleItem {
     this.batteryReplacementDate,
     this.dualProfileSupported,
     this.loraEnabled,
+    this.powerSupplyAvailable,
     this.esimEnabled,
     this.batteryCapacity,
     this.batteryType,

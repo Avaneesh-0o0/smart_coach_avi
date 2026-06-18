@@ -84,6 +84,10 @@ SensorDeviceItem _$SensorDeviceItemFromJson(Map<String, dynamic> json) =>
       noOfMasterModule: (json['no_of_master_module'] as num?)?.toInt(),
       coachStatus: json['coach_status'] as String?,
       totalDevicesAttached: (json['total_devices_attached'] as num?)?.toInt(),
+      techCoachNo: json['tech_coach_no'] as String?,
+      commCoachNo: json['comm_coach_no'] as String?,
+      trainNo: json['train_no'] as String?,
+      status: json['status'] as String?,
     );
 
 Map<String, dynamic> _$SensorDeviceItemToJson(SensorDeviceItem instance) =>
@@ -146,4 +150,8 @@ Map<String, dynamic> _$SensorDeviceItemToJson(SensorDeviceItem instance) =>
       'no_of_master_module': instance.noOfMasterModule,
       'coach_status': instance.coachStatus,
       'total_devices_attached': instance.totalDevicesAttached,
+      'tech_coach_no': instance.techCoachNo,
+      'comm_coach_no': instance.commCoachNo,
+      'train_no': instance.trainNo,
+      'status': instance.status,
     };

@@ -54,7 +54,28 @@ class CoachConfigurationRepositoryImpl implements SensorDeviceConfigurationRepos
   Future<List<CoachEntity>> fetchCoachList() async {
     final models = await remoteDataSource.fetchCoachList();
     return models.map((m) {
-      return CoachEntity.fromModel(m);
+      String? createdAt = Utils.formatReadableDate(m.createdAt,
+          dateFormat: Constants.dateTimeFormatToShowInTable);
+      String? updatedAt = Utils.formatReadableDate(m.updatedAt,
+          dateFormat: Constants.dateTimeFormatToShowInTable);
+      return CoachEntity(
+        coachId: m.coachId,
+        coachUniqueId: m.coachUniqueId,
+        coachDisplayId: m.coachDisplayId,
+        position: m.position,
+        manufacturingYear: m.manufacturingYear,
+        entityType: m.entityType,
+        makeOfCoach: m.makeOfCoachName,
+        makeOfCoachId: m.makeOfCoachId,
+        typeOfCoach: m.typeOfCoachCode,
+        typeOfCoachId: m.typeOfCoachId,
+        noOfMasterModule: m.noOfMasterModule,
+        coachStatus: m.coachStatus,
+        createdAt: createdAt,
+        createdBy: m.createdByName,
+        updatedAt: updatedAt,
+        updatedBy: m.updatedByName,
+      );
     }).toList();
   }
 

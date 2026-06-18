@@ -48,11 +48,15 @@ class StationItem {
   @JsonKey(name: 'created_date')
   final String? createdDate;
 
+  @JsonKey(name: 'station_id')
+  final int? stationId;
+
   StationItem({
     this.regionId,
     this.name,
     this.isActive,
     this.createdDate,
+    this.stationId,
   });
 
   factory StationItem.fromJson(Map<String, dynamic> json) =>

@@ -1,8 +1,16 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sizer/sizer.dart';
 import 'package:smart_coach_new/core/widgets/custom_button.dart';
 import 'package:smart_coach_new/core/widgets/custom_toggle_buttons.dart';
 import 'package:smart_coach_new/features/configuration/master_module_configuration/domain/entities/master_module_entity.dart';
+import 'package:smart_coach_new/features/configuration/master_module_configuration/presentation/bloc/master_module_configuration_bloc.dart';
+import 'package:smart_coach_new/features/configuration/master_module_configuration/presentation/bloc/master_module_configuration_event.dart';
 import 'package:smart_coach_new/features/configuration/master_module_configuration/presentation/widgets/configure_master_module.dart';
 import 'package:smart_coach_new/features/configuration/master_module_configuration/presentation/widgets/master_module_list.dart';
 
@@ -18,6 +26,63 @@ class _MasterModuleConfigurationScreenState
     extends State<MasterModuleConfigurationScreen> {
   int selectedTab = 0;
   MasterModuleEntity? selectedMasterModuleItem;
+
+  Future<void> _exportToExcel() async {
+    final bloc = context.read<MasterModuleConfigurationBloc>();
+    final items = bloc.state.masterModuleList;
+    if (items.isEmpty) return;
+
+    final excel = Excel.createExcel();
+    final sheet = excel['Master Modules'];
+
+    final headers = [
+      'Module ID', 'Coach Display', 'Make/Model', 'Firmware', 'Serial No',
+      'Install Date', 'Location', 'Placement', 'Power Supply', 'Sim Status',
+      'Sim No', 'Primary Provider', 'Secondary Provider', 'Activation Date',
+      'Recharge Date', 'Battery Capacity', 'Battery Type', 'Battery Replace',
+      'Battery Recharge', 'Lora', 'E-Sim', 'Dual Profile', 'Train No',
+      'Devices', 'Created', 'Created By', 'Updated', 'Updated By',
+    ];
+    sheet.appendRow(headers.map((h) => TextCellValue(h)).toList());
+
+    for (final item in items) {
+      sheet.appendRow([
+        TextCellValue(item.moduleUniqueId ?? ''),
+        TextCellValue(item.coach?.coachUniqueId ?? ''),
+        TextCellValue(item.makeModel ?? ''),
+        TextCellValue(item.firmwareVersion ?? ''),
+        TextCellValue(item.serialNumber ?? ''),
+        TextCellValue(item.installationDate ?? ''),
+        TextCellValue(item.location ?? ''),
+        TextCellValue(item.placementType ?? ''),
+        TextCellValue(item.powerSupplyAvailable ?? ''),
+        TextCellValue(item.simStatus ?? ''),
+        TextCellValue(item.simNo ?? ''),
+        TextCellValue(item.serviceProviderPrimary ?? ''),
+        TextCellValue(item.serviceProviderSecondary ?? ''),
+        TextCellValue(item.activationDate ?? ''),
+        TextCellValue(item.rechargeDate ?? ''),
+        TextCellValue(item.batteryCapacity?.toString() ?? ''),
+        TextCellValue(item.batteryType ?? ''),
+        TextCellValue(item.batteryReplacementDate ?? ''),
+        TextCellValue(item.batteryRechargeDate ?? ''),
+        TextCellValue(item.loraEnabled ? 'Yes' : 'No'),
+        TextCellValue(item.esimEnabled ? 'Yes' : 'No'),
+        TextCellValue(item.dualProfileSupported ? 'Yes' : 'No'),
+        TextCellValue(item.train?.trainNumber?.toString() ?? ''),
+        TextCellValue(item.deviceNames.length.toString()),
+        TextCellValue(item.createdDate ?? ''),
+        TextCellValue(item.createdByName ?? ''),
+        TextCellValue(item.updatedDate ?? ''),
+        TextCellValue(item.updatedByName ?? ''),
+      ]);
+    }
+
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/master_modules.xlsx');
+    await file.writeAsBytes(excel.encode()!);
+    await Share.shareXFiles([XFile(file.path)], text: 'Master Modules Export');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +170,9 @@ class _MasterModuleConfigurationScreenState
                         onTap: (index) {
                           selectedMasterModuleItem = null;
                           selectedTab = index;
+                          if (index == 1) {
+                            context.read<MasterModuleConfigurationBloc>().add(LoadMasterModuleConfigurationList());
+                          }
                           setState(() {});
                         },
                       ),
@@ -127,7 +195,7 @@ class _MasterModuleConfigurationScreenState
                           horizontal: 3.w,
                         ),
                         radius: 8,
-                        onPressed: () {},
+                        onPressed: _exportToExcel,
                       ),
                   ],
                 ),
@@ -139,6 +207,7 @@ class _MasterModuleConfigurationScreenState
                   selectedMasterModuleItem: selectedMasterModuleItem,
                   onGoToListAndRefresh: () {
                     selectedTab = 1;
+                    context.read<MasterModuleConfigurationBloc>().add(LoadMasterModuleConfigurationList());
                     setState(
                           () {},
                     );

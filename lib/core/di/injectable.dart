@@ -18,7 +18,11 @@ abstract class RegisterModule {
 
   @lazySingleton
   Dio provideDio(Prefs prefs) {
-    final dio = Dio();
+    final dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+    ));
 
     dio.interceptors.add(
       InterceptorsWrapper(onRequest: (options, handler) async {

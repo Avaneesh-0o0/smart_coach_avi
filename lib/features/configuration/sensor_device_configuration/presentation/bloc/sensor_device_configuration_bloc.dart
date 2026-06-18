@@ -42,7 +42,9 @@ class SensorDeviceConfigurationBloc extends Bloc<SensorDeviceConfigurationEvent,
       ]);
 
       final List<SensorMakeItem> sensorMakeList = results[0] as List<SensorMakeItem>;
-      final List<CoachEntity> coachList = results[1] as List<CoachEntity>;
+      final List<CoachEntity> coachList = (results[1] as List<CoachEntity>)
+          .where((c) => c.coachUniqueId != null && c.coachUniqueId!.isNotEmpty)
+          .toList();
       final List<DeviceEntity> deviceList = results[2] as List<DeviceEntity>;
 
       emit(state.copyWith(
@@ -152,9 +154,14 @@ class SensorDeviceConfigurationBloc extends Bloc<SensorDeviceConfigurationEvent,
       ) async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
-      print("Event ${event.coachId}");
+      final rawId = event.coachId;
+      final coachId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+      if (coachId == null) {
+        emit(state.copyWith(isLoading: false, errorMessage: 'Invalid coach ID'));
+        return;
+      }
       List<MasterModuleEntity> list = await sensorDeviceConfigurationUseCase
-          .getMasterModuleForCoach(event.coachId!);
+          .getMasterModuleForCoach(coachId);
 
       emit(state.copyWith(isLoading: false, masterModuleList: list));
     } catch (e) {

@@ -299,9 +299,9 @@ class _ChartViewState extends State<ChartView> {
           const SizedBox(height: 8),
           _buildStatRow(Colors.green, 'Good', '16'),
           const SizedBox(height: 4),
-          _buildStatRow(ColorConstants.statusWarning, 'Critical', '03'),
+          _buildStatRow(ColorConstants.statusWarning, 'Warning', '03'),
           const SizedBox(height: 4),
-          _buildStatRow(ColorConstants.statusCritical, 'Warning', '03'),
+          _buildStatRow(ColorConstants.statusCritical, 'Critical', '03'),
         ],
       ),
     );

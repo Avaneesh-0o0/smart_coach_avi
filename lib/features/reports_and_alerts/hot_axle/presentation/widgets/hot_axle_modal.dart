@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../../../core/utils/app_dimensions.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/utils/color_constants.dart';
@@ -8,6 +9,14 @@ import '../../data/models/hot_axle_model.dart';
 class HotAxleModal extends StatelessWidget {
   final HotAxleCoachModel coach;
   const HotAxleModal({super.key, required this.coach});
+
+  String _formatTimestamp(String ts) {
+    try {
+      return DateFormat('dd/MM/yy HH:mm:ss').format(DateTime.parse(ts));
+    } catch (_) {
+      return ts;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,11 +105,12 @@ class HotAxleModal extends StatelessWidget {
                       // General Info
                       _buildInfoSection('Metadata', [
                         _buildDetailRow('Device ID', coach.deviceId, showTopBorder: false),
+                        _buildDetailRow('Train No', coach.trainNo.isNotEmpty ? coach.trainNo : 'N/A'),
                         _buildDetailRow('Coach Type', coach.coachType),
                         _buildDetailRow('Railway', coach.owningRly),
                         _buildDetailRow('Battery', '${coach.batteryPercentage}%'),
                         _buildDetailRow('Signal', '${coach.signalStrength} dBm'),
-                        _buildDetailRow('Timestamp', coach.timestamp),
+                        _buildDetailRow('Timestamp', _formatTimestamp(coach.timestamp)),
                       ]),
                       
                       const SizedBox(height: 24),

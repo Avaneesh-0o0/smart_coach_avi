@@ -26,7 +26,9 @@ class HotAxleDummyData {
       coachNumber: "1006${70 + id}",
       coachType: id % 2 == 0 ? "LHB_AC_2TIER" : "LHB_AC_3TIER",
       owningRly: "SEC",
-      timestamp: "2026-04-21T22:15:00.000Z",
+      trainNo: "12615",
+      trainName: "Grand Trunk Express",
+      timestamp: DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
       a11Temp: a11, a12Temp: a12, a21Temp: a21, a22Temp: a22,
       a31Temp: a31, a32Temp: a32, a41Temp: a41, a42Temp: a42,
       batteryPercentage: 85 + (id % 15),
@@ -53,7 +55,7 @@ class HotAxleDummyData {
   }
 
   static List<AxleHistoryEntry> getHistory(String coachNumber, String period, {DateTime? from, DateTime? to}) {
-    final now = DateTime(2026, 3, 12);
+    final now = DateTime.now();
     final all = _allHistory[coachNumber] ?? [];
     DateTime cutoff;
     if (period == '7 Days') {
@@ -69,7 +71,7 @@ class HotAxleDummyData {
 
   static final Map<String, List<AxleHistoryEntry>> _allHistory = {
     'Coach 4': [
-      AxleHistoryEntry(coachNumber: 'Coach 4', axleNumber: 4, sensorId: 'AX-C04-A04', maxTemp: '108°C', status: 'Warning',  speed: '72 km/h', detectedAt: 'Today | 10:39 AM',    location: 'Near Nagda',   date: DateTime(2026, 3, 12, 10, 39)),
+      AxleHistoryEntry(coachNumber: 'Coach 4', axleNumber: 4, sensorId: 'AX-C04-A04', maxTemp: '108°C', status: 'Warning',  speed: '72 km/h', detectedAt: 'Today | 10:39 AM',    location: 'Near Nagda',   date: DateTime.now().subtract(const Duration(hours: 2))),
     ],
   };
 

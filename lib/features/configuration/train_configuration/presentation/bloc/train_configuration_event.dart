@@ -7,14 +7,14 @@ class LoadInitialData extends CoachConfigurationEvent {}
 class LoadTrainConfigurationList extends CoachConfigurationEvent {}
 
 class CreateEditTrainConfiguration extends CoachConfigurationEvent {
-  final int? trainId; //for edit
+  final dynamic trainId; //for edit (dynamic to handle int/string from API)
   final TrainConfigurationRequest trainConfigurationRequest;
 
   CreateEditTrainConfiguration(this.trainConfigurationRequest, {this.trainId});
 }
 
 class DeleteTrainConfiguration extends CoachConfigurationEvent {
-  final int? trainId;
+  final dynamic trainId;
 
   DeleteTrainConfiguration(this.trainId);
 }

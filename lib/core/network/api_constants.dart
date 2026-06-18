@@ -26,6 +26,7 @@ class ApiConstants {
   static const String sensorMakesApiEndpoint = '/sensors-make';
   static const String odourReceiveDataApiEndpoint = '/odour/logs/receive-data';
   static const String fsdsReceiveDataApiEndpoint = '/fsds/receive-data';
+  static const String fsdsStatusApiEndpoint = '/fsds/status';
   static const String coachConfigApiEndpoint = '/coach-config';
   static const String hotAxleReceiveDataApiEndpoint = '/hotaxle/receive-data';
   static const String pressureReceiveDataApiEndpoint = '/pressure/receive-data';
@@ -38,5 +39,6 @@ class ApiConstants {
 
   static const String devUrl =
       'https://smart-coach-api-production.up.railway.app/smart_coach_api/api';
+  // static const String devUrl2 = 'https://smartcoachez.com/smart_coach_api/api';
 // static const String devUrl = 'http://192.168.1.5:3000/smart_coach_api/api';
 }

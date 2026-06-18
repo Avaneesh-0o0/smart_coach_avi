@@ -5,7 +5,6 @@ import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/datasource/acp_dummy_data.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_model.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -95,9 +94,9 @@ class AcpReportGenerator {
     final summary = excel['Summary'];
     excel.setDefaultSheet('Summary');
 
-    _header(summary, 0, 0, '$title — ${AcpDummyData.trainName}');
+    _header(summary, 0, 0, title);
     _header(summary, 1, 0, 'Period: ${_fmt(range.start)}  →  ${_fmt(range.end)}');
-    _header(summary, 2, 0, 'Generated: ${_fmt(DateTime.now())} | Last Updated: ${DateFormat('HH:mm').format(DateTime.now())}');
+    _header(summary, 2, 0, 'Generated: ${_fmt(DateTime.now())}');
     _blankRow(summary, 3);
 
     // Column headers
@@ -129,7 +128,7 @@ class AcpReportGenerator {
 
     // ─── Sheet 2: Chain Pull History ──────────────────────────────────────────
     final histSheet = excel['Chain Pull History'];
-    _header(histSheet, 0, 0, 'Chain Pull History — ${AcpDummyData.trainName}');
+    _header(histSheet, 0, 0, 'Chain Pull History');
     _header(histSheet, 1, 0, 'Period: ${_fmt(range.start)}  →  ${_fmt(range.end)}');
     _blankRow(histSheet, 2);
 
@@ -139,15 +138,12 @@ class AcpReportGenerator {
     }
 
     int histRow = 4;
-    for (final coach in coaches.where((c) => c.isChainPulled || c.coachNumber == 'Coach 4')) {
-      final entries = AcpDummyData.getHistory(coach.coachNumber, 'Custom', from: range.start, to: range.end);
-      for (final entry in entries) {
-        _cell(histSheet, histRow, 0, coach.coachNumber);
-        _cell(histSheet, histRow, 1, entry.sensorId);
-        _cell(histSheet, histRow, 2, entry.lastPull);
-        _cell(histSheet, histRow, 3, entry.location);
-        histRow++;
-      }
+    for (final coach in coaches.where((c) => c.isChainPulled)) {
+      _cell(histSheet, histRow, 0, coach.coachNumber);
+      _cell(histSheet, histRow, 1, coach.sensorId);
+      _cell(histSheet, histRow, 2, coach.lastPull);
+      _cell(histSheet, histRow, 3, coach.location);
+      histRow++;
     }
 
     // ─── Sheet 3: Date-wise Summary ──────────────────────────────────────────
@@ -160,18 +156,14 @@ class AcpReportGenerator {
       _colHeader(dateSheet, 2, i, dateHeaders[i]);
     }
 
-    final days = range.end.difference(range.start).inDays + 1;
-    for (var d = 0; d < days; d++) {
-      final date = range.start.add(Duration(days: d));
-      final isToday = date.day == 12 && date.month == 3;
-      final offCount = isToday ? 4 : (d % 3 == 0 ? 2 : (d % 5 == 0 ? 1 : 0));
-      final onCount = 20 - offCount;
-      _cell(dateSheet, 3 + d, 0, _fmt(date));
-      _cell(dateSheet, 3 + d, 1, '20');
-      _cell(dateSheet, 3 + d, 2, '$onCount', color: '2E7D32');
-      _cell(dateSheet, 3 + d, 3, '$offCount', color: offCount > 0 ? 'D32F2F' : null);
-      _cell(dateSheet, 3 + d, 4, '$offCount');
-    }
+    final onCount = coaches.where((c) => c.isOn).length;
+    final offCount = coaches.where((c) => !c.isOn).length;
+    final todayStr = _fmt(DateTime.now());
+    _cell(dateSheet, 3, 0, todayStr);
+    _cell(dateSheet, 3, 1, '${coaches.length}');
+    _cell(dateSheet, 3, 2, '$onCount', color: '2E7D32');
+    _cell(dateSheet, 3, 3, '$offCount', color: offCount > 0 ? 'D32F2F' : null);
+    _cell(dateSheet, 3, 4, '${coaches.where((c) => c.isChainPulled).length}');
 
     // Set column widths
     for (final sheet in [summary, histSheet, dateSheet]) {

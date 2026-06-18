@@ -85,4 +85,9 @@ class MasterModuleConfigurationRepositoryImpl
       return CoachEntity.fromModel(m);
     }).toList();
   }
+
+  @override
+  Future<void> increaseCoachModuleLimit(int coachId) async {
+    return remoteDataSource.increaseCoachModuleLimit(coachId);
+  }
 }

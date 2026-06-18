@@ -20,7 +20,6 @@ import 'package:smart_coach_new/features/configuration/train_configuration/prese
 import 'package:smart_coach_new/features/configuration/train_configuration/presentation/bloc/train_configuration_event.dart';
 import 'package:smart_coach_new/features/configuration/train_configuration/presentation/bloc/train_configuration_state.dart';
 import 'package:smart_coach_new/features/configuration/train_configuration/presentation/widgets/train_coach_grid.dart';
-import 'package:smart_coach_new/features/drop_down_value/data/models/region_list_response.dart';
 import 'package:smart_coach_new/features/drop_down_value/data/models/station_list_response.dart';
 
 class CoachConfig {
@@ -54,10 +53,9 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
   late TrainConfigurationBloc _trainConfigurationBloc;
   final TextEditingController trainNumberController = TextEditingController();
   final TextEditingController trainNameController = TextEditingController();
-  final TextEditingController engineNumberController = TextEditingController();
+  final TextEditingController locoNumberController = TextEditingController();
 
-  int? selectedOriginationRegionId;
-  int? selectedRegionId;
+
   int? selectedDepartureStationId;
   int? selectedDestinationStationId;
   String? selectedLine;
@@ -72,7 +70,8 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
   void dispose() {
     trainNumberController.dispose();
     trainNameController.dispose();
-    engineNumberController.dispose();
+    locoNumberController.dispose();
+
     super.dispose();
   }
 
@@ -87,30 +86,29 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
   void _prefillDataIfAvailable() {
     final item = widget.selectedTrainItem;
     if (item == null) return;
-    trainNumberController.text = item.trainNumber?.toString() ?? '';
-    trainNameController.text = item.trainName ?? '';
-    engineNumberController.text = item.engineNumber ?? '';
+    try {
+      trainNumberController.text = item.trainNumber?.toString() ?? '';
+      trainNameController.text = item.trainName ?? '';
+      locoNumberController.text = item.engineNumber ?? '';
 
-    selectedOriginationRegionId = item.originationRegionId;
-    selectedRegionId = item.regionId;
-    selectedDepartureStationId = item.departureStationId;
-    selectedDestinationStationId = item.destinationStationId;
-    selectedLine = item.line;
-    selectedTrainOperator = item.trainOperator;
+      selectedDepartureStationId = item.departureStationId;
+      selectedDestinationStationId = item.destinationStationId;
+      selectedLine = item.line;
+      selectedTrainOperator = item.trainOperator;
 
-    if (item.coaches != null && item.coaches!.isNotEmpty) {
-      coaches ??= [];
-      for (CoachEntity coachEntity in (item.coaches ?? [])) {
-        final updated = CoachConfig()
-          ..uniqueNumber = coachEntity.coachUniqueId
-          ..displayId = coachEntity.coachDisplayId
-          ..position = coachEntity.position
-          ..entityType = coachEntity.entityType;
+      if (item.coaches != null && item.coaches!.isNotEmpty) {
+        coaches ??= [];
+        for (CoachEntity coachEntity in (item.coaches ?? [])) {
+          final updated = CoachConfig()
+            ..uniqueNumber = coachEntity.coachUniqueId
+            ..displayId = coachEntity.coachDisplayId
+            ..position = coachEntity.position is int ? coachEntity.position as int? : int.tryParse(coachEntity.position?.toString() ?? '')
+            ..entityType = coachEntity.entityType;
 
-        coaches?.add(updated);
+          coaches?.add(updated);
+        }
       }
-    }
-
+    } catch (_) {}
     setState(() {});
   }
 
@@ -217,41 +215,13 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
                   isRequired: true,
                 ),
                 SizedBox(height: 2.h),
-                CustomDropDown<RegionItem>(
-                  label: 'Origination Region',
-                  hintText: 'Select Origination Region',
-                  value: selectedOriginationRegionId,
-                  items: state.regionList,
-                  getValue: (e) => e.regionId,
-                  displayText: (e) => e.name ?? '',
-                  isRequired: true,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedOriginationRegionId = value;
-                    });
-                  },
-                ),
-                SizedBox(height: 2.h),
-                CustomDropDown<RegionItem>(
-                  label: 'Region Name',
-                  hintText: 'Select Region Name',
-                  value: selectedRegionId,
-                  items: state.regionList,
-                  getValue: (e) => e.regionId,
-                  displayText: (e) => e.name ?? '',
-                  onChanged: (value) {
-                    setState(() {
-                      selectedRegionId = value;
-                    });
-                  },
-                ),
-                SizedBox(height: 2.h),
+
                 CustomDropDown<StationItem>(
                   label: 'Departure Station',
                   hintText: 'Select Departure Station',
                   value: selectedDepartureStationId,
                   items: state.stationList,
-                  getValue: (e) => e.regionId,
+                  getValue: (e) => e.stationId ?? e.regionId,
                   displayText: (e) => e.name ?? '',
                   isRequired: true,
                   onChanged: (value) {
@@ -266,7 +236,7 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
                   hintText: 'Select Destination Station',
                   value: selectedDestinationStationId,
                   items: state.stationList,
-                  getValue: (e) => e.regionId,
+                  getValue: (e) => e.stationId ?? e.regionId,
                   displayText: (e) => e.name ?? '',
                   isRequired: true,
                   onChanged: (value) {
@@ -293,6 +263,7 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
                   label: 'Train Operator',
                   hintText: 'Select Train Operator',
                   value: selectedTrainOperator,
+                  isRequired: true,
                   items: Constants.trainOperatorList,
                   onChanged: (value) {
                     setState(() {
@@ -302,7 +273,7 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
                 ),
                 SizedBox(height: 2.h),
                 CustomTextField(
-                  controller: engineNumberController,
+                  controller: locoNumberController,
                   labelText: 'Loco Number',
                   hintText: 'Enter Loco Number',
                 ),
@@ -480,14 +451,13 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
     final request = TrainConfigurationRequest(
       trainNumber: int.parse(trainNumberController.text.trim()),
       trainName: trainNameController.text.trim(),
-      originationRegionId: selectedOriginationRegionId,
-      regionId: selectedRegionId,
+
       departureStationId: selectedDepartureStationId,
       destinationStationId: selectedDestinationStationId,
       numberOfCoaches: coachesRequest?.length,
       line: selectedLine,
       trainOperator: selectedTrainOperator,
-      engineNumber: engineNumberController.text.trim(),
+      engineNumber: locoNumberController.text.trim(),
       coaches: coachesRequest,
     );
 
@@ -505,12 +475,6 @@ class _ConfigureTrainState extends State<ConfigureTrain> {
       return false;
     } else if (trainNameController.text.trim().isEmpty) {
       ToastMessageUtils.showMessage(context, 'Please enter Train Name');
-      return false;
-    } else if (selectedOriginationRegionId == null) {
-      ToastMessageUtils.showMessage(
-        context,
-        'Please Select Origination Region',
-      );
       return false;
     } else if (selectedDepartureStationId == null) {
       ToastMessageUtils.showMessage(context, 'Please Select Departure Station');

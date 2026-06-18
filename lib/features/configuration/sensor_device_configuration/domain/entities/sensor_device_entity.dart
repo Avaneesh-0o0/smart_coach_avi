@@ -59,6 +59,10 @@ class SensorDeviceEntity {
   final int? noOfMasterModule;
   final String? coachStatus;
   final int? totalDevicesAttached;
+  final String? techCoachNo;
+  final String? commCoachNo;
+  final String? trainNo;
+  final String? status;
 
   const SensorDeviceEntity({
     this.sensorConfigId,
@@ -118,7 +122,11 @@ class SensorDeviceEntity {
     this.position,
     this.noOfMasterModule,
     this.coachStatus,
-    this.totalDevicesAttached
+    this.totalDevicesAttached,
+    this.techCoachNo,
+    this.commCoachNo,
+    this.trainNo,
+    this.status
   });
 
   factory SensorDeviceEntity.fromModel(SensorDeviceItem model) {
@@ -180,7 +188,11 @@ class SensorDeviceEntity {
       position: model.position,
       noOfMasterModule: model.noOfMasterModule,
       coachStatus: model.coachStatus,
-      totalDevicesAttached: model.totalDevicesAttached
+      totalDevicesAttached: model.totalDevicesAttached,
+      techCoachNo: model.techCoachNo,
+      commCoachNo: model.commCoachNo,
+      trainNo: model.trainNo,
+      status: model.status
     );
   }
 }

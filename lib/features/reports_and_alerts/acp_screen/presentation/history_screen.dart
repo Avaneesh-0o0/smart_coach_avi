@@ -127,13 +127,14 @@ class _AcpHistoryScreenState extends State<AcpHistoryScreen> {
   }
 
   Future<void> _pickCustomRange() async {
+    final now = DateTime.now();
     final range = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(2026, 1, 1),
-      lastDate: DateTime(2026, 3, 12),
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now,
       initialDateRange: DateTimeRange(
-        start: DateTime(2026, 2, 10),
-        end: DateTime(2026, 3, 12),
+        start: now.subtract(const Duration(days: 7)),
+        end: now,
       ),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
@@ -346,8 +347,8 @@ class _AcpHistoryScreenState extends State<AcpHistoryScreen> {
                 _buildRow('Tech Coach #', entry.sensorId),
                 _buildRow('Device ID', entry.deviceId),
                 const Divider(color: ColorConstants.divider),
-                _buildRow('COUNT', '${entry.status} nos'),
-                _buildRow('TOTAL', '${entry.totalCount} nos'),
+                _buildRow('Status', (int.tryParse(entry.status) ?? 0) > 0 ? 'PULLED' : 'NOT PULLED'),
+                _buildRow('Deployed Count', '${int.tryParse(entry.totalCount ?? '0') ?? 0}'),
                 const Divider(color: ColorConstants.divider),
                 _buildRow('Location', entry.location),
                 _buildRow('Updated At', entry.lastPull),

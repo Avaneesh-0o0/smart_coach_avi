@@ -64,9 +64,7 @@ class SensorDeviceConfigurationRepositoryImpl implements SensorDeviceConfigurati
   @override
   Future<List<SensorDeviceEntity>> fetchSensorDeviceList() async {
     final models = await remoteDataSource.fetchSensorDeviceList();
-    return models.map((m) {
-      return SensorDeviceEntity.fromModel(m);
-    }).toList();
+    return models.map((m) => SensorDeviceEntity.fromModel(m)).toList();
   }
 
   @override

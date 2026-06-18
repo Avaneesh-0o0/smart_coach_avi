@@ -1,5 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:smart_coach_new/features/configuration/coach_configuration/domain/entities/coach_entity.dart';
+import 'package:smart_coach_new/features/device_management/device_configuration/domain/entities/device_entity.dart';
+import 'package:smart_coach_new/features/device_management/sensor_type_configuration/domain/entities/sensor_type_entity.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_log_response.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/break_binding/data/models/pneumatic_status_model.dart';
 import 'package:smart_coach_new/features/dashboard/presentation/bloc/dashboard_event.dart';
@@ -78,12 +81,31 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       }
 
       final trains = (results[0] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.totalTrains, null) : []);
-      final coaches = (results[1] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.smartCoaches, null) : []);
-      final devices = (results[2] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.activeDevices, null) : []);
-      final sensors = (results[3] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.activeSensors, null) : []);
+      final allCoaches = (results[1] as List<CoachEntity>?) ?? [];
+      final allDevices = (results[2] as List<DeviceEntity>?) ?? [];
+      final allSensors = (results[3] as List<SensorTypeEntity>?) ?? [];
       final acpLogs = (results[4] as List<AcpLogData>?) ?? (prevState is DashboardDataLoaded ? prevState.recentAlerts : []);
       final pneumaticResponse = results[5] as PneumaticStatusResponse?;
-      final pneumaticLogs = pneumaticResponse?.history?.data ?? (prevState is DashboardDataLoaded ? prevState.recentPneumaticAlerts : []);
+      final allPneumaticLogs = pneumaticResponse?.history?.data ?? (prevState is DashboardDataLoaded ? prevState.recentPneumaticAlerts : []);
+
+      // Filter: only configured coaches (with unique ID)
+      final coaches = allCoaches.where((c) => c.coachUniqueId != null && c.coachUniqueId!.isNotEmpty).toList();
+      // Filter: only active devices
+      final devices = allDevices.where((d) => d.isActive == 1).toList();
+
+      // Filter pneumatic logs: only Brake Binding and DV/BC Defect relevant alerts
+      final pneumaticLogs = allPneumaticLogs.where((pLog) {
+        final fault = pLog.brakeFault?.toString().toLowerCase() ?? '';
+        final status = pLog.brakeStatus?.toString().toLowerCase() ?? '';
+        final isRelevant = fault.contains('brake binding') ||
+            fault.contains('dv/bc') ||
+            fault.contains('dv_bc') ||
+            fault.contains('bc defect') ||
+            status.contains('brake binding') ||
+            status.contains('dv/bc');
+        // Also include if fault exists and is not "none"/"null" (catch-all for relevant issues)
+        return isRelevant || (fault.isNotEmpty && fault != 'null' && fault != 'none' && fault != 'brake release system');
+      }).toList();
 
       // Simple alert categorization logic
       int critical = 0;
@@ -119,7 +141,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           totalTrains: trains.length,
           smartCoaches: coaches.length,
           activeDevices: devices.length,
-          activeSensors: sensors.length,
+          activeSensors: allSensors.length,
           criticalAlerts: critical,
           warnings: warnings,
           moderate: moderate,

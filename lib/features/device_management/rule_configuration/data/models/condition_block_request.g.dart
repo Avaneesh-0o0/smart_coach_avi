@@ -6,13 +6,21 @@ part of 'condition_block_request.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 _ConditionBlockRequest _$ConditionBlockRequestFromJson(
   Map<String, dynamic> json,
 ) => _ConditionBlockRequest(
-  valueTypeId: (json['value_type_id'] as num?)?.toInt(),
+  valueTypeId: _parseInt(json['value_type_id']),
   valueFormat: json['value_format'] as String?,
-  siUnitId: (json['si_unit_id'] as num?)?.toInt(),
-  alertTypeId: (json['alert_type_id'] as num?)?.toInt(),
+  siUnitId: _parseInt(json['si_unit_id']),
+  alertTypeId: _parseInt(json['alert_type_id']),
   alertMessageTemplate: json['alert_message_template'] == null
       ? null
       : AlertMessageTemplateRequest.fromJson(

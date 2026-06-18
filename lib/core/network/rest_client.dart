@@ -50,11 +50,14 @@ import 'package:smart_coach_new/features/user_management/data/models/user_manage
 import 'package:smart_coach_new/features/profile/data/models/profile_response.dart';
 
 import '../../features/reports_and_alerts/break_binding/data/models/break_binding_response.dart';
+import '../../features/reports_and_alerts/break_binding/data/models/coach_list_response.dart';
+import '../../features/reports_and_alerts/break_binding/data/models/train_list_response.dart';
 import '../../features/reports_and_alerts/level_indicator/data/models/train_list_response.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_log_response.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_filters_response.dart';
 import '../../features/reports_and_alerts/break_binding/data/models/pneumatic_status_model.dart';
 import 'package:smart_coach_new/features/coach_dashboard/data/models/coach_config_response.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/fsds_screen/data/models/fsds_status_response.dart';
 import 'api_constants.dart';
 
 part 'rest_client.g.dart';
@@ -315,9 +318,9 @@ abstract class RestClient {
       @Body() Map<String, dynamic> body,
       );
 
-  @DELETE('/sensors/sensors-configs')
+  @DELETE('/sensors/sensors-configs/{sensor_config_id}')
   Future<DeleteSensorDeviceConfigurationResponse>
-  deleteSensorDeviceConfiguration(@Path("sensor_id") int? sensorId);
+  deleteSensorDeviceConfiguration(@Path("sensor_config_id") int? sensorConfigId);
 
   @GET(ApiConstants.coachMakesApiEndpoint)
   Future<CoachMakeListResponse> getCoachMakeList();
@@ -369,6 +372,9 @@ abstract class RestClient {
 
   @GET("${ApiConstants.coachConfigApiEndpoint}/{coach_no}")
   Future<CoachConfigResponse> getCoachConfig(@Path("coach_no") String coachNo);
+
+  @GET(ApiConstants.fsdsStatusApiEndpoint)
+  Future<FsdsStatusResponse> getFsdsStatus();
 
   @POST(ApiConstants.fsdsReceiveDataApiEndpoint)
   Future<dynamic> postFsdsData(@Body() Map<String, dynamic> body);

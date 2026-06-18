@@ -28,6 +28,9 @@ class SensorFormModel {
   String? placement;
   String? location;
   String? remarks;
+  TextEditingController sensorIdController;
+  TextEditingController locationController;
+  TextEditingController remarksController;
 
   SensorFormModel({
     this.sensorId,
@@ -36,13 +39,22 @@ class SensorFormModel {
     this.placement,
     this.location,
     this.remarks,
-  }) : installDate = installDate ?? DateTime.now();
+  }) : installDate = installDate ?? DateTime.now(),
+       sensorIdController = TextEditingController(text: sensorId ?? ''),
+       locationController = TextEditingController(text: location ?? ''),
+       remarksController = TextEditingController(text: remarks ?? '');
 
   bool isValid() {
     return sensorId?.isNotEmpty == true &&
         sensorMakeId != null &&
         installDate != null &&
         placement?.isNotEmpty == true;
+  }
+
+  void dispose() {
+    sensorIdController.dispose();
+    locationController.dispose();
+    remarksController.dispose();
   }
 }
 
@@ -63,16 +75,26 @@ class ConfigureSensorDevice extends StatefulWidget {
 class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
   late SensorDeviceConfigurationBloc _sensorDeviceConfigurationBloc;
 
-  CoachEntity? selectedCoach;
+  int? selectedCoachId;
   int? selectedMasterModuleId;
   String? selectedDevicesId;
 
-  List<String> coachList = ['Coach A', 'Coach B'];
   bool showDeviceSection = false;
   bool showSensorSection = false;
 
+  List<CoachEntity> _coachList = [];
+
+  CoachEntity? get selectedCoach {
+    if (selectedCoachId == null || _coachList.isEmpty) return null;
+    try {
+      return _coachList.firstWhere((c) => c.coachId == selectedCoachId);
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _loadDevices() {
-    if (selectedCoach != null && selectedMasterModuleId != null) {
+    if (selectedCoachId != null && selectedMasterModuleId != null) {
       _sensorDeviceConfigurationBloc.add(LoadDeviceListData());
       setState(() {
         showDeviceSection = true;
@@ -88,16 +110,26 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
   void updateSensorCount(int count) {
     setState(() {
       sensorCount = count;
-      sensorForms = List.generate(
-        count,
-        (index) =>
-            index < sensorForms.length ? sensorForms[index] : SensorFormModel(),
-      );
+      final newForms = <SensorFormModel>[];
+      for (int i = 0; i < count; i++) {
+        if (i < sensorForms.length) {
+          newForms.add(sensorForms[i]);
+        } else {
+          newForms.add(SensorFormModel());
+        }
+      }
+      for (int i = count; i < sensorForms.length; i++) {
+        sensorForms[i].dispose();
+      }
+      sensorForms = newForms;
     });
   }
 
   @override
   void dispose() {
+    for (final form in sensorForms) {
+      form.dispose();
+    }
     super.dispose();
   }
 
@@ -105,7 +137,11 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
   void initState() {
     super.initState();
     _sensorDeviceConfigurationBloc =
-        context.read<SensorDeviceConfigurationBloc>()..add(LoadInitialData());
+        context.read<SensorDeviceConfigurationBloc>();
+    final state = _sensorDeviceConfigurationBloc.state;
+    if (state.coachList.isEmpty || state.sensorMakeList.isEmpty || state.deviceList.isEmpty) {
+      _sensorDeviceConfigurationBloc.add(LoadInitialData());
+    }
     _prefillDataIfAvailable();
   }
 
@@ -113,33 +149,36 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
     final item = widget.selectedSensorDeviceItem;
     if (item == null) return;
     setState(() {
+      selectedCoachId = item.coachId;
       selectedMasterModuleId = item.masterModuleId;
       selectedDevicesId = item.deviceId;
 
       showDeviceSection =
-          selectedMasterModuleId != null && selectedCoach != null;
+          selectedMasterModuleId != null && selectedCoachId != null;
       showSensorSection = selectedDevicesId != null;
 
-      // final sensors = item.sensors;
-      // if (sensors != null && sensors.isNotEmpty) {
-      //   sensorCount = sensors.length;
-      //   sensorForms = sensors.map((sensor) {
-      //     return SensorFormModel(
-      //       sensorId: sensor.sensorId,
-      //       make: sensor.make,
-      //       installDate: sensor.installDate != null
-      //           ? DateTime.tryParse(sensor.installDate!)
-      //           : null,
-      //       placement: sensor.placement,
-      //       location: sensor.location,
-      //       remarks: sensor.remarks,
-      //     );
-      //   }).toList();
-      // } else {
-      //   sensorCount = 1;
-      //   sensorForms = [SensorFormModel()];
-      // }
+      if (item.placement != null || item.sensorMakeId != null) {
+        sensorCount = 1;
+        sensorForms = [
+          SensorFormModel(
+            sensorId: item.sensorTypeName,
+            sensorMakeId: item.sensorMakeId,
+            installDate: item.installDate != null
+                ? DateTime.tryParse(item.installDate!)
+                : DateTime.now(),
+            placement: item.placement,
+            location: item.location,
+            remarks: item.remarks,
+          ),
+        ];
+      } else {
+        sensorCount = 1;
+        sensorForms = [SensorFormModel()];
+      }
     });
+    if (selectedCoachId != null && selectedMasterModuleId != null) {
+      _sensorDeviceConfigurationBloc.add(LoadDeviceListData());
+    }
   }
 
   @override
@@ -166,6 +205,7 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
               }
             },
             builder: (context, state) {
+              _coachList = state.coachList;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -224,7 +264,7 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
       title: Constants.confirmSave,
       onYes: () {
         final request = SensorDeviceConfigurationRequest(
-          coachId: selectedCoach?.coachId,
+          coachId: selectedCoachId,
           masterModuleId: selectedMasterModuleId,
           deviceId: selectedDevicesId,
           sensors: sensorForms
@@ -244,7 +284,7 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
         _sensorDeviceConfigurationBloc.add(
           CreateEditSensorDeviceConfiguration(
             request,
-            sensorId: widget.selectedSensorDeviceItem?.coachId,
+            sensorId: widget.selectedSensorDeviceItem?.sensorConfigId,
           ),
         );
       },
@@ -298,23 +338,20 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
     bool isInActive =
         deviceStatus.name.toLowerCase() ==
         DeviceStatus.inactive.name.toLowerCase();
-    Color color = Colors.grey;
-    Color textColor = Colors.black;
+    Color bgColor = Colors.grey.withValues(alpha: 0.13);
+    Color textColor = Colors.grey;
 
     if (isActive) {
-      color = Colors.green.withValues(alpha: 0.13);
+      bgColor = Colors.green.withValues(alpha: 0.13);
       textColor = Colors.green;
-    } else if (isPending) {
-      color = Colors.red.shade900.withValues(alpha: 0.13);
+    } else if (isPending || isInActive) {
+      bgColor = Colors.red.shade900.withValues(alpha: 0.13);
       textColor = Colors.red.shade900;
-    } else if (isInActive) {
-      color = Color(0xFFFEF7C3);
-      textColor = Color(0xFF684412);
     }
     return _chipView(
       getStatusIcon(deviceStatus),
       '${(deviceName != null && deviceName.isNotEmpty) ? deviceName : '---'} (${deviceStatus.name})',
-      color,
+      bgColor,
       textColor,
     );
   }
@@ -370,24 +407,24 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
             hintText: 'Select Coach',
             label: 'Coach',
             isRequired: true,
-            value: selectedCoach,
+            showSearch: true,
+            value: selectedCoachId,
             items: state.coachList,
-            getValue: (e) => e, // internal value used by dropdown
+            getValue: (e) => e.coachId,
             displayText: (e) => e.coachUniqueId ?? '',
             onChanged: (value) {
               setState(() {
-                selectedCoach = value; // this is a CoachEntity
+                selectedCoachId = value as int?;
                 showDeviceSection = false;
               });
-              // Coach ID: ${value.coachId}
-
-              _sensorDeviceConfigurationBloc.add(LoadMasterModulesForCoach(value.coachId));
+              _sensorDeviceConfigurationBloc.add(LoadMasterModulesForCoach(selectedCoachId));
             },
           ),
           SizedBox(height: 2.h),
           CustomDropDown<MasterModuleEntity>(
             label: 'Master Module',
             hintText: 'Select Master Module',
+            showSearch: true,
             value: selectedMasterModuleId,
             items: state.masterModuleList,
             getValue: (e) => e.moduleId,
@@ -578,6 +615,7 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
                     labelText: 'Sensor ID',
                     isRequired: true,
                     hintText: 'Enter sensor ID',
+                    controller: form.sensorIdController,
                     onChanged: (val) => form.sensorId = val,
                   ),
                   SizedBox(height: 2.h),
@@ -631,12 +669,14 @@ class _ConfigureSensorDeviceState extends State<ConfigureSensorDevice> {
                   CustomTextField(
                     labelText: 'Location',
                     hintText: 'e.g. Front panel, Rear axle',
+                    controller: form.locationController,
                     onChanged: (val) => form.location = val,
                   ),
                   SizedBox(height: 2.h),
                   CustomTextField(
                     labelText: 'Remarks',
                     hintText: 'Any additional notes',
+                    controller: form.remarksController,
                     onChanged: (val) => form.remarks = val,
                   ),
                 ],

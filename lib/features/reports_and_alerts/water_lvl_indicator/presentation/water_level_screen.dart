@@ -39,7 +39,7 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
   Timer? _refreshTimer;
 
   List<String> trainNumbers = ['All Trains'];
-  List<String> coachTypes = ['All Types'];
+  List<String> coachTypes = ['All Types', 'LHB_AC_3TIER'];
   List<String> coachNumbers = ['All Unique IDs'];
 
   List<WaterTankModel> _allCoaches = [];
@@ -50,6 +50,19 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
     super.initState();
     _refreshData();
     _startAutoRefresh();
+  }
+
+  Set<String> _getAvailableCoachTypes() {
+    return _allCoaches.map((c) {
+      final name = c.location.coachName;
+      if (name.contains('AC 2')) return 'LHB_AC_2TIER';
+      if (name.contains('Power') || name.contains('POWER')) return 'LHB_POWER_CAR';
+      return 'LHB_AC_3TIER';
+    }).toSet();
+  }
+
+  Set<String> _getAvailableCoachNumbers() {
+    return _allCoaches.map((c) => c.coachNumber).toSet();
   }
 
   @override
@@ -72,8 +85,8 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
       selectedCoachType = 'All Types';
       selectedCoachNumber = 'All Unique IDs';
       selectedStatus = 'All';
-      coachTypes = ['All Types'];
-      coachNumbers = ['All Unique IDs'];
+      coachTypes = ['All Types', ..._getAvailableCoachTypes()];
+      coachNumbers = ['All Unique IDs', ..._getAvailableCoachNumbers()];
     });
     _refreshData();
   }
@@ -92,7 +105,7 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
     await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) {
       setState(() {
-        coachTypes = ['All Types', 'LHB_AC_3TIER', 'LHB_AC_2TIER', 'LHB_POWER_CAR'];
+        coachTypes = ['All Types', ..._getAvailableCoachTypes()];
         selectedCoachType = 'All Types';
         coachNumbers = ['All Unique IDs'];
         selectedCoachNumber = 'All Unique IDs';
@@ -104,19 +117,30 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
     await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) {
       setState(() {
-        coachNumbers = ['All Unique IDs', 'COACH_B1', 'COACH_B2', 'COACH_A1'];
+        coachNumbers = ['All Unique IDs', ..._getAvailableCoachNumbers()];
         selectedCoachNumber = 'All Unique IDs';
       });
     }
   }
 
+  String _coachTypeLabel(WaterTankModel coach) {
+    final name = coach.location.coachName;
+    if (name.contains('AC 2')) return 'LHB_AC_2TIER';
+    if (name.contains('Power') || name.contains('POWER')) return 'LHB_POWER_CAR';
+    return 'LHB_AC_3TIER';
+  }
+
   void _applyFilters() {
     setState(() {
       _filteredCoaches = _allCoaches.where((coach) {
-        final matchesTrain = selectedTrainNumber == 'All Trains' || coach.source.deviceId.contains(selectedTrainNumber) || coach.location.coachName.contains(selectedTrainNumber);
-        final matchesType = selectedCoachType == 'All Types' || coach.location.coachName.contains(selectedCoachType);
-        final matchesCoach = selectedCoachNumber == 'All Unique IDs' || coach.coachNumber == selectedCoachNumber;
-        final matchesStatus = selectedStatus == 'All' || coach.status.toUpperCase() == selectedStatus.toUpperCase();
+        final matchesTrain = selectedTrainNumber == 'All Trains' ||
+            WliDummyData.trainNumber == selectedTrainNumber;
+        final matchesType = selectedCoachType == 'All Types' ||
+            _coachTypeLabel(coach) == selectedCoachType;
+        final matchesCoach = selectedCoachNumber == 'All Unique IDs' ||
+            coach.coachNumber == selectedCoachNumber;
+        final matchesStatus = selectedStatus == 'All' ||
+            coach.status.toUpperCase() == selectedStatus.toUpperCase();
         return matchesTrain && matchesType && matchesCoach && matchesStatus;
       }).toList();
     });
@@ -141,6 +165,8 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
           isRefreshing = false;
           lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
           _allCoaches = mockData;
+          coachTypes = ['All Types', ..._getAvailableCoachTypes()];
+          coachNumbers = ['All Unique IDs', ..._getAvailableCoachNumbers()];
           _applyFilters();
           if (!isBackgroundRefresh) isRefreshing = false;
         });
@@ -405,7 +431,7 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
 
   Widget _buildContent() {
     if (selectedViewType == 'Chart') return const ChartView();
-    if (selectedViewType == 'Alerts') return const AlertsView();
+    if (selectedViewType == 'Alerts') return AlertsView(coaches: _filteredCoaches);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

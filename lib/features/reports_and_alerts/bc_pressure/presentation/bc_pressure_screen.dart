@@ -31,7 +31,7 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
   String selectedCoachNumber = 'All Unique IDs';
   String selectedStatus = 'All';
   String selectedViewType = 'BC Pressure';
-  String lastUpdated = '10:46 AM';
+  late String lastUpdated = _formatTime(DateTime.now());
   bool isRefreshing = false;
 
   final List<String> trainNumbers = ['All Trains', '12615/6 Grand Tr...'];
@@ -43,6 +43,12 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
 
   late List<BCPressureModel> _allCoaches = BCDummyData.generateCoaches();
   late List<BCPressureModel> _filteredCoaches = List.from(_allCoaches);
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 
   void _applyFilters() {
     setState(() {
@@ -59,17 +65,17 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
   Future<void> _refreshData() async {
     setState(() => isRefreshing = true);
     await Future.delayed(const Duration(seconds: 2));
-    final now = TimeOfDay.now();
+    final now = DateTime.now();
     setState(() {
       isRefreshing = false;
-      lastUpdated = now.format(context);
+      lastUpdated = _formatTime(now);
       _allCoaches = BCDummyData.generateCoaches();
       _filteredCoaches = List.from(_allCoaches);
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Data refreshed at ${now.format(context)}',
+          content: Text('Data refreshed at ${_formatTime(now)}',
               style: GoogleFonts.poppins(fontSize: 13)),
           backgroundColor: Colors.green[700],
           duration: const Duration(seconds: 2),

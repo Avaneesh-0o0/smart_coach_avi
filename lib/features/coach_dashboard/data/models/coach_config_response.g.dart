@@ -1,0 +1,30 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'coach_config_response.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+CoachConfigResponse _$CoachConfigResponseFromJson(Map<String, dynamic> json) =>
+    CoachConfigResponse(
+      success: json['success'] as bool,
+      message: json['message'] as String,
+      data: json['data'] == null
+          ? null
+          : CoachConfigData.fromJson(json['data'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$CoachConfigResponseToJson(
+  CoachConfigResponse instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'message': instance.message,
+  'data': instance.data,
+};
+
+CoachConfigData _$CoachConfigDataFromJson(Map<String, dynamic> json) =>
+    CoachConfigData(config: json['config'] as String?);
+
+Map<String, dynamic> _$CoachConfigDataToJson(CoachConfigData instance) =>
+    <String, dynamic>{'config': instance.config};

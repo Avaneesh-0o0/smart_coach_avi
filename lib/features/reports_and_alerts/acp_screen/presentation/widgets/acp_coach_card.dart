@@ -49,11 +49,11 @@ class AcpCoachCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Unique ID: ${coach.sensorId}',
+                      'Coach: ${coach.coachNumber}',
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: ColorConstants.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: ColorConstants.textPrimary,
                       ),
                     ),
                     Text(

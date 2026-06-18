@@ -90,10 +90,15 @@ class _TrainTableState extends State<TrainTable> {
 
     // Collect all unique keys from all items' rawJson in the order they appear
     final List<String> orderedKeys = [];
+    const excludedKeys = {
+      'train_id', 'origination_region_id', 'region_id',
+      'departure_station_id', 'destination_station_id',
+      'entity_type', 'is_mapped',
+    };
     for (var item in filteredItems) {
       if (item.rawJson != null) {
         for (var key in item.rawJson!.keys) {
-          if (!orderedKeys.contains(key)) {
+          if (!orderedKeys.contains(key) && !excludedKeys.contains(key)) {
             orderedKeys.add(key);
           }
         }

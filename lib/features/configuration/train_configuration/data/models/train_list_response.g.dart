@@ -6,6 +6,14 @@ part of 'train_list_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 TrainListResponse _$TrainListResponseFromJson(Map<String, dynamic> json) =>
     TrainListResponse(
       success: json['success'] as bool,
@@ -33,7 +41,7 @@ Map<String, dynamic> _$TrainDataToJson(TrainData instance) => <String, dynamic>{
 };
 
 TrainItem _$TrainItemFromJson(Map<String, dynamic> json) => TrainItem(
-  trainId: (json['train_id'] as num?)?.toInt(),
+  trainId: _parseInt(json['train_id']),
   originationRegionName: json['origination_region_name'] as String?,
   regionName: json['region_name'] as String?,
   departureStationName: json['departure_station_name'] as String?,
@@ -42,11 +50,11 @@ TrainItem _$TrainItemFromJson(Map<String, dynamic> json) => TrainItem(
   isMapped: json['is_mapped'] as bool?,
   trainNumber: json['train_number'] as String?,
   trainName: json['train_name'] as String?,
-  originationRegionId: (json['origination_region_id'] as num?)?.toInt(),
-  regionId: (json['region_id'] as num?)?.toInt(),
-  departureStationId: (json['departure_station_id'] as num?)?.toInt(),
-  destinationStationId: (json['destination_station_id'] as num?)?.toInt(),
-  numberOfCoaches: (json['no_of_coaches'] as num?)?.toInt(),
+  originationRegionId: _parseInt(json['origination_region_id']),
+  regionId: _parseInt(json['region_id']),
+  departureStationId: _parseInt(json['departure_station_id']),
+  destinationStationId: _parseInt(json['destination_station_id']),
+  numberOfCoaches: _parseInt(json['no_of_coaches']),
   line: json['line'] as String?,
   trainOperator: json['train_operator'] as String?,
   engineNumber: json['engine_number'] as String?,

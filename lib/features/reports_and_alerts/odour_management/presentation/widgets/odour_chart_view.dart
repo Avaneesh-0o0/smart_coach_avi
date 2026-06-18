@@ -5,12 +5,11 @@ import 'package:smart_coach_new/core/utils/app_dimensions.dart';
 import 'package:smart_coach_new/core/utils/app_strings.dart';
 import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
-import 'package:smart_coach_new/core/widgets/period_filter.dart';
 import '../../data/models/odour_model.dart';
 
 class OdourChartView extends StatefulWidget {
-  final List<OdourCoachModel> coaches;
-  const OdourChartView({super.key, required this.coaches});
+  final List<OdourCoachModel> records;
+  const OdourChartView({super.key, required this.records});
 
   @override
   State<OdourChartView> createState() => _OdourChartViewState();
@@ -18,59 +17,52 @@ class OdourChartView extends StatefulWidget {
 
 class _OdourChartViewState extends State<OdourChartView> {
   String selectedPeriod = 'Live';
-  String selectedChartType = AppStrings.timeSeries;
+  String selectedChartType = 'Time Series';
   DateTimeRange? customRange;
 
-  List<OdourCoachModel> get filteredCoaches {
-    if (selectedPeriod == 'Live') return widget.coaches;
-    DateTime now = DateTime.now();
-    DateTime? startDate;
-    if (selectedPeriod == '7 Days') startDate = now.subtract(const Duration(days: 7));
-    else if (selectedPeriod == '30 Days') startDate = now.subtract(const Duration(days: 30));
-    else if (selectedPeriod == 'Custom' && customRange != null) startDate = customRange!.start;
-    
-    if (startDate == null) return widget.coaches;
-    return widget.coaches.where((c) {
-      try {
-        final updateTime = DateTime.parse(c.timestamp);
-        return updateTime.isAfter(startDate!);
-      } catch (_) { return false; }
+  int get alertCount => widget.records.where((r) => r.hasAlert).length;
+  int get activeCount => widget.records.where((r) => r.isActive).length;
+  int get total => widget.records.length;
+
+  List<OdourCoachModel> get _filteredByPeriod {
+    if (selectedPeriod == 'Live') return widget.records;
+    final now = DateTime.now();
+    DateTime? start;
+    if (selectedPeriod == '7 Days') start = now.subtract(const Duration(days: 7));
+    else if (selectedPeriod == '30 Days') start = now.subtract(const Duration(days: 30));
+    else if (selectedPeriod == 'Custom' && customRange != null) start = customRange!.start;
+    if (start == null) return widget.records;
+    return widget.records.where((r) {
+      try { return DateTime.parse(r.timestamp).isAfter(start!); }
+      catch (_) { return false; }
     }).toList();
   }
 
-  int get activeCount => filteredCoaches.where((c) => c.isActive).length;
-  int get inactiveCount => filteredCoaches.where((c) => !c.isActive).length;
-  int get total => filteredCoaches.length;
-
-  List<FlSpot> get timeSeriesData {
-    final count = filteredCoaches.where((c) => c.isRecent).length;
-    if (selectedPeriod == 'Live') {
-      return [
-        const FlSpot(0, 0), const FlSpot(1, 1), const FlSpot(2, 0), const FlSpot(3, 2),
-        const FlSpot(4, 1), const FlSpot(5, 3), const FlSpot(6, 2), FlSpot(7, count.toDouble()),
-      ];
-    } else {
-      int days = selectedPeriod == '7 Days' ? 7 : 30;
-      List<FlSpot> spots = [];
-      for (int i = 0; i <= days; i++) {
-        double val = (i % 5 == 0) ? 4.0 : (i % 3 == 0) ? 2.0 : 1.0;
-        if (i == days) val = count.toDouble(); 
-        spots.add(FlSpot(i.toDouble(), val));
-      }
-      return spots;
+  List<FlSpot> get _timeSeriesData {
+    final filtered = _filteredByPeriod;
+    if (filtered.isEmpty) return [const FlSpot(0, 0)];
+    final coachMap = <String, double>{};
+    for (final r in filtered) {
+      coachMap[r.coachNumber] = (coachMap[r.coachNumber] ?? 0) + r.reading.toDouble();
     }
+    final entries = coachMap.entries.toList();
+    return entries.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.value)).toList();
+  }
+
+  List<String> get _xLabels {
+    return _filteredByPeriod.map((r) => r.coachNumber).toSet().toList();
   }
 
   Future<void> _pickCustomRange() async {
     final range = await showDateRangePicker(
-      context: context, firstDate: DateTime(2026, 1, 1), lastDate: DateTime.now(),
+      context: context, firstDate: DateTime.now().subtract(const Duration(days: 365)), lastDate: DateTime.now(),
     );
     if (range != null) setState(() { customRange = range; selectedPeriod = 'Custom'; });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.coaches.isEmpty) return const SizedBox.shrink();
+    if (widget.records.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -82,14 +74,14 @@ class _OdourChartViewState extends State<OdourChartView> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: Text('Odour Incident Timelines', style: AppTextStyles.header2)),
-            _chartTypeToggle(AppStrings.timeSeries),
+            Expanded(child: Text('Odour Readings by Coach', style: AppTextStyles.header2)),
+            _chartTypeToggle('Time Series'),
             const SizedBox(width: 8),
-            _chartTypeToggle(AppStrings.pieChart),
+            _chartTypeToggle('Pie Chart'),
           ],
         ),
         const SizedBox(height: 16),
-        selectedChartType == AppStrings.pieChart ? _buildPieChart() : _buildTimeSeriesChart(),
+        selectedChartType == 'Pie Chart' ? _buildPieChart() : _buildBarChart(),
         const SizedBox(height: 16),
         _buildSummaryCard(),
       ],
@@ -122,19 +114,23 @@ class _OdourChartViewState extends State<OdourChartView> {
             children: [
               PieChart(PieChartData(sectionsSpace: 3, centerSpaceRadius: 56, sections: [
                 PieChartSectionData(value: activeCount.toDouble(), color: const Color(0xFF34C700), radius: 60, showTitle: false),
-                PieChartSectionData(value: inactiveCount.toDouble(), color: const Color(0xFFFF3B30), radius: 60, showTitle: false),
+                PieChartSectionData(value: alertCount.toDouble(), color: const Color(0xFFFF3B30), radius: 60, showTitle: false),
+                PieChartSectionData(value: (total - activeCount - alertCount).toDouble(), color: Colors.grey, radius: 60, showTitle: false),
               ])),
               Column(mainAxisSize: MainAxisSize.min, children: [
                 Text('$total', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700)),
-                Text('Total', style: GoogleFonts.poppins(fontSize: 11, color: ColorConstants.textSecondary)),
+                Text('Sensors', style: GoogleFonts.poppins(fontSize: 11, color: ColorConstants.textSecondary)),
               ]),
             ],
           ),
         ),
         const SizedBox(height: 12),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _legend(const Color(0xFF34C700), 'Active ($activeCount)'), const SizedBox(width: 20),
-          _legend(const Color(0xFFFF3B30), 'Inactive ($inactiveCount)'),
+          _legend(const Color(0xFF34C700), 'Active ($activeCount)'),
+          const SizedBox(width: 16),
+          _legend(const Color(0xFFFF3B30), 'Alert ($alertCount)'),
+          const SizedBox(width: 16),
+          _legend(Colors.grey, 'Inactive (${total - activeCount - alertCount})'),
         ]),
       ],
     );
@@ -145,34 +141,43 @@ class _OdourChartViewState extends State<OdourChartView> {
     const SizedBox(width: 6), Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500)),
   ]);
 
-  Widget _buildTimeSeriesChart() {
-    final spots = timeSeriesData;
+  Widget _buildBarChart() {
+    final spots = _timeSeriesData;
+    final labels = _xLabels;
+    if (spots.isEmpty) return const Center(child: Text('No data'));
+
     return Container(
       padding: const EdgeInsets.only(top: 24, right: 24, bottom: 12, left: 12),
       decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
       child: SizedBox(
         height: 220,
-        child: LineChart(LineChartData(
-          clipData: const FlClipData.all(),
-          gridData: const FlGridData(show: true, drawVerticalLine: true, horizontalInterval: 1),
+        child: BarChart(BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) * 1.2).clamp(100, 500),
+          gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 50,
+            getDrawingHorizontalLine: (v) => FlLine(color: ColorConstants.divider, strokeWidth: 1)),
           titlesData: FlTitlesData(
             show: true, rightTitles: const AxisTitles(), topTitles: const AxisTitles(),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: selectedPeriod == 'Live' ? 1 : 5, getTitlesWidget: (v, m) {
-              if (selectedPeriod == 'Live') {
-                final h = (DateTime.now().hour - (7 - v.toInt())) % 24;
-                return Text('${h.toString().padLeft(2, '0')}:00', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary));
-              }
-              return Text('D ${v.toInt()}', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary));
-            })),
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 1, reservedSize: 28)),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true, reservedSize: 30,
+              getTitlesWidget: (v, m) {
+                final idx = v.toInt();
+                if (idx >= 0 && idx < labels.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(labels[idx], style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary)),
+                  );
+                }
+                return const SizedBox.shrink();
+              })),
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 35,
+              getTitlesWidget: (v, m) => Text('${v.toInt()}', style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary)))),
           ),
-          minX: 0, maxX: selectedPeriod == 'Live' ? 7 : (selectedPeriod == '7 Days' ? 7 : 30), minY: 0,
-          maxY: (spots.isEmpty ? 5 : (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1).toDouble().clamp(5, 100)),
-          lineBarsData: [LineChartBarData(
-            spots: spots, isCurved: true, gradient: const LinearGradient(colors: [Colors.blue, Colors.cyan]),
-            barWidth: 3, dotData: FlDotData(show: spots.length < 10),
-            belowBarData: BarAreaData(show: true, gradient: LinearGradient(colors: [Colors.blue.withOpacity(0.3), Colors.transparent], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
-          )],
+          borderData: FlBorderData(show: false),
+          barGroups: spots.asMap().entries.map((e) => BarChartGroupData(x: e.key, barRods: [
+            BarChartRodData(toY: e.value.y, color: e.value.y > 70 ? const Color(0xFFD32F2F) : const Color(0xFF34C700), width: 22,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(4), topRight: Radius.circular(4)))
+          ])).toList(),
         )),
       ),
     );
@@ -184,13 +189,15 @@ class _OdourChartViewState extends State<OdourChartView> {
       decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
       child: Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Total Records', style: AppTextStyles.bodyMedium),
+          Text('Total Sensors', style: AppTextStyles.bodyMedium),
           Text('$total', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
         ]),
         const SizedBox(height: 8),
-        _buildStatRow('Active Sensors', '$activeCount', const Color(0xFF34C700)),
+        _buildStatRow('Active', '$activeCount', const Color(0xFF34C700)),
         const SizedBox(height: 8),
-        _buildStatRow('Inactive/Resolved', '$inactiveCount', const Color(0xFFFF3B30)),
+        _buildStatRow('Alert ( > 70 ppm)', '$alertCount', const Color(0xFFFF3B30)),
+        const SizedBox(height: 8),
+        _buildStatRow('Inactive', '${total - activeCount - alertCount}', Colors.grey),
       ]),
     );
   }

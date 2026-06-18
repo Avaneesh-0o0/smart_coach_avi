@@ -6,6 +6,14 @@ part of 'zone_list_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 ZoneListResponse _$ZoneListResponseFromJson(Map<String, dynamic> json) =>
     ZoneListResponse(
       success: json['success'] as bool,
@@ -38,11 +46,11 @@ Map<String, dynamic> _$ZoneListDataToJson(ZoneListData instance) =>
     };
 
 ZoneItem _$ZoneItemFromJson(Map<String, dynamic> json) => ZoneItem(
-  zoneId: (json['zone_id'] as num?)?.toInt(),
+  zoneId: _parseInt(json['zone_id']),
   name: json['name'] as String?,
   headquarters: json['headquarters'] as String?,
   zoneCode: json['zone_code'] as String?,
-  isActive: (json['is_active'] as num?)?.toInt(),
+  isActive: _parseInt(json['is_active']),
   createdDate: json['created_date'] as String?,
 );
 

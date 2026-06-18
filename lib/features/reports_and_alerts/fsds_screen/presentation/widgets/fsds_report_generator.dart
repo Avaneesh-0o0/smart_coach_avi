@@ -8,12 +8,10 @@ import 'package:smart_coach_new/core/utils/color_constants.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/fsds_screen/data/models/fsds_model.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 
 class FsdsReportGenerator {
-  static Future<void> generate(BuildContext context, List<FsdsAssetModel> assets, {String title = 'FSDS Monitoring Report'}) async {
+  static Future<void> generate(BuildContext context, List<FsdsAssetModel> assets, {String title = 'FSDS Bypass Report'}) async {
     final String? format = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -33,7 +31,6 @@ class FsdsReportGenerator {
     if (format == null) return;
     if (!context.mounted) return;
 
-    // Show loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -46,7 +43,7 @@ class FsdsReportGenerator {
             children: [
               CircularProgressIndicator(color: ColorConstants.primary),
               SizedBox(height: 16),
-              Text('Generating FSDS Report...', style: TextStyle(fontWeight: FontWeight.w500)),
+              Text('Generating FSDS Bypass Report...', style: TextStyle(fontWeight: FontWeight.w500)),
             ],
           ),
         ),
@@ -63,7 +60,7 @@ class FsdsReportGenerator {
         file = await _buildPdf(assets, title: title);
       }
       
-      if (context.mounted) Navigator.pop(context); // close loading
+      if (context.mounted) Navigator.pop(context);
 
       if (!context.mounted) return;
       _showSuccess(context, file.path);
@@ -77,39 +74,48 @@ class FsdsReportGenerator {
     }
   }
 
-  static Future<File> _buildExcel(List<FsdsAssetModel> assets, {String title = 'FSDS Monitoring Report'}) async {
+  static Future<File> _buildExcel(List<FsdsAssetModel> assets, {String title = 'FSDS Bypass Report'}) async {
     final excel = Excel.createExcel();
-    final summary = excel['Summary'];
-    excel.setDefaultSheet('Summary');
+    final sheet = excel['FSDS Bypass'];
+    excel.setDefaultSheet('FSDS Bypass');
 
-    _header(summary, 0, 0, title);
-    _header(summary, 1, 0, 'Generated: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}');
+    _header(sheet, 0, 0, title);
+    _header(sheet, 1, 0, 'Generated: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}');
 
-    final headers = ['Asset Name', 'Location', 'Smoke Level', 'Light Value', 'Timestamp', 'Status'];
+    final headers = [
+      'Train ID', 'Train Number', 'Coach ID', 'Coach Number',
+      'Device ID', 'Device Name', 'FSDS Bypass Status', 'Alert Status',
+      'Location', 'Date & Time', 'Remarks'
+    ];
     for (var i = 0; i < headers.length; i++) {
-      _colHeader(summary, 3, i, headers[i]);
+      _colHeader(sheet, 3, i, headers[i]);
     }
 
     for (var r = 0; r < assets.length; r++) {
       final a = assets[r];
       final row = 4 + r;
-      _cell(summary, row, 0, a.assetName);
-      _cell(summary, row, 1, a.locName);
-      _cell(summary, row, 2, '${a.smokeLevel}');
-      _cell(summary, row, 3, '${a.lightValue}');
-      _cell(summary, row, 4, a.timestamp);
-      _cell(summary, row, 5, a.isSmokeDetected ? 'ALERT' : 'NORMAL');
+      _cell(sheet, row, 0, '${a.trainId}');
+      _cell(sheet, row, 1, a.trainNo);
+      _cell(sheet, row, 2, a.coachUniqueId);
+      _cell(sheet, row, 3, a.coachDisplayId.isNotEmpty ? a.coachDisplayId : a.coachNumber);
+      _cell(sheet, row, 4, a.deviceId);
+      _cell(sheet, row, 5, a.deviceName);
+      _cell(sheet, row, 6, a.bypassStatusText);
+      _cell(sheet, row, 7, a.alertStatusText);
+      _cell(sheet, row, 8, a.location);
+      _cell(sheet, row, 9, a.timestamp);
+      _cell(sheet, row, 10, a.remarks);
     }
 
     final dir = await getApplicationDocumentsDirectory();
-    final fileName = 'FSDS_Report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+    final fileName = 'FSDS_Bypass_Report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
     final file = File('${dir.path}/$fileName');
     final bytes = excel.encode()!;
     await file.writeAsBytes(bytes);
     return file;
   }
 
-  static Future<File> _buildPdf(List<FsdsAssetModel> assets, {String title = 'FSDS Monitoring Report'}) async {
+  static Future<File> _buildPdf(List<FsdsAssetModel> assets, {String title = 'FSDS Bypass Report'}) async {
     final pdf = pw.Document();
     pdf.addPage(
       pw.MultiPage(
@@ -118,15 +124,25 @@ class FsdsReportGenerator {
           pw.Header(level: 0, child: pw.Text(title)),
           pw.SizedBox(height: 20),
           pw.TableHelper.fromTextArray(
-            headers: ['Asset', 'Location', 'Smoke', 'Light', 'Status'],
-            data: assets.map((a) => [a.assetName, a.locName, '${a.smokeLevel}', '${a.lightValue}', a.isSmokeDetected ? 'ALERT' : 'NORMAL']).toList(),
+            headers: [
+              'Train ID', 'Train No', 'Coach ID', 'Coach Number',
+              'Device ID', 'Device Name', 'Bypass', 'Alert',
+              'Location', 'Date & Time', 'Remarks'
+            ],
+            data: assets.map((a) => [
+              '${a.trainId}', a.trainNo, a.coachUniqueId,
+              a.coachDisplayId.isNotEmpty ? a.coachDisplayId : a.coachNumber,
+              a.deviceId, a.deviceName,
+              a.bypassStatusText, a.alertStatusText,
+              a.location, a.timestamp, a.remarks
+            ]).toList(),
           ),
         ],
       ),
     );
 
     final dir = await getApplicationDocumentsDirectory();
-    final fileName = 'FSDS_Report_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final fileName = 'FSDS_Bypass_Report_${DateTime.now().millisecondsSinceEpoch}.pdf';
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(await pdf.save());
     return file;
@@ -154,7 +170,7 @@ class FsdsReportGenerator {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Report Ready'),
-        content: Text('FSDS report generated at: $path'),
+        content: Text('FSDS Bypass report generated at: $path'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
           ElevatedButton(onPressed: () => OpenFile.open(path), child: const Text('Open')),

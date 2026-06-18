@@ -37,12 +37,15 @@ List<MasterModuleEntity> _filterMasterModule(SearchParams params) {
       masterModuleItem.rechargeDate,
       masterModuleItem.simStatus,
       masterModuleItem.batteryReplacementDate,
+      masterModuleItem.powerSupplyAvailable,
       masterModuleItem.batteryCapacity,
       masterModuleItem.batteryType,
       masterModuleItem.createdDate,
       masterModuleItem.createdByName,
       masterModuleItem.updatedDate,
       masterModuleItem.updatedByName,
+      masterModuleItem.train?.trainNumber,
+      masterModuleItem.train?.trainName,
     ].any((field) => field.toString().toLowerCase().contains(query));
   }).toList();
 }
@@ -182,13 +185,14 @@ class _MasterModuleTableState extends State<MasterModuleTable> {
                     headerGridLinesVisibility: GridLinesVisibility.both,
                     columns: [
                       Utils.gridColumn(label: 'Unique ID'),
-                      Utils.gridColumn(label: 'Coach ID'),
+                      Utils.gridColumn(label: 'Coach Display'),
                       Utils.gridColumn(label: 'Make/Model'),
                       Utils.gridColumn(label: 'Firmware'),
                       Utils.gridColumn(label: 'Serial No'),
                       Utils.gridColumn(label: 'Install Date'),
                       Utils.gridColumn(label: 'Location'),
                       Utils.gridColumn(label: 'Placement'),
+                      Utils.gridColumn(label: 'Power Supply'),
                       Utils.gridColumn(label: 'Sim Status'),
                       Utils.gridColumn(label: 'Sim No'),
                       Utils.gridColumn(label: 'Primary Prov'),
@@ -202,6 +206,7 @@ class _MasterModuleTableState extends State<MasterModuleTable> {
                       Utils.gridColumn(label: 'Lora'),
                       Utils.gridColumn(label: 'E-Sim'),
                       Utils.gridColumn(label: 'Dual Profile'),
+                      Utils.gridColumn(label: 'Train No'),
                       Utils.gridColumn(label: 'No. Of Devices'),
                       Utils.gridColumn(label: 'Created'),
                       Utils.gridColumn(label: 'Created By'),
@@ -246,7 +251,7 @@ class TableDataSource extends DataGridSource {
             columnName: 'Unique ID',
             value: masterModuleItem.moduleUniqueId ?? emptyText),
         DataGridCell<String>(
-            columnName: 'Coach ID',
+            columnName: 'Coach Display',
             value: masterModuleItem.coach?.coachUniqueId ?? emptyText),
         DataGridCell<String>(
             columnName: 'Make/Model',
@@ -265,6 +270,9 @@ class TableDataSource extends DataGridSource {
         DataGridCell<String>(
             columnName: 'Placement',
             value: masterModuleItem.placementType ?? emptyText),
+        DataGridCell<String>(
+            columnName: 'Power Supply',
+            value: masterModuleItem.powerSupplyAvailable ?? emptyText),
         DataGridCell<String>(
             columnName: 'Sim Status',
             value: masterModuleItem.simStatus ?? emptyText),
@@ -302,6 +310,9 @@ class TableDataSource extends DataGridSource {
         DataGridCell<String>(
             columnName: 'Dual Profile',
             value: masterModuleItem.dualProfileSupported ? 'Yes' : 'No'),
+        DataGridCell<String>(
+            columnName: 'Train No',
+            value: masterModuleItem.train?.trainNumber?.toString() ?? emptyText),
         DataGridCell<String>(
             columnName: 'No. Of Devices',
             value: masterModuleItem.deviceNames.length.toString()),

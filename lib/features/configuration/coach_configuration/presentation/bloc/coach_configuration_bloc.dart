@@ -50,6 +50,7 @@ class CoachConfigurationBloc
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
       List<CoachEntity> list = await coachConfigurationUseCase.fetchCoachList();
+      list = list.where((c) => c.coachUniqueId != null && c.coachUniqueId!.isNotEmpty).toList();
 
       emit(state.copyWith(isLoading: false, coachList: list));
     } catch (e) {
@@ -61,7 +62,7 @@ class CoachConfigurationBloc
     CreateEditCoachConfiguration event,
     Emitter<CoachConfigurationState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, isActionSuccess: false, actionMessage: null));
     try {
       String message;
       if (event.coachId != null) {
@@ -91,14 +92,19 @@ class CoachConfigurationBloc
     DeleteCoachConfiguration event,
     Emitter<CoachConfigurationState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, isActionSuccess: false, actionMessage: null));
     try {
       String message = await coachConfigurationUseCase.deleteCoachConfiguration(
         event.coachId,
       );
 
       final updatedList = state.coachList
-          .where((device) => device.coachId != event.coachId)
+          .where((device) {
+            final id = device.coachId;
+            final eventId = event.coachId;
+            if (id is int && eventId is int) return id != eventId;
+            return id?.toString() != eventId?.toString();
+          })
           .toList();
 
       emit(

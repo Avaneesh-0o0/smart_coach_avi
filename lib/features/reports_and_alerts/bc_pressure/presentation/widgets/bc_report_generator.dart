@@ -35,9 +35,9 @@ class BCReportGenerator {
 
     final DateTimeRange? range = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(2026, 1, 1),
-      lastDate: DateTime(2026, 3, 12),
-      initialDateRange: DateTimeRange(start: DateTime(2026, 3, 5), end: DateTime(2026, 3, 12)),
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now(),
+      initialDateRange: DateTimeRange(start: DateTime.now().subtract(const Duration(days: 7)), end: DateTime.now()),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: ColorConstants.primary)),
         child: child!,
@@ -111,7 +111,7 @@ class BCReportGenerator {
 
     _hdr(summary, 0, 0, 'BC Pressure Monitoring Report — ${BCDummyData.trainName}');
     _hdr(summary, 1, 0, 'Period: ${_fmt(range.start)}  →  ${_fmt(range.end)}');
-    _hdr(summary, 2, 0, 'Generated: ${_fmt(DateTime(2026, 3, 12))} | Last Updated: ${BCDummyData.lastUpdated}');
+    _hdr(summary, 2, 0, 'Generated: ${_fmt(DateTime.now())} | Last Updated: ${BCDummyData.lastUpdated}');
     _blank(summary, 3);
 
     final h1 = ['Coach No.', 'Sensor ID', 'Pressure (Kg/cm²)', 'Status', 'Brake Applied', 'Brake Released', 'Warning', 'Last Updated'];
@@ -178,9 +178,10 @@ class BCReportGenerator {
     }
 
     final days = range.end.difference(range.start).inDays + 1;
+    final today = DateTime.now();
     for (var d = 0; d < days; d++) {
       final date     = range.start.add(Duration(days: d));
-      final isToday  = date.day == 12 && date.month == 3;
+      final isToday  = date.day == today.day && date.month == today.month && date.year == today.year;
       final crit     = isToday ? 2 : (d % 7 == 0 ? 1 : 0);
       final warn     = isToday ? 3 : (d % 4 == 0 ? 2 : (d % 3 == 0 ? 1 : 0));
       final goodCnt  = 20 - crit - warn;

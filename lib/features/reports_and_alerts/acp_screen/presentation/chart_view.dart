@@ -53,41 +53,25 @@ class _AcpChartViewState extends State<AcpChartView> {
   int get offlineCount => filteredCoaches.where((c) => !c.isOn).length;
   int get total => filteredCoaches.length;
 
-  // Dynamic Time Series data based on period
+  // Time Series data based on actual coach status
   List<FlSpot> get timeSeriesData {
-    final count = filteredCoaches.where((c) => c.isRecent).length;
-    
-    if (selectedPeriod == 'Live') {
-      return [
-        const FlSpot(0, 0),
-        const FlSpot(1, 1),
-        const FlSpot(2, 0),
-        const FlSpot(3, 2),
-        const FlSpot(4, 1),
-        const FlSpot(5, 3),
-        const FlSpot(6, 2),
-        FlSpot(7, count.toDouble()),
-      ];
-    } else {
-      int days = selectedPeriod == '7 Days' ? 7 : 30;
-      List<FlSpot> spots = [];
-      for (int i = 0; i <= days; i++) {
-        double val = (i % 5 == 0) ? 4.0 : (i % 3 == 0) ? 2.0 : 1.0;
-        if (i == days) val = count.toDouble(); 
-        spots.add(FlSpot(i.toDouble(), val));
-      }
-      return spots;
-    }
+    final online = onlineCount.toDouble();
+    final offline = offlineCount.toDouble();
+    return [
+      const FlSpot(0, 0),
+      FlSpot(1, online),
+    ];
   }
 
   Future<void> _pickCustomRange() async {
+    final now = DateTime.now();
     final range = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(2026, 1, 1),
-      lastDate: DateTime(2026, 3, 12),
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now,
       initialDateRange: DateTimeRange(
-        start: DateTime(2026, 3, 1),
-        end: DateTime(2026, 3, 12),
+        start: now.subtract(const Duration(days: 7)),
+        end: now,
       ),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
@@ -231,28 +215,36 @@ class _AcpChartViewState extends State<AcpChartView> {
                 PieChartData(
                   sectionsSpace: 3,
                   centerSpaceRadius: 56,
-                  sections: [
-                    PieChartSectionData(
-                      value: (onlineCount == 0 && offlineCount == 0) ? 1 : onlineCount.toDouble(),
-                      color: (onlineCount == 0 && offlineCount == 0) ? ColorConstants.divider : const Color(0xFF34C700),
-                      radius: 60,
-                      showTitle: false,
-                    ),
-                    if (onlineCount > 0 || offlineCount > 0)
-                      PieChartSectionData(
-                        value: offlineCount.toDouble(),
-                        color: const Color(0xFFFF3B30),
-                        radius: 60,
-                        showTitle: false,
-                      ),
-                  ],
+                  sections: onlineCount == 0 && offlineCount == 0
+                      ? [
+                          PieChartSectionData(
+                            value: 1,
+                            color: ColorConstants.divider,
+                            radius: 60,
+                            showTitle: false,
+                          ),
+                        ]
+                      : [
+                          PieChartSectionData(
+                            value: onlineCount.toDouble(),
+                            color: const Color(0xFF34C700),
+                            radius: 60,
+                            showTitle: false,
+                          ),
+                          PieChartSectionData(
+                            value: offlineCount.toDouble(),
+                            color: const Color(0xFFFF3B30),
+                            radius: 60,
+                            showTitle: false,
+                          ),
+                        ],
                 ),
               ),
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('$total', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: ColorConstants.textPrimary)),
-                  Text('Total', style: GoogleFonts.poppins(fontSize: 11, color: ColorConstants.textSecondary)),
+                  Text(total == 0 ? '--' : '$total', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: ColorConstants.textPrimary)),
+                  Text(total == 0 ? 'No Data' : 'Total', style: GoogleFonts.poppins(fontSize: 11, color: ColorConstants.textSecondary)),
                 ],
               ),
             ],
@@ -350,7 +342,7 @@ class _AcpChartViewState extends State<AcpChartView> {
               border: Border.all(color: ColorConstants.divider, width: 1),
             ),
             minX: 0,
-            maxX: selectedPeriod == 'Live' ? 7 : (selectedPeriod == '7 Days' ? 7 : 30),
+            maxX: 1,
             minY: 0,
             maxY: (spots.isEmpty ? 5 : (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1).toDouble().clamp(5, 100)),
             lineBarsData: [

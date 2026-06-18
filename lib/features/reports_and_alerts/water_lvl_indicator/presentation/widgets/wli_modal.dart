@@ -88,7 +88,6 @@ class WliModal extends StatelessWidget {
                         _buildDetailRow('Level', '${asset.percentFull.toStringAsFixed(1)}%', showTopBorder: false),
                         _buildDetailRow('Volume', '${asset.volumeLiters.toStringAsFixed(1)} L'),
                         _buildDetailRow('Level (cm)', '${asset.levelCm.toStringAsFixed(1)} cm'),
-                        _buildDetailRow('Raw Value', '${asset.rawValue}'),
                       ])),
                       
                       const SizedBox(height: 12),

@@ -17,10 +17,16 @@ Future<T> safeRequest<T>(Future<T> Function() request) async {
       throw ApiException(data['message']);
     }
 
-    throw ApiException('Something went wrong');
+    String? errorMsg;
+    if (e.error is ApiException) {
+      errorMsg = (e.error as ApiException).message;
+    }
+    if (e.response?.statusCode != null) {
+      errorMsg ??= 'Request failed (${e.response!.statusCode})';
+    }
+
+    throw ApiException(errorMsg ?? 'Something went wrong');
   } catch (e, stack) {
-    print('❌ SAFE_REQUEST REAL ERROR: $e');  // ADD THIS
-    print('❌ SAFE_REQUEST REAL STACK: $stack');  // ADD THIS
-    throw ApiException('Unexpected error');
+    throw ApiException(e.toString());
   }
 }

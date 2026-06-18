@@ -14,6 +14,7 @@ class MasterModuleEntity {
   final String? installationDate;
   final String? location;
   final String? placementType;
+  final String? specifyPlacementLocation;
   final String? simNo;
   final String? serviceProviderPrimary;
   final String? serviceProviderSecondary;
@@ -22,6 +23,7 @@ class MasterModuleEntity {
   final String? batteryReplacementDate;
   final bool dualProfileSupported;
   final bool loraEnabled;
+  final String? powerSupplyAvailable;
   final bool esimEnabled;
   final int? batteryCapacity;
   final String? batteryType;
@@ -47,6 +49,7 @@ class MasterModuleEntity {
     this.installationDate,
     this.location,
     this.placementType,
+    this.specifyPlacementLocation,
     this.simNo,
     this.serviceProviderPrimary,
     this.serviceProviderSecondary,
@@ -55,6 +58,7 @@ class MasterModuleEntity {
     this.batteryReplacementDate,
     this.dualProfileSupported = false,
     this.loraEnabled = false,
+    this.powerSupplyAvailable,
     this.esimEnabled = false,
     this.batteryCapacity,
     this.batteryType,
@@ -91,6 +95,7 @@ class MasterModuleEntity {
         model.placementType,
         Constants.placementTypeList,
       ),
+      specifyPlacementLocation: model.specifyPlacementLocation,
       simNo: model.simNo,
       serviceProviderPrimary: Utils.normalizeDropDownValue(
         model.serviceProviderPrimary,
@@ -108,6 +113,7 @@ class MasterModuleEntity {
       batteryReplacementDate: model.batteryReplacementDate,
       dualProfileSupported: model.dualProfileSupported ?? false,
       loraEnabled: model.loraEnabled ?? false,
+      powerSupplyAvailable: model.powerSupplyAvailable,
       esimEnabled: model.esimEnabled ?? false,
       batteryCapacity: model.batteryCapacity,
       batteryType: Utils.normalizeDropDownValue(

@@ -34,6 +34,15 @@ class _BCCoachDetailState extends State<BCCoachDetail> {
     }
   }
 
+  String _formatDetailDate(DateTime dt) {
+    final d = dt.day.toString().padLeft(2, '0');
+    final mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.month - 1];
+    final y = dt.year;
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$d $mon, $y | $h:$m';
+  }
+
   List<BCHistoryEntry> get _history {
     if (selectedPeriod == 'Custom' && customRange != null) {
       return BCDummyData.getHistory(widget.coach.coachNumber, 'Custom', from: customRange!.start, to: customRange!.end);
@@ -49,11 +58,12 @@ class _BCCoachDetailState extends State<BCCoachDetail> {
       .toList();
 
   Future<void> _pickCustomRange() async {
+    final now = DateTime.now();
     final range = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(2026, 1, 1),
-      lastDate: DateTime(2026, 3, 12),
-      initialDateRange: DateTimeRange(start: DateTime(2026, 2, 10), end: DateTime(2026, 3, 12)),
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now,
+      initialDateRange: DateTimeRange(start: now.subtract(const Duration(days: 30)), end: now),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: ColorConstants.primary)),
         child: child!,
@@ -94,7 +104,7 @@ class _BCCoachDetailState extends State<BCCoachDetail> {
               const SizedBox(height: 16),
               _card(child: _buildLivePressure()),
               const SizedBox(height: 12),
-              const UpdateInfo(lastUpdated: '12 Mar, 2026 | 10:46 AM', refilledBy: 'Ramesh Kumar'),
+              UpdateInfo(lastUpdated: _formatDetailDate(DateTime.now()), refilledBy: 'Ramesh Kumar'),
               const SizedBox(height: 16),
               _card(child: _buildSensorInfo()),
               const SizedBox(height: 16),

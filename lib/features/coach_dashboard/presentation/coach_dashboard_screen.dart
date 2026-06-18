@@ -48,6 +48,30 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (state.errorMessage != null && state.coachList.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                    const SizedBox(height: 16),
+                    Text(state.errorMessage!, textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade600)),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => context.read<CoachDashboardBloc>().add(LoadCoachDashboardData()),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Retry"),
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
