@@ -10,7 +10,12 @@ class AcpLogResponse {
   final int? totalRegisteredDevices;
   final List<AcpLogData>? data;
 
-  AcpLogResponse({this.success, this.count, this.totalRegisteredDevices, this.data});
+  AcpLogResponse({
+    this.success,
+    this.count,
+    this.totalRegisteredDevices,
+    this.data,
+  });
 
   factory AcpLogResponse.fromJson(Map<String, dynamic> json) =>
       _$AcpLogResponseFromJson(json);
@@ -58,22 +63,23 @@ class AcpLogData {
   });
 
   factory AcpLogData.fromJson(Map<String, dynamic> json) {
-    String? _safeString(dynamic val) {
+    String? safeString(dynamic val) {
       if (val == null || val == 'null') return null;
       return val.toString();
     }
+
     return AcpLogData(
       logId: json['log_id'] as int?,
       lastUpdated: json['last_updated'] as String?,
       rawAssetName: json['raw_asset_name'] as String?,
-      acpStatus: _safeString(json['acp_status']),
-      trainNo: _safeString(json['train_no']),
-      commCoachNo: _safeString(json['comm_coach_no']),
-      techCoachNo: _safeString(json['tech_coach_no']),
+      acpStatus: safeString(json['acp_status']),
+      trainNo: safeString(json['train_no']),
+      commCoachNo: safeString(json['comm_coach_no']),
+      techCoachNo: safeString(json['tech_coach_no']),
       trainLocation: json['train_location'] as String?,
-      powerCarNo: _safeString(json['power_car_no']),
-      totalCount: _safeString(json['total_count']),
-      deviceId: _safeString(json['device_id']),
+      powerCarNo: safeString(json['power_car_no']),
+      totalCount: safeString(json['total_count']),
+      deviceId: safeString(json['device_id']),
     );
   }
 

@@ -3,7 +3,6 @@ import 'package:smart_coach_new/core/network/rest_client.dart';
 import 'package:smart_coach_new/core/network/safe_request.dart';
 import 'package:smart_coach_new/core/utils/prefs.dart';
 import 'package:smart_coach_new/features/configuration/coach_configuration/data/models/coach_list_response.dart';
-import 'package:smart_coach_new/features/configuration/coach_configuration/data/models/edit_coach_configuration_response.dart';
 import 'package:smart_coach_new/features/configuration/master_module_configuration/data/models/create_master_module_configuration_response.dart';
 import 'package:smart_coach_new/features/configuration/master_module_configuration/data/models/delete_master_module_configuration_response.dart';
 import 'package:smart_coach_new/features/configuration/master_module_configuration/data/models/edit_master_module_configuration_response.dart';

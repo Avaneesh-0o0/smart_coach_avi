@@ -11,7 +11,7 @@ import 'package:smart_coach_new/core/widgets/status_chip.dart';
 import 'package:smart_coach_new/core/widgets/view_type_selector.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/data/datasource/hot_axle_dummy_data.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/data/repository/hot_axle_repository.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/presentation/widgets/hot_axle_report_generator.dart';
 import '../data/models/hot_axle_model.dart';
 import 'hot_axle_alert_view.dart';
@@ -38,13 +38,15 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
   List<String> coachTypes = ['All Types'];
   List<String> coachNumbers = ['All Unique IDs'];
 
+  final HotAxleRepository _repository = HotAxleRepository();
   List<HotAxleCoachModel> _allCoaches = [];
   List<HotAxleCoachModel> _filteredCoaches = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _refreshData();
+    _fetchData();
   }
 
   void _applyFilters() {
@@ -60,64 +62,28 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
     });
   }
 
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    final data = await _repository.getHotAxleData();
+    if (mounted) {
+      setState(() {
+        _allCoaches = data;
+        _isLoading = false;
+        lastUpdated = DateFormat('dd/MM/yy HH:mm:ss').format(DateTime.now());
+        
+        trainNumbers = ['All Trains', ...data.map((e) => e.trainNo).where((n) => n.isNotEmpty).toSet()];
+        coachTypes = ['All Types', ...data.map((e) => e.coachType).toSet()];
+        coachNumbers = ['All Unique IDs', ...data.map((e) => e.coachNumber).toSet()];
+      });
+      _applyFilters();
+    }
+  }
+
   Future<void> _refreshData({bool isBackgroundRefresh = false}) async {
     if (!isBackgroundRefresh) setState(() => isRefreshing = true);
-    
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    if (mounted) {
-      final List<HotAxleCoachModel> mockData = [
-        HotAxleCoachModel(
-          deviceId: "HA_DEV_100676",
-          coachNumber: "100676",
-          coachType: "LHB_AC_2TIER",
-          owningRly: "SEC",
-          trainNo: "12615",
-          trainName: "Grand Trunk Express",
-          timestamp: DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String(),
-          a11Temp: 45.2,
-          a12Temp: 46.8,
-          a21Temp: 82.5,
-          a22Temp: 44.1,
-          a31Temp: 45.9,
-          a32Temp: 47.3,
-          a41Temp: 44.8,
-          a42Temp: 46.2,
-          batteryPercentage: 88,
-          signalStrength: -65,
-        ),
-        HotAxleCoachModel(
-          deviceId: "HA_DEV_100677",
-          coachNumber: "100677",
-          coachType: "LHB_AC_3TIER",
-          owningRly: "SEC",
-          trainNo: "12615",
-          trainName: "Grand Trunk Express",
-          timestamp: DateTime.now().subtract(const Duration(minutes: 10)).toIso8601String(),
-          a11Temp: 40.2,
-          a12Temp: 41.8,
-          a21Temp: 42.5,
-          a22Temp: 40.1,
-          a31Temp: 41.9,
-          a32Temp: 42.3,
-          a41Temp: 41.8,
-          a42Temp: 42.2,
-          batteryPercentage: 92,
-          signalStrength: -60,
-        ),
-      ];
-
-      setState(() {
-        isRefreshing = false;
-        lastUpdated = DateFormat('dd/MM/yy HH:mm:ss').format(DateTime.now());
-        _allCoaches = mockData;
-        
-        trainNumbers = ['All Trains', ...mockData.map((e) => e.trainNo).where((n) => n.isNotEmpty).toSet()];
-        coachTypes = ['All Types', ...mockData.map((e) => e.coachType).toSet()];
-        coachNumbers = ['All Unique IDs', ...mockData.map((e) => e.coachNumber).toSet()];
-        
-        _applyFilters();
-      });
+    await _fetchData();
+    if (!isBackgroundRefresh && mounted) {
+      setState(() => isRefreshing = false);
     }
   }
 
@@ -236,7 +202,16 @@ class _HotAxleDashboardState extends State<HotAxleDashboard> {
                 const SizedBox(height: 8),
                 _buildSectionCard(child: _buildViewTypeSection()),
                 const SizedBox(height: 8),
-                if (selectedViewType == 'Coaches')
+                if (_isLoading)
+                  _buildSectionCard(
+                    child: const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  )
+                else if (selectedViewType == 'Coaches')
                   _buildSectionCard(child: HotAxleCoachesView(coaches: _filteredCoaches))
                 else if (selectedViewType == 'Chart View')
                   _buildSectionCard(child: HotAxleChartView(coaches: _filteredCoaches))

@@ -14,6 +14,7 @@ import 'package:smart_coach_new/core/widgets/filter_dropdown.dart';
 import 'package:smart_coach_new/core/widgets/status_chip.dart';
 import 'package:smart_coach_new/core/widgets/view_type_selector.dart';
 import '../data/models/odour_model.dart';
+import '../data/repository/odour_repository.dart';
 import 'widgets/odour_alerts_view.dart';
 import 'widgets/odour_coaches_view.dart';
 import 'widgets/odour_report_generator.dart';
@@ -31,7 +32,7 @@ class _OdourDashboardState extends State<OdourDashboard> {
   String selectedCoachType = 'All Types';
   String selectedCoachNumber = 'All Unique IDs';
   String selectedStatus = 'All';
-  String selectedViewType = 'Coaches';
+  String selectedViewType = 'Monitoring';
   String lastUpdated = 'Never';
   bool isRefreshing = false;
   Timer? _refreshTimer;
@@ -120,8 +121,8 @@ class _OdourDashboardState extends State<OdourDashboard> {
             'status': isActive ? 'Active' : 'Inactive',
             'reading': readings[p],
             'timestamp': ts,
-            'sensor_id': 'SENS-${coachLabel}-T${p + 1}',
-            'device_id': 'ODM-${coachLabel}-T${p + 1}',
+            'sensor_id': 'SENS-$coachLabel-T${p + 1}',
+            'device_id': 'ODM-$coachLabel-T${p + 1}',
             'train_number': tNo,
             'train_name': tInfo['name'],
             'route': tInfo['route'],
@@ -142,22 +143,8 @@ class _OdourDashboardState extends State<OdourDashboard> {
       if (mounted) setState(() => isRefreshing = true);
     }
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      final rawData = _generateRichData();
-      final records = rawData.map((d) => OdourCoachModel(
-        coachNumber: d['coach_number'],
-        coachType: d['coach_type'],
-        toiletPosition: d['toilet_position'],
-        status: d['status'],
-        reading: d['reading'],
-        timestamp: d['timestamp'],
-        sensorId: d['sensor_id'],
-        deviceId: d['device_id'],
-        trainNumber: d['train_number'],
-        trainName: d['train_name'],
-        route: d['route'],
-        isRecent: true,
-      )).toList();
+      final repository = OdourRepository();
+      final records = await repository.getOdourData();
 
       if (mounted) {
         setState(() {
@@ -216,9 +203,9 @@ class _OdourDashboardState extends State<OdourDashboard> {
                     const SizedBox(height: 8),
                     _buildSectionCard(child: _buildViewTypeSection()),
                     const SizedBox(height: 8),
-                    if (selectedViewType == 'Coaches')
+                    if (selectedViewType == 'Monitoring')
                       _buildSectionCard(child: OdourCoachesView(coaches: _filteredRecords, grouped: _groupedCoaches))
-                    else if (selectedViewType == 'Chart View')
+                    else if (selectedViewType == 'Analytics')
                       _buildSectionCard(child: OdourChartView(records: _allRecords))
                     else if (selectedViewType == 'Alerts')
                       _buildSectionCard(child: OdourAlertsView(records: _allRecords)),
@@ -326,9 +313,9 @@ class _OdourDashboardState extends State<OdourDashboard> {
   Widget _buildViewTypeSection() {
     return Row(
       children: [
-        Expanded(child: ViewTypeSelector(label: "Coaches", svgIcon: AppIcons.coaches, isSelected: selectedViewType == 'Coaches', onTap: () => setState(() => selectedViewType = 'Coaches'))),
+        Expanded(child: ViewTypeSelector(label: "Monitoring", svgIcon: AppIcons.coaches, isSelected: selectedViewType == 'Monitoring', onTap: () => setState(() => selectedViewType = 'Monitoring'))),
         const SizedBox(width: 8),
-        Expanded(child: ViewTypeSelector(label: "Chart View", svgIcon: AppIcons.graph, isSelected: selectedViewType == 'Chart View', onTap: () => setState(() => selectedViewType = 'Chart View'))),
+        Expanded(child: ViewTypeSelector(label: "Analytics", svgIcon: AppIcons.graph, isSelected: selectedViewType == 'Analytics', onTap: () => setState(() => selectedViewType = 'Analytics'))),
         const SizedBox(width: 8),
         Expanded(child: ViewTypeSelector(label: "Alerts", svgIcon: AppIcons.alert, isSelected: selectedViewType == 'Alerts', onTap: () => setState(() => selectedViewType = 'Alerts'))),
       ],

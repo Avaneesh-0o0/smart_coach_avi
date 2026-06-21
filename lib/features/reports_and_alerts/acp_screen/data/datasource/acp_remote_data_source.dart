@@ -4,8 +4,6 @@ import 'package:smart_coach_new/core/network/safe_request.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_filters_response.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_log_response.dart';
 
-import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_filters_response.dart';
-
 abstract class AcpRemoteDataSource {
   Future<AcpLogResponse> getAcpLogs();
   Future<AcpLogResponse> getAcpSummary();

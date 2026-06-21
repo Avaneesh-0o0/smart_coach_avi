@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_coach_new/core/utils/app_dimensions.dart';
+import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import '../../data/models/odour_model.dart';
+import 'odour_washroom_details_view.dart';
 
 class OdourCoachesView extends StatelessWidget {
   final List<OdourCoachModel> coaches;
@@ -54,15 +56,24 @@ class _CoachGroupCard extends StatelessWidget {
         ? group.toilets.map((t) => t.reading).reduce((a, b) => a > b ? a : b)
         : 0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: group.alertToilets > 0 ? const Color(0xFFFFF0F0) : ColorConstants.cardBackground,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        border: Border.all(
-          color: group.alertToilets > 0 ? Colors.red.withOpacity(0.15) : ColorConstants.divider,
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OdourWashroomDetailsView(group: group),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: group.alertToilets > 0 ? const Color(0xFFFFF0F0) : ColorConstants.cardBackground,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+          border: Border.all(
+            color: group.alertToilets > 0 ? Colors.red.withOpacity(0.15) : ColorConstants.divider,
+          ),
         ),
-      ),
-      child: Column(
+        child: Column(
         children: [
           // Coach header
           Padding(
@@ -89,15 +100,17 @@ class _CoachGroupCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('${group.totalToilets} Toilets',
-                      style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: ColorConstants.textSecondary)),
-                    const SizedBox(height: 2),
-                    Text('Peak: $displayReading ppm',
-                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: wc)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      FittedBox(fit: BoxFit.scaleDown, child: Text('${group.totalToilets} Toilets',
+                        style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: ColorConstants.textSecondary))),
+                      const SizedBox(height: 2),
+                      FittedBox(fit: BoxFit.scaleDown, child: Text('Peak: $displayReading ppm',
+                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: wc))),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -107,7 +120,7 @@ class _CoachGroupCard extends StatelessWidget {
           ...group.toilets.map((toilet) => _ToiletRow(toilet: toilet)),
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -134,12 +147,18 @@ class _ToiletRow extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Text(toilet.toiletPosition,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: ColorConstants.textPrimary)),
           ),
           Expanded(
             flex: 2,
-            child: Text('${toilet.reading} ppm',
-              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: readingColor)),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text('${toilet.reading} ppm',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: readingColor)),
+            ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

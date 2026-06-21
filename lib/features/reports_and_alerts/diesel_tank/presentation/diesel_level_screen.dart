@@ -347,6 +347,7 @@ import '../../../../core/widgets/action_button.dart';
 import '../../../../core/widgets/filter_dropdown.dart';
 import '../../../../core/widgets/status_chip.dart';
 import '../data/models/diesel_tank_model.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/diesel_tank/data/repository/diesel_tank_repository.dart';
 import 'diesel_chart_view.dart';
 import 'diesel_alerts_view.dart';
 import 'diesel_tank_history.dart';
@@ -360,54 +361,61 @@ class DieselLevelScreen extends StatefulWidget {
 }
 
 class _DieselLevelScreenState extends State<DieselLevelScreen> {
-  String selectedTrainNumber = '12615/6 Grand Tr...';
+  final DieselTankRepository _repository = DieselTankRepository();
+  List<DieselTankModel> _allTanks = [];
+  List<DieselTankModel> _filteredTanks = [];
+  bool _isLoading = true;
+
+  String selectedTrainNumber = 'All Trains';
   String selectedLocoNumber = 'All Locos'; 
   String selectedStatus = 'All';
   String selectedViewType = 'Diesel Tanks';
 
-  final List<String> trainNumbers = [
-    '12615/6 Grand Tr...',
-    '12617/8 Express',
-    '12619/0 Special',
-  ];
+  List<String> trainNumbers = ['All Trains'];
+  List<String> locoNumbers = ['All Locos'];
 
-  final List<String> locoNumbers = [
-    'All Locos',
-    'WDP4D #40345',
-    'WDP4D #40346',
-    'WDP4D #40347',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
 
-  final DieselTankModel dieselTank = DieselTankModel(
-    engineId: 'WDP4D #40345',
-    sensorId: 'WLI 125678',
-    locoNumber: 'WDP4D #40345',
-    trainName: '12615/6 Grand Trunk Express',
-    percentage: 75,
-    status: 'Good',
-    height: 180,
-    width: 120,
-    length: 220,
-    capacity: 5000,
-    consumptionRate: 400,
-    estimatedRunTime: 8.5,
-    rangeLeft: 950,
-    refilledBy: 'Ramesh Kumar',
-    lastUpdated: DateTime(2026, 2, 7, 10, 42),
-  );
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    final data = await _repository.getDieselTanks();
+    if (mounted) {
+      setState(() {
+        _allTanks = data;
+        _isLoading = false;
+        trainNumbers = ['All Trains', ..._allTanks.map((e) => e.trainName).toSet()];
+        locoNumbers = ['All Locos', ..._allTanks.map((e) => e.locoNumber).toSet()];
+      });
+      _applyFilters();
+    }
+  }
 
-  void _clearFilters() {
+  void _applyFilters() {
     setState(() {
-      selectedTrainNumber = trainNumbers.first;
-      selectedLocoNumber = 'All Locos';
-      selectedStatus = 'All';
+      _filteredTanks = _allTanks.where((tank) {
+        final matchesTrain = selectedTrainNumber == 'All Trains' || tank.trainName == selectedTrainNumber;
+        final matchesLoco = selectedLocoNumber == 'All Locos' || tank.locoNumber == selectedLocoNumber;
+        final matchesStatus = selectedStatus == 'All' || tank.status.toUpperCase() == selectedStatus.toUpperCase();
+        return matchesTrain && matchesLoco && matchesStatus;
+      }).toList();
     });
   }
 
+  void _clearFilters() {
+    setState(() {
+      selectedTrainNumber = 'All Trains';
+      selectedLocoNumber = 'All Locos';
+      selectedStatus = 'All';
+    });
+    _applyFilters();
+  }
+
   Future<void> _refreshData() async {
-    // Mock refresh logic
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) setState(() {});
+    await _fetchData();
   }
 
   @override
@@ -469,35 +477,60 @@ class _DieselLevelScreenState extends State<DieselLevelScreen> {
               _buildSectionCard(child: _buildViewTypeSection()),
               const SizedBox(height: 8),
 
-              if (selectedViewType == 'Diesel Tanks') ...[
-                _buildSectionCard(child: DieselTankView(tank: dieselTank)),
-                const SizedBox(height: 16),
+              if (_isLoading)
                 _buildSectionCard(
-                  child: Column(
-                    children: [
-                      TankInfoSection(
-                        title: AppStrings.dieselTankInfo,
-                        tank: dieselTank,
-                      ),
-                      const SizedBox(height: 20),
-                      ViewHistoryButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  DieselTankHistory(tank: dieselTank),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                  child: const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
-                ),
-              ] else if (selectedViewType == 'Chart View')
-                _buildSectionCard(child: DieselChartView(tank: dieselTank))
-              else if (selectedViewType == 'Alerts')
-                _buildSectionCard(child: const DieselAlertsView()),
+                )
+              else if (_filteredTanks.isEmpty)
+                _buildSectionCard(
+                  child: const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Text('No Diesel Tanks found'),
+                    ),
+                  ),
+                )
+              else ...[
+                if (selectedViewType == 'Diesel Tanks') ...[
+                  ..._filteredTanks.map((tank) => Column(
+                    children: [
+                      _buildSectionCard(child: DieselTankView(tank: tank)),
+                      const SizedBox(height: 16),
+                      _buildSectionCard(
+                        child: Column(
+                          children: [
+                            TankInfoSection(
+                              title: AppStrings.dieselTankInfo,
+                              tank: tank,
+                            ),
+                            const SizedBox(height: 20),
+                            ViewHistoryButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        DieselTankHistory(tank: tank),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  )).toList()
+                ] else if (selectedViewType == 'Chart View')
+                  _buildSectionCard(child: DieselChartView(tank: _filteredTanks.first))
+                else if (selectedViewType == 'Alerts')
+                  _buildSectionCard(child: const DieselAlertsView()),
+              ],
             ],
           ),
         ),
@@ -562,8 +595,10 @@ class _DieselLevelScreenState extends State<DieselLevelScreen> {
                 label: AppStrings.trainNumber,
                 value: selectedTrainNumber,
                 items: trainNumbers,
-                onChanged: (value) =>
-                    setState(() => selectedTrainNumber = value!),
+                onChanged: (value) {
+                  setState(() => selectedTrainNumber = value!);
+                  _applyFilters();
+                }
               ),
             ),
             const SizedBox(width: 8),
@@ -572,8 +607,10 @@ class _DieselLevelScreenState extends State<DieselLevelScreen> {
                 label: 'Loco Number',
                 value: selectedLocoNumber,
                 items: locoNumbers,
-                onChanged: (value) =>
-                    setState(() => selectedLocoNumber = value!),
+                onChanged: (value) {
+                  setState(() => selectedLocoNumber = value!);
+                  _applyFilters();
+                }
               ),
             ),
           ],
@@ -587,7 +624,10 @@ class _DieselLevelScreenState extends State<DieselLevelScreen> {
               child: StatusChip(
                 label: AppStrings.all,
                 isSelected: selectedStatus == 'All',
-                onTap: () => setState(() => selectedStatus = 'All'),
+                onTap: () {
+                  setState(() => selectedStatus = 'All');
+                  _applyFilters();
+                }
               ),
             ),
             const SizedBox(width: 8),
@@ -595,7 +635,10 @@ class _DieselLevelScreenState extends State<DieselLevelScreen> {
               child: StatusChip(
                 label: AppStrings.good,
                 isSelected: selectedStatus == 'Good',
-                onTap: () => setState(() => selectedStatus = 'Good'),
+                onTap: () {
+                  setState(() => selectedStatus = 'Good');
+                  _applyFilters();
+                }
               ),
             ),
             const SizedBox(width: 8),
@@ -603,7 +646,10 @@ class _DieselLevelScreenState extends State<DieselLevelScreen> {
               child: StatusChip(
                 label: AppStrings.warning,
                 isSelected: selectedStatus == 'Warning',
-                onTap: () => setState(() => selectedStatus = 'Warning'),
+                onTap: () {
+                  setState(() => selectedStatus = 'Warning');
+                  _applyFilters();
+                }
               ),
             ),
             const SizedBox(width: 8),
@@ -611,7 +657,10 @@ class _DieselLevelScreenState extends State<DieselLevelScreen> {
               child: StatusChip(
                 label: AppStrings.critical,
                 isSelected: selectedStatus == 'Critical',
-                onTap: () => setState(() => selectedStatus = 'Critical'),
+                onTap: () {
+                  setState(() => selectedStatus = 'Critical');
+                  _applyFilters();
+                }
               ),
             ),
           ],

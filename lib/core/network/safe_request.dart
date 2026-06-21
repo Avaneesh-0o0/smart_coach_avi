@@ -8,8 +8,9 @@ Future<T> safeRequest<T>(Future<T> Function() request) async {
     final data = e.response?.data;
 
     if (data is Map && data['errors'] != null) {
-      final errors =
-          (data['errors'] as List).map((e) => e['msg'].toString()).toList();
+      final errors = (data['errors'] as List)
+          .map((e) => e['msg'].toString())
+          .toList();
       throw MultiFieldsValidationException(errors);
     }
 
@@ -26,7 +27,7 @@ Future<T> safeRequest<T>(Future<T> Function() request) async {
     }
 
     throw ApiException(errorMsg ?? 'Something went wrong');
-  } catch (e, stack) {
+  } catch (e) {
     throw ApiException(e.toString());
   }
 }

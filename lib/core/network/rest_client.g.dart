@@ -1587,7 +1587,7 @@ class _RestClient implements RestClient {
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/sensors/sensors-configs/$sensorConfigId',
+            '/sensors/sensors-configs/${sensorConfigId}',
             queryParameters: queryParameters,
             data: _data,
           )

@@ -65,7 +65,7 @@ class OdourCoachCard extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const Spacer(),
+            const Expanded(child: SizedBox(height: 10)),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

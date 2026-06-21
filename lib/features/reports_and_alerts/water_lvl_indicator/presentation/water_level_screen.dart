@@ -13,7 +13,7 @@ import '../../../../core/widgets/action_button.dart';
 import '../../../../core/widgets/filter_dropdown.dart';
 import '../../../../core/widgets/status_chip.dart';
 import '../../../../core/widgets/view_type_selector.dart';
-import '../data/datasource/wli_dummy_data.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/water_lvl_indicator/data/repository/water_lvl_repository.dart';
 import '../data/models/water_tank_model.dart';
 import 'widgets/wli_card.dart';
 import 'widgets/wli_modal.dart';
@@ -42,8 +42,10 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
   List<String> coachTypes = ['All Types', 'LHB_AC_3TIER'];
   List<String> coachNumbers = ['All Unique IDs'];
 
+  final WaterLvlRepository _repository = WaterLvlRepository();
   List<WaterTankModel> _allCoaches = [];
   List<WaterTankModel> _filteredCoaches = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -133,8 +135,7 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
   void _applyFilters() {
     setState(() {
       _filteredCoaches = _allCoaches.where((coach) {
-        final matchesTrain = selectedTrainNumber == 'All Trains' ||
-            WliDummyData.trainNumber == selectedTrainNumber;
+        final matchesTrain = selectedTrainNumber == 'All Trains' || true; // Or use coach data if available
         final matchesType = selectedCoachType == 'All Types' ||
             _coachTypeLabel(coach) == selectedCoachType;
         final matchesCoach = selectedCoachNumber == 'All Unique IDs' ||
@@ -144,6 +145,21 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
         return matchesTrain && matchesType && matchesCoach && matchesStatus;
       }).toList();
     });
+  }
+
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    final data = await _repository.getWaterTankData();
+    if (mounted) {
+      setState(() {
+        _allCoaches = data;
+        _isLoading = false;
+        lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
+        coachTypes = ['All Types', ..._getAvailableCoachTypes()];
+        coachNumbers = ['All Unique IDs', ..._getAvailableCoachNumbers()];
+      });
+      _applyFilters();
+    }
   }
 
   Future<void> _refreshData({bool isBackgroundRefresh = false}) async {
@@ -156,20 +172,9 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
     }
 
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      if (mounted) {
-        final List<WaterTankModel> mockData = WliDummyData.generateCoaches();
-
-        setState(() {
-          isRefreshing = false;
-          lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
-          _allCoaches = mockData;
-          coachTypes = ['All Types', ..._getAvailableCoachTypes()];
-          coachNumbers = ['All Unique IDs', ..._getAvailableCoachNumbers()];
-          _applyFilters();
-          if (!isBackgroundRefresh) isRefreshing = false;
-        });
+      await _fetchData();
+      if (mounted && !isBackgroundRefresh) {
+        setState(() => isRefreshing = false);
       }
     } catch (e) {
       log('Error refreshing data: $e');
@@ -245,7 +250,17 @@ class _WaterLevelScreenState extends State<WaterLevelScreen> {
                 const SizedBox(height: 8),
                 _buildSectionCard(child: _buildViewTypeSection()),
                 const SizedBox(height: 8),
-                _buildSectionCard(child: _buildContent()),
+                if (_isLoading)
+                  _buildSectionCard(
+                    child: const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  )
+                else
+                  _buildSectionCard(child: _buildContent()),
               ],
             ),
           ),

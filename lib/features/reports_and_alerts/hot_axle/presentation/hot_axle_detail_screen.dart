@@ -155,7 +155,7 @@ class _HotAxleDetailScreenState extends State<HotAxleDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(cross: CrossAxisAlignment.start, children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('Coach ${widget.coach.coachNumber}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary)),
                 Text('Max Temp: ${widget.coach.maxTemp.toStringAsFixed(1)}°C', style: GoogleFonts.poppins(fontSize: 12, color: statusColor, fontWeight: FontWeight.w600)),
               ]),

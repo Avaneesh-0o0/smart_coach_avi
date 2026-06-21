@@ -38,12 +38,13 @@ class TrainTable extends StatefulWidget {
   final Function(TrainConfigsEntity trainEntity) onTapView;
   final Function(TrainConfigsEntity trainEntity) onTapDelete;
 
-  const TrainTable(
-      {super.key,
-      required this.items,
-      required this.onTapEdit,
-      required this.onTapView,
-      required this.onTapDelete});
+  const TrainTable({
+    super.key,
+    required this.items,
+    required this.onTapEdit,
+    required this.onTapView,
+    required this.onTapDelete,
+  });
 
   @override
   State<TrainTable> createState() => _TrainTableState();
@@ -85,15 +86,21 @@ class _TrainTableState extends State<TrainTable> {
       filteredItems = trainListToFilter;
     } else {
       filteredItems = await compute(
-          _filterTrain, SearchParams(trainListToFilter, _searchText));
+        _filterTrain,
+        SearchParams(trainListToFilter, _searchText),
+      );
     }
 
     // Collect all unique keys from all items' rawJson in the order they appear
     final List<String> orderedKeys = [];
     const excludedKeys = {
-      'train_id', 'origination_region_id', 'region_id',
-      'departure_station_id', 'destination_station_id',
-      'entity_type', 'is_mapped',
+      'train_id',
+      'origination_region_id',
+      'region_id',
+      'departure_station_id',
+      'destination_station_id',
+      'entity_type',
+      'is_mapped',
     };
     for (var item in filteredItems) {
       if (item.rawJson != null) {
@@ -129,9 +136,11 @@ class _TrainTableState extends State<TrainTable> {
   String _formatHeader(String key) {
     return key
         .split('_')
-        .map((word) => word.isEmpty
-            ? ''
-            : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}')
+        .map(
+          (word) => word.isEmpty
+              ? ''
+              : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+        )
         .join(' ');
   }
 
@@ -139,12 +148,10 @@ class _TrainTableState extends State<TrainTable> {
   Widget build(BuildContext context) {
     final bool showSearch = true;
     final bool hasSearch = _searchText.isNotEmpty;
-    
+
     // Get columns from data source if initialized
     List<String> columnsToShow = [];
-    if (_dataSource is TableDataSource) {
-       columnsToShow = (_dataSource as TableDataSource).columnNames;
-    }
+    columnsToShow = (_dataSource as TableDataSource).columnNames;
 
     return Column(
       children: [
@@ -195,14 +202,19 @@ class _TrainTableState extends State<TrainTable> {
                     isScrollbarAlwaysShown: true,
                     onSelectionChanged:
                         (List<DataGridRow> added, List<DataGridRow> removed) {
-                      _dataSource.handleSelectionChanged(added, removed);
-                    },
+                          _dataSource.handleSelectionChanged(added, removed);
+                        },
                     gridLinesVisibility: GridLinesVisibility.both,
                     headerGridLinesVisibility: GridLinesVisibility.both,
                     columns: [
-                      ...columnsToShow.map((key) => Utils.gridColumn(label: _formatHeader(key))),
+                      ...columnsToShow.map(
+                        (key) => Utils.gridColumn(label: _formatHeader(key)),
+                      ),
                       Utils.gridColumn(
-                          label: 'Actions', width: 150, allowSorting: false),
+                        label: 'Actions',
+                        width: 150,
+                        allowSorting: false,
+                      ),
                     ],
                   ),
                 ),
@@ -238,21 +250,24 @@ class TableDataSource extends DataGridSource {
     String emptyText = '----';
     _rows = items.map((trainItem) {
       return DataGridRow(
-          cells: columnNames.map((key) {
-        final value = trainItem.rawJson?[key];
-        String displayValue = emptyText;
-        if (value != null) {
-          if (value is List) {
-            displayValue = '${value.length} items';
-          } else if (value is Map) {
-            displayValue = '{...}';
-          } else {
-            displayValue = value.toString();
-          }
-        }
-        return DataGridCell<String>(columnName: key, value: displayValue);
-      }).toList()
-            ..add(DataGridCell<String>(columnName: 'Actions', value: null)));
+        cells:
+            columnNames.map((key) {
+              final value = trainItem.rawJson?[key];
+              String displayValue = emptyText;
+              if (value != null) {
+                if (value is List) {
+                  displayValue = '${value.length} items';
+                } else if (value is Map) {
+                  displayValue = '{...}';
+                } else {
+                  displayValue = value.toString();
+                }
+              }
+              return DataGridCell<String>(columnName: key, value: displayValue);
+            }).toList()..add(
+              DataGridCell<String>(columnName: 'Actions', value: null),
+            ),
+      );
     }).toList();
   }
 
@@ -325,7 +340,9 @@ class TableDataSource extends DataGridSource {
 
   @override
   void handleSelectionChanged(
-      List<DataGridRow> addedRows, List<DataGridRow> removedRows) {
+    List<DataGridRow> addedRows,
+    List<DataGridRow> removedRows,
+  ) {
     _selectedRows
       ..removeWhere((row) => removedRows.contains(row))
       ..addAll(addedRows);

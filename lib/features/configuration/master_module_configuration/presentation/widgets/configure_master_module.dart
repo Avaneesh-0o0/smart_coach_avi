@@ -608,7 +608,7 @@ class _ConfigureMasterModuleState extends State<ConfigureMasterModule> {
       moduleUniqueId: moduleIdController.text.trim(),
       makeModel: makeModelController.text.trim(),
       firmwareVersion: firmwareVersionController.text.trim(),
-      serialNumber: serialNumberController.text.trim(),
+      serielNumber: serialNumberController.text.trim(),
       installationDate: installationDateController.text.trim(),
       location: selectedLocation,
       placementType: selectedPlacementType,

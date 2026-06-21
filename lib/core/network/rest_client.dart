@@ -1,4 +1,4 @@
- import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:smart_coach_new/features/auth/login/data/models/login_response.dart';
 import 'package:smart_coach_new/features/auth/register/data/models/register_response.dart';
@@ -49,7 +49,6 @@ import 'package:smart_coach_new/features/user_management/data/models/general_res
 import 'package:smart_coach_new/features/user_management/data/models/user_management_response.dart';
 import 'package:smart_coach_new/features/profile/data/models/profile_response.dart';
 
-import '../../features/reports_and_alerts/break_binding/data/models/break_binding_response.dart';
 import '../../features/reports_and_alerts/break_binding/data/models/coach_list_response.dart';
 import '../../features/reports_and_alerts/break_binding/data/models/train_list_response.dart';
 import '../../features/reports_and_alerts/level_indicator/data/models/train_list_response.dart';
@@ -95,19 +94,19 @@ abstract class RestClient {
   @GET("/roles")
   @Extra({'requiresAuth': false})
   Future<RoleListResponse> getDefaultRoles(
-      @Query("zone_id") int? zoneId,
-      @Query("division_id") int? divisionId,
-      @Query("region_id", encoded: true) String? regionId,
-      @Query("train_ids", encoded: true) String? trainIds,
-      );
+    @Query("zone_id") int? zoneId,
+    @Query("division_id") int? divisionId,
+    @Query("region_id", encoded: true) String? regionId,
+    @Query("train_ids", encoded: true) String? trainIds,
+  );
 
   @GET("/roles")
   Future<RoleListResponse> getDefaultRolesWithToken(
-      @Query("zone_id") int? zoneId,
-      @Query("division_id") int? divisionId,
-      @Query("region_id", encoded: true) String? regionId,
-      @Query("train_ids", encoded: true) String? trainIds,
-      );
+    @Query("zone_id") int? zoneId,
+    @Query("division_id") int? divisionId,
+    @Query("region_id", encoded: true) String? regionId,
+    @Query("train_ids", encoded: true) String? trainIds,
+  );
 
   @GET("/roles/get-all-roles")
   @Extra({'requiresAuth': false})
@@ -116,43 +115,43 @@ abstract class RestClient {
   @GET("/trains/getAllTrains")
   @Extra({'requiresAuth': false})
   Future<TrainListResponse> getTrains(
-      @Query("targer_user_id") int? targetUserId,
-      @Query("zone_id") int? zoneId,
-      @Query("division_id") int? divisionId,
-      @Query("region_id", encoded: true) String? regionId,
-      );
+    @Query("targer_user_id") int? targetUserId,
+    @Query("zone_id") int? zoneId,
+    @Query("division_id") int? divisionId,
+    @Query("region_id", encoded: true) String? regionId,
+  );
 
   @GET("/trains/getAllTrains")
   Future<TrainListResponse> getTrainsWithToken(
-      @Query("targer_user_id") int? targetUserId,
-      @Query("zone_id") int? zoneId,
-      @Query("division_id") int? divisionId,
-      @Query("region_id", encoded: true) String? regionId,
-      );
+    @Query("targer_user_id") int? targetUserId,
+    @Query("zone_id") int? zoneId,
+    @Query("division_id") int? divisionId,
+    @Query("region_id", encoded: true) String? regionId,
+  );
 
   // @GET("/trains/usertrains")
   // Future<UserTrainResponse> getUserTrains(@Query("user_id") int? userId);
 
   @GET("/auth/users/pending")
   Future<UserManagementResponse> getPendingUsers(
-      @Query("user_id") int userId, {
-        @Query("status") String? status,
-        @Query("organisation_type") String? organisationType,
-        @Query("from_date") String? fromDate,
-        @Query("to_date") String? toDate,
-      });
+    @Query("user_id") int userId, {
+    @Query("status") String? status,
+    @Query("organisation_type") String? organisationType,
+    @Query("from_date") String? fromDate,
+    @Query("to_date") String? toDate,
+  });
 
   @GET("/auth/users/pending")
   Future<UserManagementResponse> getPendingUsersNew(
-      @Query("user_id") int userId,
-      @Queries() Map<String, dynamic>? queryParams,
-      );
+    @Query("user_id") int userId,
+    @Queries() Map<String, dynamic>? queryParams,
+  );
 
   @PUT("/auth/users/approve")
   Future<ApproveOrRejectResponse> approveUser(
-      @Query("user_id") int userId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Query("user_id") int userId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @PUT("/auth/users/approve")
   Future<GeneralResponse> changeRole(@Body() Map<String, dynamic> body);
@@ -165,28 +164,28 @@ abstract class RestClient {
 
   @PUT("/auth/users/approve/bulk")
   Future<ApproveOrRejectResponse> approveBulkUser(
-      @Query("user_id") int userId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Query("user_id") int userId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @GET(ApiConstants.devicesApiEndpoint)
   Future<DeviceListResponse> getDeviceList();
 
   @POST(ApiConstants.devicesApiEndpoint)
   Future<CreateDeviceConfigurationResponse> createDeviceConfiguration(
-      @Body() Map<String, dynamic> body,
-      );
+    @Body() Map<String, dynamic> body,
+  );
 
   @PUT('${ApiConstants.devicesApiEndpoint}/{device_id}')
   Future<EditDeviceConfigurationResponse> editDeviceConfiguration(
-      @Path("device_id") String? deviceId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Path("device_id") String? deviceId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @DELETE('${ApiConstants.devicesApiEndpoint}/{device_id}')
   Future<DeleteDeviceConfigurationResponse> deleteDeviceConfiguration(
-      @Path("device_id") String? deviceId,
-      );
+    @Path("device_id") String? deviceId,
+  );
 
   @GET("/sensors/categories")
   Future<SensorCategoryListResponse> getCategories();
@@ -199,38 +198,38 @@ abstract class RestClient {
 
   @POST(ApiConstants.sensorsApiEndpoint)
   Future<CreateSensorTypeConfigurationResponse> createSensorTypeConfiguration(
-      @Body() Map<String, dynamic> body,
-      );
+    @Body() Map<String, dynamic> body,
+  );
 
   @PUT('${ApiConstants.sensorsApiEndpoint}/{sensor_id}')
   Future<EditSensorTypeConfigurationResponse> editSensorTypeConfiguration(
-      @Path("sensor_id") int? sensorId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Path("sensor_id") int? sensorId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @DELETE('${ApiConstants.sensorsApiEndpoint}/{sensor_id}')
   Future<DeleteSensorTypeConfigurationResponse> deleteSensorTypeConfiguration(
-      @Path("sensor_id") int? sensorId,
-      );
+    @Path("sensor_id") int? sensorId,
+  );
 
   @GET(ApiConstants.rulesApiEndpoint)
   Future<RulesListResponse> getRulesList();
 
   @POST(ApiConstants.rulesApiEndpoint)
   Future<CreateRuleConfigurationResponse> createRuleConfiguration(
-      @Body() Map<String, dynamic> body,
-      );
+    @Body() Map<String, dynamic> body,
+  );
 
   @PUT('${ApiConstants.rulesApiEndpoint}/{rule_id}')
   Future<EditRuleConfigurationResponse> editRuleConfiguration(
-      @Path("rule_id") int? ruleId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Path("rule_id") int? ruleId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @DELETE('${ApiConstants.rulesApiEndpoint}/{rule_id}')
   Future<DeleteRuleConfigurationResponse> deleteRuleConfiguration(
-      @Path("rule_id") int? ruleId,
-      );
+    @Path("rule_id") int? ruleId,
+  );
 
   @GET("${ApiConstants.rulesApiEndpoint}/alert-types")
   Future<AlertTypeResponse> getAlertTypes();
@@ -244,9 +243,9 @@ abstract class RestClient {
 
   @PUT('${ApiConstants.masterModulesApiEndpoint}/{module_id}')
   Future<EditMasterModuleConfigurationResponse> editMasterModuleConfiguration(
-      @Path("module_id") int? moduleId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Path("module_id") int? moduleId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @DELETE('${ApiConstants.masterModulesApiEndpoint}/{module_id}')
   Future<DeleteMasterModuleConfigurationResponse>
@@ -259,51 +258,57 @@ abstract class RestClient {
   Future<TrainListResponseForBreakBinding> getTrainListBasic();
 
   @GET("/coaches/coachfortrain")
-  Future<CoachListResponseForBreakBinding> getCoachListBasic(@Query("train_id") int? trainId);
+  Future<CoachListResponseForBreakBinding> getCoachListBasic(
+    @Query("train_id") int? trainId,
+  );
 
   @GET("/trains/getTrainsForUsers")
   Future<TrainListResponseForReport> getTrainListForReport();
 
   @GET("/coaches/coachfortrain")
-  Future<CoachListResponseForReport> getCoachesForReport(@Query("train_id") int? trainId);
+  Future<CoachListResponseForReport> getCoachesForReport(
+    @Query("train_id") int? trainId,
+  );
 
   @GET("/sensors/watersensorsforcoach")
-  Future<SensorListResponseForReport> getSensorsForReport(@Query("coach_id") int? trainId);
+  Future<SensorListResponseForReport> getSensorsForReport(
+    @Query("coach_id") int? trainId,
+  );
 
   @POST(ApiConstants.trainConfigsApiEndpoint)
   Future<CreateTrainConfigurationResponse> createTrainConfiguration(
-      @Body() Map<String, dynamic> body,
-      );
+    @Body() Map<String, dynamic> body,
+  );
 
   @PUT('${ApiConstants.trainConfigsApiEndpoint}/{train_id}')
   Future<EditTrainConfigurationResponse> editTrainConfiguration(
-      @Path("train_id") int? trainId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Path("train_id") int? trainId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @DELETE('${ApiConstants.trainConfigsApiEndpoint}/{train_id}')
   Future<DeleteTrainConfigurationResponse> deleteTrainConfiguration(
-      @Path("train_id") int? trainId,
-      );
+    @Path("train_id") int? trainId,
+  );
 
   @GET(ApiConstants.coachesApiEndpoint)
   Future<CoachListResponse> getCoachList();
 
   @POST(ApiConstants.coachesApiEndpoint)
   Future<CreateCoachConfigurationResponse> createCoachConfiguration(
-      @Body() Map<String, dynamic> body,
-      );
+    @Body() Map<String, dynamic> body,
+  );
 
   @PUT('${ApiConstants.coachesApiEndpoint}/{coach_id}')
   Future<EditCoachConfigurationResponse> editCoachConfiguration(
-      @Path("coach_id") int? coachId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Path("coach_id") int? coachId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @DELETE('${ApiConstants.coachesApiEndpoint}/{coach_id}')
   Future<DeleteCoachConfigurationResponse> deleteCoachConfiguration(
-      @Path("coach_id") int? coachId,
-      );
+    @Path("coach_id") int? coachId,
+  );
 
   @GET(ApiConstants.sensorConfigsApiEndpoint)
   Future<SensorDeviceListResponse> getSensorDeviceList();
@@ -314,13 +319,15 @@ abstract class RestClient {
 
   @PUT(ApiConstants.sensorConfigsApiEndpoint)
   Future<EditSensorDeviceConfigurationResponse> editSensorDeviceConfiguration(
-      @Path("sensor_id") int? sensorId,
-      @Body() Map<String, dynamic> body,
-      );
+    @Path("sensor_id") int? sensorId,
+    @Body() Map<String, dynamic> body,
+  );
 
   @DELETE('/sensors/sensors-configs/{sensor_config_id}')
   Future<DeleteSensorDeviceConfigurationResponse>
-  deleteSensorDeviceConfiguration(@Path("sensor_config_id") int? sensorConfigId);
+  deleteSensorDeviceConfiguration(
+    @Path("sensor_config_id") int? sensorConfigId,
+  );
 
   @GET(ApiConstants.coachMakesApiEndpoint)
   Future<CoachMakeListResponse> getCoachMakeList();
@@ -338,11 +345,13 @@ abstract class RestClient {
   Future<StationListResponse> getAllStations();
 
   @GET("${ApiConstants.masterModulesApiEndpoint}/coach")
-  Future<MasterModuleListResponse> getMasterModulesForCoach(@Query("coach_id") int coachId);
+  Future<MasterModuleListResponse> getMasterModulesForCoach(
+    @Query("coach_id") int coachId,
+  );
 
   @GET(ApiConstants.acpLogsApiEndpoint)
   Future<AcpLogResponse> getAcpLogs();
-  
+
   @GET(ApiConstants.acpSummaryApiEndpoint)
   Future<AcpLogResponse> getAcpSummary();
 
@@ -358,17 +367,15 @@ abstract class RestClient {
     @Query("techCoachNo") String? techCoachNo,
   );
 
-
-
   @GET(ApiConstants.pneumaticStatusApiEndpoint)
   Future<PneumaticStatusResponse> getPneumaticStatus(
-      @Query("train_no") String? trainNo,
-      @Query("coach_no") String? coachNo,
-      @Query("deviceId") String? deviceId,
-      @Query("from_date") String? fromDate,
-      @Query("to_date") String? toDate,
-      @Query("limit") int? limit,
-      );
+    @Query("train_no") String? trainNo,
+    @Query("coach_no") String? coachNo,
+    @Query("deviceId") String? deviceId,
+    @Query("from_date") String? fromDate,
+    @Query("to_date") String? toDate,
+    @Query("limit") int? limit,
+  );
 
   @GET("${ApiConstants.coachConfigApiEndpoint}/{coach_no}")
   Future<CoachConfigResponse> getCoachConfig(@Path("coach_no") String coachNo);

@@ -6,28 +6,59 @@ import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import '../../data/models/odour_model.dart';
 
-class OdourAlertsView extends StatelessWidget {
+class OdourAlertItem {
+  final OdourCoachModel record;
+  final String alertType;
+  final String sensorName;
+  final String currentReading;
+  final String threshold;
+  final String severity;
+  final String id;
+
+  OdourAlertItem({
+    required this.record,
+    required this.alertType,
+    required this.sensorName,
+    required this.currentReading,
+    required this.threshold,
+    required this.severity,
+  }) : id = '${record.deviceId}-$alertType-${record.timestamp}';
+}
+
+class OdourAlertsView extends StatefulWidget {
   final List<OdourCoachModel> records;
   const OdourAlertsView({super.key, required this.records});
 
   @override
-  Widget build(BuildContext context) {
-    final alerts = records.where((r) => r.hasAlert).toList();
-    final warnings = records.where((r) => r.isActive && !r.hasAlert && r.reading > 50).toList();
+  State<OdourAlertsView> createState() => _OdourAlertsViewState();
+}
 
-    if (alerts.isEmpty && warnings.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Recent Alerts", style: AppTextStyles.header2),
-          const SizedBox(height: 16),
-          const Center(child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 32),
-            child: Text('No active alerts', style: TextStyle(color: Colors.grey)),
-          )),
-        ],
-      );
+class _OdourAlertsViewState extends State<OdourAlertsView> {
+  final Set<String> _acknowledgedIds = {};
+  final Set<String> _resolvedIds = {};
+
+  List<OdourAlertItem> _generateAlerts() {
+    final alerts = <OdourAlertItem>[];
+    for (var r in widget.records) {
+      if (r.voc >= r.vocThreshold) alerts.add(OdourAlertItem(record: r, alertType: 'Threshold Exceeded', sensorName: 'VOC', currentReading: '${r.voc.toStringAsFixed(0)} ppb', threshold: '${r.vocThreshold.toStringAsFixed(0)} ppb', severity: 'Critical'));
+      if (r.h2s >= r.h2sThreshold) alerts.add(OdourAlertItem(record: r, alertType: 'Threshold Exceeded', sensorName: 'H₂S', currentReading: '${r.h2s.toStringAsFixed(2)} ppm', threshold: '${r.h2sThreshold.toStringAsFixed(2)} ppm', severity: 'Critical'));
+      if (r.nh3 >= r.nh3Threshold) alerts.add(OdourAlertItem(record: r, alertType: 'Threshold Exceeded', sensorName: 'NH₃', currentReading: '${r.nh3.toStringAsFixed(1)} ppm', threshold: '${r.nh3Threshold.toStringAsFixed(1)} ppm', severity: 'Critical'));
+      if (r.smoke >= r.smokeThreshold) alerts.add(OdourAlertItem(record: r, alertType: 'Threshold Exceeded', sensorName: 'Smoke', currentReading: '${r.smoke.toStringAsFixed(1)} mg/m³', threshold: '${r.smokeThreshold.toStringAsFixed(1)} mg/m³', severity: 'Critical'));
+      if (r.hygieneScore < 50) alerts.add(OdourAlertItem(record: r, alertType: 'Hygiene Critical', sensorName: 'Hygiene Score', currentReading: '${r.hygieneScore.toStringAsFixed(0)}%', threshold: '50%', severity: 'Critical'));
+      else if (r.hygieneScore < 70) alerts.add(OdourAlertItem(record: r, alertType: 'Hygiene Warning', sensorName: 'Hygiene Score', currentReading: '${r.hygieneScore.toStringAsFixed(0)}%', threshold: '70%', severity: 'Warning'));
+      
+      if (r.doorStatus.toLowerCase() == 'open') {
+        alerts.add(OdourAlertItem(record: r, alertType: 'Door Open', sensorName: 'Limit Switch', currentReading: 'Open', threshold: 'Closed', severity: 'Warning'));
+      }
     }
+    return alerts;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allAlerts = _generateAlerts().where((a) => !_resolvedIds.contains(a.id)).toList();
+    final critical = allAlerts.where((a) => a.severity == 'Critical').toList();
+    final warning = allAlerts.where((a) => a.severity == 'Warning').toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,32 +66,27 @@ class OdourAlertsView extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Recent Alerts", style: AppTextStyles.header2),
+            Text("Automatic Alerts", style: AppTextStyles.header2),
             Row(children: [
-              if (alerts.isNotEmpty) _badge('${alerts.length} High', const Color(0xFFD32F2F)),
-              if (warnings.isNotEmpty) ...[const SizedBox(width: 6), _badge('${warnings.length} Warning', const Color(0xFFBE8B22))],
+              if (critical.isNotEmpty) _badge('${critical.length} Critical', const Color(0xFFD32F2F)),
+              if (warning.isNotEmpty) ...[const SizedBox(width: 6), _badge('${warning.length} Warning', const Color(0xFFBE8B22))],
             ]),
           ],
         ),
         const SizedBox(height: 16),
-        ...alerts.map((a) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildCard(a, Icons.warning_amber_rounded, const Color(0xFFFFEBEE), const Color(0xFFD32F2F),
-            'High Odour: Coach ${a.coachNumber} (${a.toiletPosition})',
-            'Reading: ${a.reading} ppm | ${_fmt(a.timestamp)}'),
-        )),
-        ...warnings.map((w) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildCard(w, Icons.info_outline, const Color(0xFFFFF8E1), const Color(0xFFBE8B22),
-            'Moderate: Coach ${w.coachNumber} (${w.toiletPosition})',
-            'Reading: ${w.reading} ppm | ${_fmt(w.timestamp)}'),
-        )),
+        if (allAlerts.isEmpty)
+          const Center(child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Text('No active alerts', style: TextStyle(color: Colors.grey)),
+          )),
+        ...critical.map((a) => _buildAlertCard(a)),
+        ...warning.map((a) => _buildAlertCard(a)),
       ],
     );
   }
 
   String _fmt(String ts) {
-    try { return DateFormat('dd MMM, HH:mm').format(DateTime.parse(ts)); }
+    try { return DateFormat('dd MMM, HH:mm:ss').format(DateTime.parse(ts)); }
     catch (_) { return ts; }
   }
 
@@ -70,20 +96,64 @@ class OdourAlertsView extends StatelessWidget {
     child: Text(label, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
   );
 
-  Widget _buildCard(OdourCoachModel r, IconData icon, Color bg, Color iconColor, String title, String subtitle) {
+  Widget _buildAlertCard(OdourAlertItem alert) {
+    final isAck = _acknowledgedIds.contains(alert.id);
+    final color = alert.severity == 'Critical' ? const Color(0xFFD32F2F) : const Color(0xFFBE8B22);
+    final bg = alert.severity == 'Critical' ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1);
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge)),
+      decoration: BoxDecoration(color: isAck ? ColorConstants.cardBackground : bg, borderRadius: BorderRadius.circular(AppDimensions.radiusLarge), border: Border.all(color: isAck ? ColorConstants.divider : color.withValues(alpha: 0.3))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(alert.severity == 'Critical' ? Icons.error : Icons.warning_amber_rounded, color: isAck ? Colors.grey : color, size: 20),
+              const SizedBox(width: 8),
+              Text(alert.alertType, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: isAck ? Colors.grey : color)),
+              const Spacer(),
+              if (isAck) _badge('Acknowledged', Colors.blue)
+              else _badge('Open', color),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _infoRow('Coach / Device', '${alert.record.coachNumber} (${alert.record.toiletPosition}) | ${alert.record.deviceId}'),
+          _infoRow('Sensor Name', alert.sensorName),
+          _infoRow('Current Reading', alert.currentReading, valueColor: color),
+          _infoRow('Threshold Value', alert.threshold),
+          _infoRow('Timestamp', _fmt(alert.record.timestamp)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (!isAck)
+                TextButton(
+                  onPressed: () => setState(() => _acknowledgedIds.add(alert.id)),
+                  child: Text('Acknowledge', style: GoogleFonts.poppins(color: Colors.blue, fontWeight: FontWeight.w600)),
+                ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, elevation: 0),
+                onPressed: () => setState(() => _resolvedIds.add(alert.id)),
+                child: Text('Resolve', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: iconColor, size: 24),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: iconColor)),
-            const SizedBox(height: 4),
-            Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: iconColor.withOpacity(0.8))),
-          ])),
+          SizedBox(width: 120, child: Text(label, style: AppTextStyles.bodySmall.copyWith(color: ColorConstants.textSecondary))),
+          Expanded(child: Text(value, style: AppTextStyles.bodyMedium.copyWith(color: valueColor ?? ColorConstants.textPrimary, fontWeight: valueColor != null ? FontWeight.w600 : FontWeight.w500))),
         ],
       ),
     );

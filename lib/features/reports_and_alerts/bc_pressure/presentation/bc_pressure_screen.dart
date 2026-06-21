@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:smart_coach_new/features/reports_and_alerts/bc_pressure/data/datasource/bc_dummy_data.dart';
+import 'package:smart_coach_new/features/reports_and_alerts/bc_pressure/data/repository/bc_pressure_repository.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/bc_pressure/presentation/widgets/bc_report_generator.dart';
 import '../../../../core/utils/app_dimensions.dart';
 import '../../../../core/utils/app_icons.dart';
@@ -41,8 +41,30 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
     ...List.generate(20, (i) => 'Coach ${i + 1}'),
   ];
 
-  late List<BCPressureModel> _allCoaches = BCDummyData.generateCoaches();
-  late List<BCPressureModel> _filteredCoaches = List.from(_allCoaches);
+  final BcPressureRepository _repository = BcPressureRepository();
+  List<BCPressureModel> _allCoaches = [];
+  List<BCPressureModel> _filteredCoaches = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    final data = await _repository.getBcPressureData();
+    if (mounted) {
+      setState(() {
+        _allCoaches = data;
+        _filteredCoaches = List.from(_allCoaches);
+        _isLoading = false;
+        lastUpdated = _formatTime(DateTime.now());
+      });
+      _applyFilters();
+    }
+  }
 
   String _formatTime(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
@@ -64,18 +86,12 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
 
   Future<void> _refreshData() async {
     setState(() => isRefreshing = true);
-    await Future.delayed(const Duration(seconds: 2));
-    final now = DateTime.now();
-    setState(() {
-      isRefreshing = false;
-      lastUpdated = _formatTime(now);
-      _allCoaches = BCDummyData.generateCoaches();
-      _filteredCoaches = List.from(_allCoaches);
-    });
+    await _fetchData();
+    setState(() => isRefreshing = false);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Data refreshed at ${_formatTime(now)}',
+          content: Text('Data refreshed at ${_formatTime(DateTime.now())}',
               style: GoogleFonts.poppins(fontSize: 13)),
           backgroundColor: Colors.green[700],
           duration: const Duration(seconds: 2),
@@ -205,7 +221,12 @@ class _BCPressureScreenState extends State<BCPressureScreen> {
               const SizedBox(height: 8),
               _card(child: _buildViewType()),
               const SizedBox(height: 8),
-              if (selectedViewType == 'BC Pressure')
+              if (_isLoading)
+                const Center(child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: CircularProgressIndicator(),
+                ))
+              else if (selectedViewType == 'BC Pressure')
                 _card(child: _buildGrid())
               else if (selectedViewType == 'Chart View')
                 _card(child: const BCChartView())

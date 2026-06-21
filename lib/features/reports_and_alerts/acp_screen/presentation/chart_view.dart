@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import '../data/models/acp_model.dart';
 import '../../../../core/utils/app_dimensions.dart';
 import '../../../../core/utils/app_strings.dart';
@@ -57,10 +56,7 @@ class _AcpChartViewState extends State<AcpChartView> {
   List<FlSpot> get timeSeriesData {
     final online = onlineCount.toDouble();
     final offline = offlineCount.toDouble();
-    return [
-      const FlSpot(0, 0),
-      FlSpot(1, online),
-    ];
+    return [const FlSpot(0, 0), FlSpot(1, online)];
   }
 
   Future<void> _pickCustomRange() async {
@@ -115,7 +111,12 @@ class _AcpChartViewState extends State<AcpChartView> {
               const SizedBox(height: 24),
               Icon(Icons.history, size: 64, color: ColorConstants.textTertiary),
               const SizedBox(height: 16),
-              Text('No activity recorded in this period', style: AppTextStyles.bodyMedium.copyWith(color: ColorConstants.textTertiary)),
+              Text(
+                'No activity recorded in this period',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: ColorConstants.textTertiary,
+                ),
+              ),
             ],
           ),
         ),
@@ -150,7 +151,11 @@ class _AcpChartViewState extends State<AcpChartView> {
             ),
             child: Text(
               '${_fmt(customRange!.start)}  →  ${_fmt(customRange!.end)}',
-              style: GoogleFonts.poppins(fontSize: 12, color: ColorConstants.primary, fontWeight: FontWeight.w500),
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: ColorConstants.primary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -158,7 +163,12 @@ class _AcpChartViewState extends State<AcpChartView> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: Text('Recently Triggered Timelines', style: AppTextStyles.header2)),
+            Expanded(
+              child: Text(
+                'Recently Triggered Timelines',
+                style: AppTextStyles.header2,
+              ),
+            ),
             _chartTypeToggle(AppStrings.timeSeries),
             const SizedBox(width: 8),
             _chartTypeToggle(AppStrings.pieChart),
@@ -184,7 +194,9 @@ class _AcpChartViewState extends State<AcpChartView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? ColorConstants.primary.withValues(alpha: 0.08) : ColorConstants.white,
+          color: isSelected
+              ? ColorConstants.primary.withValues(alpha: 0.08)
+              : ColorConstants.white,
           borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
           border: Border.all(
             color: isSelected ? ColorConstants.primary : ColorConstants.divider,
@@ -196,7 +208,9 @@ class _AcpChartViewState extends State<AcpChartView> {
           style: GoogleFonts.poppins(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? ColorConstants.primary : ColorConstants.textSecondary,
+            color: isSelected
+                ? ColorConstants.primary
+                : ColorConstants.textSecondary,
           ),
         ),
       ),
@@ -243,8 +257,21 @@ class _AcpChartViewState extends State<AcpChartView> {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(total == 0 ? '--' : '$total', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: ColorConstants.textPrimary)),
-                  Text(total == 0 ? 'No Data' : 'Total', style: GoogleFonts.poppins(fontSize: 11, color: ColorConstants.textSecondary)),
+                  Text(
+                    total == 0 ? '--' : '$total',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: ColorConstants.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    total == 0 ? 'No Data' : 'Total',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: ColorConstants.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -265,9 +292,16 @@ class _AcpChartViewState extends State<AcpChartView> {
 
   Widget _legend(Color color, String label) => Row(
     children: [
-      Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+      Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
       const SizedBox(width: 6),
-      Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500)),
+      Text(
+        label,
+        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+      ),
     ],
   );
 
@@ -288,27 +322,41 @@ class _AcpChartViewState extends State<AcpChartView> {
               show: true,
               drawVerticalLine: true,
               horizontalInterval: 1,
-              verticalInterval: selectedPeriod == 'Live' ? 1 : (selectedPeriod == '7 Days' ? 1 : 5),
-              getDrawingHorizontalLine: (value) => FlLine(color: ColorConstants.divider, strokeWidth: 1),
-              getDrawingVerticalLine: (value) => FlLine(color: ColorConstants.divider, strokeWidth: 1),
+              verticalInterval: selectedPeriod == 'Live'
+                  ? 1
+                  : (selectedPeriod == '7 Days' ? 1 : 5),
+              getDrawingHorizontalLine: (value) =>
+                  FlLine(color: ColorConstants.divider, strokeWidth: 1),
+              getDrawingVerticalLine: (value) =>
+                  FlLine(color: ColorConstants.divider, strokeWidth: 1),
             ),
             titlesData: FlTitlesData(
               show: true,
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 30,
-                  interval: selectedPeriod == 'Live' ? 1 : (selectedPeriod == '7 Days' ? 1 : 5),
+                  interval: selectedPeriod == 'Live'
+                      ? 1
+                      : (selectedPeriod == '7 Days' ? 1 : 5),
                   getTitlesWidget: (value, meta) {
                     if (selectedPeriod == 'Live') {
-                      final hour = (DateTime.now().hour - (7 - value.toInt())) % 24;
+                      final hour =
+                          (DateTime.now().hour - (7 - value.toInt())) % 24;
                       return Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
                           '${hour.toString().padLeft(2, '0')}:00',
-                          style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary),
+                          style: GoogleFonts.poppins(
+                            fontSize: 9,
+                            color: ColorConstants.textSecondary,
+                          ),
                         ),
                       );
                     } else {
@@ -316,7 +364,10 @@ class _AcpChartViewState extends State<AcpChartView> {
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
                           'Day ${value.toInt()}',
-                          style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary),
+                          style: GoogleFonts.poppins(
+                            fontSize: 9,
+                            color: ColorConstants.textSecondary,
+                          ),
                         ),
                       );
                     }
@@ -330,7 +381,10 @@ class _AcpChartViewState extends State<AcpChartView> {
                   getTitlesWidget: (value, meta) {
                     return Text(
                       value.toInt().toString(),
-                      style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary),
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        color: ColorConstants.textSecondary,
+                      ),
                     );
                   },
                   reservedSize: 28,
@@ -344,7 +398,11 @@ class _AcpChartViewState extends State<AcpChartView> {
             minX: 0,
             maxX: 1,
             minY: 0,
-            maxY: (spots.isEmpty ? 5 : (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1).toDouble().clamp(5, 100)),
+            maxY: (spots.isEmpty
+                ? 5
+                : (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1)
+                      .toDouble()
+                      .clamp(5, 100)),
             lineBarsData: [
               LineChartBarData(
                 spots: spots,
@@ -375,8 +433,12 @@ class _AcpChartViewState extends State<AcpChartView> {
   }
 
   Widget _buildSummaryCard() {
-    final onPct = total > 0 ? (onlineCount / total * 100).toStringAsFixed(1) : '0';
-    final offPct = total > 0 ? (offlineCount / total * 100).toStringAsFixed(1) : '0';
+    final onPct = total > 0
+        ? (onlineCount / total * 100).toStringAsFixed(1)
+        : '0';
+    final offPct = total > 0
+        ? (offlineCount / total * 100).toStringAsFixed(1)
+        : '0';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -389,13 +451,26 @@ class _AcpChartViewState extends State<AcpChartView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total Coaches', style: AppTextStyles.bodyMedium),
-              Text('$total', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                '$total',
+                style: AppTextStyles.bodyLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          _buildStatRow('Online', '$onlineCount  ($onPct%)', const Color(0xFF34C700)),
+          _buildStatRow(
+            'Online',
+            '$onlineCount  ($onPct%)',
+            const Color(0xFF34C700),
+          ),
           const SizedBox(height: 8),
-          _buildStatRow('Offline', '$offlineCount  ($offPct%)', const Color(0xFFFF3B30)),
+          _buildStatRow(
+            'Offline',
+            '$offlineCount  ($offPct%)',
+            const Color(0xFFFF3B30),
+          ),
           const SizedBox(height: 12),
           // Progress bar
           ClipRRect(
@@ -404,7 +479,9 @@ class _AcpChartViewState extends State<AcpChartView> {
               value: total > 0 ? onlineCount / total : 0,
               minHeight: 8,
               backgroundColor: const Color(0xFFFF3B30),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF34C700)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF34C700),
+              ),
             ),
           ),
         ],
@@ -418,15 +495,28 @@ class _AcpChartViewState extends State<AcpChartView> {
       children: [
         Row(
           children: [
-            Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
             const SizedBox(width: 6),
-            Text(label, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500)),
+            Text(
+              label,
+              style: AppTextStyles.bodyMedium.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
-        Text(value, style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          value,
+          style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }
 
-  String _fmt(DateTime d) => '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  String _fmt(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 }

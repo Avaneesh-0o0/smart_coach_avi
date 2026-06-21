@@ -73,7 +73,7 @@ class AppRouter {
   static const String coachDashboardRoute = '/coach_dashboard';
 
   static final router = GoRouter(
-    initialLocation: splashRoute,
+    initialLocation: odourManagement,
     routes: [
       GoRoute(
         path: splashRoute,

@@ -10,7 +10,7 @@ abstract class MasterModuleConfigurationRequest with _$MasterModuleConfiguration
     @JsonKey(name: 'module_unique_id') String? moduleUniqueId,
     @JsonKey(name: 'make_model') String? makeModel,
     @JsonKey(name: 'firmware_version') String? firmwareVersion,
-    @JsonKey(name: 'serial_number') String? serialNumber,
+    @JsonKey(name: 'serial_number') String? serielNumber,
     @JsonKey(name: 'installation_date') String? installationDate,
     @JsonKey(name: 'location') String? location,
     @JsonKey(name: 'placement_type') String? placementType,

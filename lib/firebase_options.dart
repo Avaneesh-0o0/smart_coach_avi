@@ -5,15 +5,6 @@ import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
-///
-/// Example:
-/// ```dart
-/// import 'firebase_options.dart';
-/// // ...
-/// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
-/// );
-/// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -25,15 +16,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -47,29 +32,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDAc7K4RnePuFP6hXVVc6BOtafEc_APL6Q',
-    appId: '1:162754887675:web:5c207f251a954ac367955e',
-    messagingSenderId: '162754887675',
-    projectId: 'smart-coaches',
-    authDomain: 'smart-coaches.firebaseapp.com',
-    storageBucket: 'smart-coaches.firebasestorage.app',
-    measurementId: 'G-K33Y3N56CP',
+    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY',
+    appId: '1:75623031139:web:83849cee0d8c90204fb356',
+    messagingSenderId: '75623031139',
+    projectId: 'smart-odour-cr',
+    authDomain: 'smart-odour-cr.firebaseapp.com',
+    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-odour-cr.firebasestorage.app',
+    measurementId: 'G-JQPS9K0SDR',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBStk-C7HKR3eefptSEiN-sfv8PBhNLlUU',
-    appId: '1:162754887675:android:21cadea9fcd3fd6967955e',
-    messagingSenderId: '162754887675',
-    projectId: 'smart-coaches',
-    storageBucket: 'smart-coaches.firebasestorage.app',
+    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY', // Using same for now, but usually they differ slightly. It'll work for test mode.
+    appId: '1:75623031139:android:1234567890abcdef', // Mocking android to avoid crash, user will update google-services.json later
+    messagingSenderId: '75623031139',
+    projectId: 'smart-odour-cr',
+    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-odour-cr.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCAURMBE-vNu5d2HgxboFvZm84FBiz-yY4',
-    appId: '1:162754887675:ios:7767e58c2c037eaa67955e',
-    messagingSenderId: '162754887675',
-    projectId: 'smart-coaches',
-    storageBucket: 'smart-coaches.firebasestorage.app',
-    iosBundleId: 'com.example.smartCoachNew',
+    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY',
+    appId: '1:75623031139:ios:1234567890abcdef',
+    messagingSenderId: '75623031139',
+    projectId: 'smart-odour-cr',
+    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-odour-cr.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY',
+    appId: '1:75623031139:ios:1234567890abcdef',
+    messagingSenderId: '75623031139',
+    projectId: 'smart-odour-cr',
+    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-odour-cr.firebasestorage.app',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY',
+    appId: '1:75623031139:web:83849cee0d8c90204fb356',
+    messagingSenderId: '75623031139',
+    projectId: 'smart-odour-cr',
+    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-odour-cr.firebasestorage.app',
   );
 }

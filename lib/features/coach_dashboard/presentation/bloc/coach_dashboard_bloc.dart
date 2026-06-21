@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:smart_coach_new/features/configuration/coach_configuration/domain/usecases/coach_configuration_usecase.dart';
+import 'package:smart_coach_new/features/device_management/device_configuration/domain/entities/device_entity.dart';
+import 'package:smart_coach_new/features/configuration/coach_configuration/domain/entities/coach_entity.dart';
 import 'coach_dashboard_event.dart';
 import 'coach_dashboard_state.dart';
 

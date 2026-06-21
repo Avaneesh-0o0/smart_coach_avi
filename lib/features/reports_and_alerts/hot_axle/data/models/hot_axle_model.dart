@@ -39,8 +39,14 @@ class HotAxleCoachModel {
 
   double get maxTemp {
     return [
-      a11Temp, a12Temp, a21Temp, a22Temp,
-      a31Temp, a32Temp, a41Temp, a42Temp
+      a11Temp,
+      a12Temp,
+      a21Temp,
+      a22Temp,
+      a31Temp,
+      a32Temp,
+      a41Temp,
+      a42Temp,
     ].reduce((a, b) => a > b ? a : b);
   }
 
@@ -53,14 +59,42 @@ class HotAxleCoachModel {
   // Add back fields for report compatibility
   int get axlesMonitored => 8;
   int get axlesIssue => [
-    a11Temp, a12Temp, a21Temp, a22Temp,
-    a31Temp, a32Temp, a41Temp, a42Temp
+    a11Temp,
+    a12Temp,
+    a21Temp,
+    a22Temp,
+    a31Temp,
+    a32Temp,
+    a41Temp,
+    a42Temp,
   ].where((t) => t > 60).length;
   String get updateTime => timestamp;
 
   List<AxleModel> get axles => [
-    AxleModel(axleNumber: 1, status: a11Temp > 60 ? 'Warning' : 'Good', maxTemp: '${a11Temp}°C', currentTemp: '${a11Temp}°C', sensorId: 'A11', speed: 'N/A', detectedAt: timestamp, location: 'N/A', lastMaintenance: 'N/A', updateTime: timestamp),
-    AxleModel(axleNumber: 2, status: a12Temp > 60 ? 'Warning' : 'Good', maxTemp: '${a12Temp}°C', currentTemp: '${a12Temp}°C', sensorId: 'A12', speed: 'N/A', detectedAt: timestamp, location: 'N/A', lastMaintenance: 'N/A', updateTime: timestamp),
+    AxleModel(
+      axleNumber: 1,
+      status: a11Temp > 60 ? 'Warning' : 'Good',
+      maxTemp: '$a11Temp°C',
+      currentTemp: '$a11Temp°C',
+      sensorId: 'A11',
+      speed: 'N/A',
+      detectedAt: timestamp,
+      location: 'N/A',
+      lastMaintenance: 'N/A',
+      updateTime: timestamp,
+    ),
+    AxleModel(
+      axleNumber: 2,
+      status: a12Temp > 60 ? 'Warning' : 'Good',
+      maxTemp: '$a12Temp°C',
+      currentTemp: '$a12Temp°C',
+      sensorId: 'A12',
+      speed: 'N/A',
+      detectedAt: timestamp,
+      location: 'N/A',
+      lastMaintenance: 'N/A',
+      updateTime: timestamp,
+    ),
     // ... we can add more if needed, but for reports this might suffice
   ];
 
