@@ -17,3 +17,46 @@ android/.kotlin/
 
 # Generated
 *.log
+
+# Arduino/PlatformIO
+.pio/
+.vscode/
+*.bin
+*.elf
+*.hex
+*.a
+*.o
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+cmake-build-debug/
+
+# Node
+node_modules/
+npm-debug.log
+
+# Firebase
+.firebase/
+
+# Build artifacts
+build/
+dist/
+*.log
+
+# Personal/Secret
+.env
+secret.json
+credentials.json
