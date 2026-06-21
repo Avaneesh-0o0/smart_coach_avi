@@ -7,18 +7,10 @@ import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import '../../data/models/odour_model.dart';
 
-class OdourWashroomDetailsView extends StatefulWidget {
-  final CoachToiletGroup group;
-  const OdourWashroomDetailsView({super.key, required this.group});
-
-  @override
-  State<OdourWashroomDetailsView> createState() => _OdourWashroomDetailsViewState();
-}
-
-class _OdourWashroomDetailsViewState extends State<OdourWashroomDetailsView> {
-  int _selectedIndex = 0;
-
-  OdourCoachModel get _selected => widget.group.toilets[_selectedIndex];
+class OdourWashroomDetailsView extends StatelessWidget {
+  final OdourCoachModel toilet;
+  
+  const OdourWashroomDetailsView({super.key, required this.toilet});
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
@@ -36,7 +28,6 @@ class _OdourWashroomDetailsViewState extends State<OdourWashroomDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    final wm = _selected;
     return Scaffold(
       backgroundColor: ColorConstants.scaffoldBackground,
       appBar: AppBar(
@@ -50,7 +41,7 @@ class _OdourWashroomDetailsViewState extends State<OdourWashroomDetailsView> {
           onPressed: () => Navigator.pop(context),
         ),
         titleSpacing: 4,
-        title: Text('Coach ${widget.group.coachNumber} – Washrooms', style: AppTextStyles.header1),
+        title: Text('${toilet.coachNumber} - ${toilet.toiletPosition}', style: AppTextStyles.header1),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -61,28 +52,25 @@ class _OdourWashroomDetailsViewState extends State<OdourWashroomDetailsView> {
             _trainInfoCard(),
             const SizedBox(height: 12),
 
-            // Washroom selector tabs
-            _washroomSelector(),
-            const SizedBox(height: 12),
-
-            // 1. Hygiene Score
-            _card(child: _hygieneSection(wm)),
+            // 1. Hygiene Score (Large Circular Gauge)
+            _card(child: _hygieneSection(toilet)),
             const SizedBox(height: 10),
 
-            // 2. Sensor Readings (Now includes Thresholds)
-            _card(child: _sensorSection(wm)),
+            // 2. Sensor Readings (Smaller Circular Gauges)
+            _card(child: _sensorSection(toilet)),
             const SizedBox(height: 10),
 
             // 3. Door Activity
-            _card(child: _doorSection(wm)),
+            _card(child: _doorSection(toilet)),
             const SizedBox(height: 10),
 
-            // 5. Device Information
-            _card(child: _deviceInfoSection(wm)),
+            // 4. Device Information
+            _card(child: _deviceInfoSection(toilet)),
             const SizedBox(height: 10),
 
-            // 6. System Health
-            _card(child: _systemHealthSection(wm)),
+            // 5. System Health
+            _card(child: _systemHealthSection(toilet)),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -108,17 +96,17 @@ class _OdourWashroomDetailsViewState extends State<OdourWashroomDetailsView> {
       Row(children: [
         SvgPicture.asset(AppIcons.train, width: 18, height: 18, colorFilter: const ColorFilter.mode(ColorConstants.primary, BlendMode.srcIn)),
         const SizedBox(width: 8),
-        Expanded(child: Text('${widget.group.trainNumber} - ${widget.group.trainName}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary))),
+        Expanded(child: Text('${toilet.trainNumber} - ${toilet.trainName}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary))),
       ]),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
         runSpacing: 4,
         children: [
-          _infoPill('Coach: ${widget.group.coachNumber}'),
-          _infoPill(widget.group.coachType),
-          _infoPill('Device: ${_selected.deviceId}'),
-          _infoPill('Updated: ${_fmtDt(_selected.timestamp)}'),
+          _infoPill('Coach: ${toilet.coachNumber}'),
+          _infoPill(toilet.coachType),
+          _infoPill('Device: ${toilet.deviceId}'),
+          _infoPill('Updated: ${_fmtDt(toilet.timestamp)}'),
         ],
       ),
     ]),
@@ -130,146 +118,131 @@ class _OdourWashroomDetailsViewState extends State<OdourWashroomDetailsView> {
     child: Text(label, style: AppTextStyles.bodySmall),
   );
 
-  Widget _washroomSelector() {
-    return Row(
-      children: List.generate(widget.group.toilets.length, (i) {
-        final t = widget.group.toilets[i];
-        final isSelected = i == _selectedIndex;
-        final color = _statusColor(t.hygieneScore >= 70 ? 'Good' : t.hygieneScore >= 50 ? 'Warning' : 'Critical');
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedIndex = i),
-            child: Container(
-              margin: EdgeInsets.only(right: i < widget.group.toilets.length - 1 ? 8 : 0),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected ? ColorConstants.primary : ColorConstants.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: isSelected ? ColorConstants.primary : ColorConstants.divider),
-              ),
-              child: Column(children: [
-                Text(t.toiletPosition, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: isSelected ? Colors.white : ColorConstants.textPrimary)),
-                const SizedBox(height: 2),
-                Container(
-                  width: 8, height: 8,
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: isSelected ? Colors.white : color),
-                ),
-              ]),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
-  // ── 1. Hygiene Score ──
+  // ── 1. Hygiene Score (Large Circular) ──
   Widget _hygieneSection(OdourCoachModel wm) {
     final score = wm.hygieneScore;
     final status = score >= 70 ? 'Good' : score >= 50 ? 'Warning' : 'Critical';
     final color = _statusColor(status);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text('Overall Hygiene Score', style: AppTextStyles.header2),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${score.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w700, color: color)),
-                Text(status, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: color)),
-              ]),
-              SizedBox(
-                width: 60, height: 60,
-                child: CircularProgressIndicator(
-                  value: score / 100,
-                  strokeWidth: 6,
-                  backgroundColor: color.withValues(alpha: 0.15),
-                  valueColor: AlwaysStoppedAnimation(color),
-                ),
+        const SizedBox(height: 24),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 160,
+              height: 160,
+              child: CircularProgressIndicator(
+                value: score / 100,
+                strokeWidth: 14,
+                backgroundColor: color.withValues(alpha: 0.15),
+                valueColor: AlwaysStoppedAnimation(color),
+                strokeCap: StrokeCap.round,
               ),
-            ],
-          ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${score.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 40, fontWeight: FontWeight.w800, color: color)),
+                Text(status, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: color)),
+              ],
+            ),
+          ],
         ),
+        const SizedBox(height: 16),
       ],
     );
   }
 
-  // ── 2. Sensor Readings (With Thresholds) ──
+  // ── 2. Sensor Readings (Smaller Circular Gauges) ──
   Widget _sensorSection(OdourCoachModel wm) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Sensor Readings', style: AppTextStyles.header2),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 8,
-          crossAxisSpacing: 8,
-          childAspectRatio: 1.4,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.85,
           children: [
-            _sensorTile('VOC', wm.voc, 'ppb', wm.vocThreshold, wm.vocStatus),
-            _sensorTile('NH₃', wm.nh3, 'ppm', wm.nh3Threshold, wm.nh3Status),
-            _sensorTile('H₂S', wm.h2s, 'ppm', wm.h2sThreshold, wm.h2sStatus),
-            _sensorTile('Smoke', wm.smoke, 'mg/m³', wm.smokeThreshold, wm.smokeStatus),
-            _sensorTile('Temp', wm.temperature, '°C', 40.0, wm.tempStatus),
-            _sensorTile('Humidity', wm.humidity, '%', 90.0, wm.humidityStatus),
+            _circularSensorTile('VOC', wm.voc, 'ppb', wm.vocThreshold, wm.vocStatus),
+            _circularSensorTile('NH₃', wm.nh3, 'ppm', wm.nh3Threshold, wm.nh3Status),
+            _circularSensorTile('H₂S', wm.h2s, 'ppm', wm.h2sThreshold, wm.h2sStatus),
+            _circularSensorTile('Smoke', wm.smoke, 'mg/m³', wm.smokeThreshold, wm.smokeStatus),
+            _circularSensorTile('Temp', wm.temperature, '°C', 40.0, wm.tempStatus),
+            _circularSensorTile('Humidity', wm.humidity, '%', 90.0, wm.humidityStatus),
           ],
         ),
       ],
     );
   }
 
-  Widget _sensorTile(String label, double value, String unit, double threshold, String status) {
+  Widget _circularSensorTile(String label, double value, String unit, double threshold, String status) {
     final color = _statusColor(status);
+    // Calculate a percentage to fill the circle (cap at 1.0)
+    double percent = value / threshold;
+    if (percent > 1.0) percent = 1.0;
+    if (label == 'Temp' || label == 'Humidity') {
+       // For temp/humidity, percentage is based on an arbitrary max (e.g. 50C for temp, 100% for humidity)
+       percent = value / (label == 'Temp' ? 50.0 : 100.0);
+    }
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.15)),
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Text(label, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: ColorConstants.textSecondary)),
+          const SizedBox(height: 12),
+          Stack(
+            alignment: Alignment.center,
             children: [
-              Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: ColorConstants.textSecondary)),
-              Icon(status.toLowerCase() == 'critical' ? Icons.warning : Icons.check_circle, size: 14, color: color)
-            ]
+              SizedBox(
+                width: 70,
+                height: 70,
+                child: CircularProgressIndicator(
+                  value: percent,
+                  strokeWidth: 8,
+                  backgroundColor: color.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation(color),
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('${value.toStringAsFixed(1)}', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text('${value.toStringAsFixed(1)} $unit', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
-          ),
+          const Spacer(),
+          Text(unit, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: ColorConstants.textSecondary)),
           const SizedBox(height: 2),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text('Threshold: ${threshold.toStringAsFixed(1)}', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w500, color: ColorConstants.textSecondary)),
-          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+            child: Text(status, style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold, color: color)),
+          )
         ],
       ),
     );
   }
 
-
-
-  // ── 4. Door Activity (Limit Switch) ──
+  // ── 3. Door Activity Monitoring (Limit Switch) ──
   Widget _doorSection(OdourCoachModel wm) {
     final isOpen = wm.doorStatus.toLowerCase() == 'open';
     final doorColor = isOpen ? ColorConstants.statusWarning : Colors.green;
@@ -291,23 +264,45 @@ class _OdourWashroomDetailsViewState extends State<OdourWashroomDetailsView> {
               Icon(isOpen ? Icons.door_front_door : Icons.door_front_door_outlined, size: 28, color: doorColor),
               const SizedBox(width: 12),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Current Status', style: AppTextStyles.bodySmall),
-                Text(wm.doorStatus, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: doorColor)),
+                Text('Current State', style: AppTextStyles.bodySmall),
+                Text(wm.doorStatus.toUpperCase(), style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: doorColor)),
               ]),
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _dataRow('Open Events Today', '${wm.doorOpenEventsToday}'),
         const Divider(color: ColorConstants.divider),
-        _dataRow('Last Opened', wm.lastOpenedTime),
+        _dataRow('Total Cycles Today', '${wm.totalDoorCyclesToday}'),
         const Divider(color: ColorConstants.divider),
-        _dataRow('Last Closed', wm.lastClosedTime),
+        _dataRow('Average Open Duration', wm.averageOpenDuration),
+        const Divider(color: ColorConstants.divider),
+        _dataRow('Longest Open Duration', wm.longestOpenDuration),
+        const SizedBox(height: 16),
+        Text('Recent Events', style: AppTextStyles.header2.copyWith(fontSize: 14)),
+        const SizedBox(height: 8),
+        if (wm.recentDoorEventsTimeline.isEmpty)
+          Text('No recent events', style: AppTextStyles.bodyMedium.copyWith(color: ColorConstants.textSecondary)),
+        ...wm.recentDoorEventsTimeline.map((e) {
+          final isClose = e['event']?.contains('Closed') ?? false;
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Icon(isClose ? Icons.check_circle : Icons.door_front_door, size: 14, color: isClose ? Colors.green : ColorConstants.primary),
+                const SizedBox(width: 8),
+                Text(e['time'] ?? '', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: ColorConstants.textPrimary)),
+                const SizedBox(width: 8),
+                Text(e['event'] ?? '', style: GoogleFonts.poppins(fontSize: 12, color: ColorConstants.textSecondary)),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
 
-  // ── 5. Device Information ──
+  // ── 4. Device Information ──
   Widget _deviceInfoSection(OdourCoachModel wm) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,14 +317,12 @@ class _OdourWashroomDetailsViewState extends State<OdourWashroomDetailsView> {
         const Divider(color: ColorConstants.divider),
         _dataRow('Coach Number', wm.coachNumber),
         const Divider(color: ColorConstants.divider),
-        _dataRow('Coach Type', wm.coachType),
-        const Divider(color: ColorConstants.divider),
         _dataRow('GPS Location', wm.gpsCoordinates),
       ],
     );
   }
 
-  // ── 6. System Health ──
+  // ── 5. System Health ──
   Widget _systemHealthSection(OdourCoachModel wm) {
     final onlineColor = wm.isOnline ? Colors.green : ColorConstants.statusCritical;
     return Column(

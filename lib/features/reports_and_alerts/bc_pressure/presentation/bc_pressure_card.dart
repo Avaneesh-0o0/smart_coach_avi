@@ -150,7 +150,6 @@ class BCPressureCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String status, Color color, bool isGood) {
-    // All statuses get a tinted pill background
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(

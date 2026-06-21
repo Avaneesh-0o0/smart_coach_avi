@@ -48,8 +48,21 @@ class _OdourDashboardState extends State<OdourDashboard> {
   @override
   void initState() {
     super.initState();
+    _loadSampleDataInstantly();
     _refreshData();
     _startAutoRefresh();
+  }
+
+  void _loadSampleDataInstantly() {
+    final repository = OdourRepository();
+    final records = repository.getSampleData();
+    setState(() {
+      _allRecords = records;
+      trainNumbers = ['All Trains', ...records.map((e) => e.trainNumber).toSet()];
+      coachTypes = ['All Types', ...records.map((e) => e.coachType).toSet()];
+      coachNumbers = ['All Unique IDs', ...records.map((e) => e.coachNumber).toSet()];
+      _applyFilters();
+    });
   }
 
   @override
@@ -189,9 +202,7 @@ class _OdourDashboardState extends State<OdourDashboard> {
           ),
         ],
       ),
-      body: isRefreshing && _allRecords.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+      body: RefreshIndicator(
               onRefresh: _refreshData,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(AppDimensions.paddingLarge),
@@ -206,7 +217,7 @@ class _OdourDashboardState extends State<OdourDashboard> {
                     if (selectedViewType == 'Monitoring')
                       _buildSectionCard(child: OdourCoachesView(coaches: _filteredRecords, grouped: _groupedCoaches))
                     else if (selectedViewType == 'Analytics')
-                      _buildSectionCard(child: OdourChartView(records: _allRecords))
+                      _buildSectionCard(child: OdourChartView(records: _allRecords, groups: _groupedCoaches))
                     else if (selectedViewType == 'Alerts')
                       _buildSectionCard(child: OdourAlertsView(records: _allRecords)),
                   ],

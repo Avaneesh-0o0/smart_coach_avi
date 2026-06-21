@@ -27,44 +27,8 @@ class AcpRepositoryImpl implements AcpRepository {
   AcpRepositoryImpl(this.remoteDataSource);
 
   Future<List<AcpLogData>> _fetchFromFirebase() async {
-    try {
-      final snapshot = await _dbRef.get();
-      if (snapshot.exists && snapshot.value != null) {
-        final Map<dynamic, dynamic> coachesData = snapshot.value as Map<dynamic, dynamic>;
-        List<AcpLogData> parsedModels = [];
-        
-        coachesData.forEach((coachNumber, coachInfo) {
-          if (coachInfo is Map && coachInfo.containsKey('devices')) {
-            final Map<dynamic, dynamic> devices = coachInfo['devices'];
-            devices.forEach((deviceId, deviceData) {
-              if (deviceData is Map) {
-                parsedModels.add(AcpLogData(
-                  deviceId: deviceData['device_id']?.toString() ?? '',
-                  rawAssetName: deviceData['device_name']?.toString() ?? 'ACP Device',
-                  acpStatus: deviceData['acp_status']?.toString() ?? 'Normal',
-                  trainNo: coachInfo['coach_info']?['train_number']?.toString() ?? 'Unknown',
-                  commCoachNo: coachNumber.toString(),
-                  techCoachNo: coachNumber.toString(),
-                  trainLocation: deviceData['location']?.toString() ?? 'Unknown',
-                  lastUpdated: deviceData['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
-                ));
-              }
-            });
-          }
-        });
-        
-        if (parsedModels.isNotEmpty) {
-          return parsedModels;
-        }
-      }
-      
-      print('No ACP data found in Firebase. Seeding with mock data...');
-      await _seedFirebaseWithMockData();
-      return _getMockData();
-    } catch (e) {
-      print('Failed to fetch from Firebase, using fallback data: $e');
-      return _getMockData();
-    }
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _getMockData();
   }
 
   @override
@@ -159,7 +123,87 @@ class AcpRepositoryImpl implements AcpRepository {
         techCoachNo: "S1",
         trainLocation: "Near Door B",
         lastUpdated: DateTime.now().toIso8601String(),
-      )
+      ),
+      AcpLogData(
+        deviceId: "ACP-DEV-003",
+        rawAssetName: "ACP Handle 1",
+        acpStatus: "Normal",
+        trainNo: "12951",
+        commCoachNo: "S2",
+        techCoachNo: "S2",
+        trainLocation: "Near Door A",
+        lastUpdated: DateTime.now().toIso8601String(),
+      ),
+      AcpLogData(
+        deviceId: "ACP-DEV-004",
+        rawAssetName: "ACP Handle 2",
+        acpStatus: "Normal",
+        trainNo: "12951",
+        commCoachNo: "S2",
+        techCoachNo: "S2",
+        trainLocation: "Near Door B",
+        lastUpdated: DateTime.now().toIso8601String(),
+      ),
+      AcpLogData(
+        deviceId: "ACP-DEV-005",
+        rawAssetName: "ACP Handle 1",
+        acpStatus: "Pulled",
+        trainNo: "12951",
+        commCoachNo: "S3",
+        techCoachNo: "S3",
+        trainLocation: "Near Door A",
+        lastUpdated: DateTime.now().toIso8601String(),
+      ),
+      AcpLogData(
+        deviceId: "ACP-DEV-006",
+        rawAssetName: "ACP Handle 2",
+        acpStatus: "Normal",
+        trainNo: "12951",
+        commCoachNo: "S3",
+        techCoachNo: "S3",
+        trainLocation: "Near Door B",
+        lastUpdated: DateTime.now().toIso8601String(),
+      ),
+      AcpLogData(
+        deviceId: "ACP-DEV-007",
+        rawAssetName: "ACP Handle 1",
+        acpStatus: "Normal",
+        trainNo: "12951",
+        commCoachNo: "S4",
+        techCoachNo: "S4",
+        trainLocation: "Near Door A",
+        lastUpdated: DateTime.now().toIso8601String(),
+      ),
+      AcpLogData(
+        deviceId: "ACP-DEV-008",
+        rawAssetName: "ACP Handle 1",
+        acpStatus: "Normal",
+        trainNo: "12951",
+        commCoachNo: "S5",
+        techCoachNo: "S5",
+        trainLocation: "Near Door A",
+        lastUpdated: DateTime.now().toIso8601String(),
+      ),
+      AcpLogData(
+        deviceId: "ACP-DEV-009",
+        rawAssetName: "ACP Handle 1",
+        acpStatus: "Normal",
+        trainNo: "12951",
+        commCoachNo: "S6",
+        techCoachNo: "S6",
+        trainLocation: "Near Door A",
+        lastUpdated: DateTime.now().toIso8601String(),
+      ),
+      AcpLogData(
+        deviceId: "ACP-DEV-010",
+        rawAssetName: "ACP Handle 1",
+        acpStatus: "Normal",
+        trainNo: "12951",
+        commCoachNo: "S7",
+        techCoachNo: "S7",
+        trainLocation: "Near Door A",
+        lastUpdated: DateTime.now().toIso8601String(),
+      ),
     ];
   }
 }

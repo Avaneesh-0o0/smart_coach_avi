@@ -120,9 +120,9 @@ class _OdourAlertsViewState extends State<OdourAlertsView> {
           ),
           const SizedBox(height: 12),
           _infoRow('Coach / Device', '${alert.record.coachNumber} (${alert.record.toiletPosition}) | ${alert.record.deviceId}'),
-          _infoRow('Sensor Name', alert.sensorName),
-          _infoRow('Current Reading', alert.currentReading, valueColor: color),
-          _infoRow('Threshold Value', alert.threshold),
+          _infoRow('Triggered Sensor', alert.sensorName),
+          _infoRow('Actual Value', alert.currentReading, valueColor: color),
+          _infoRow('Triggered Threshold', alert.threshold),
           _infoRow('Timestamp', _fmt(alert.record.timestamp)),
           const SizedBox(height: 12),
           Row(

@@ -13,45 +13,8 @@ class BreakBindinngRepositoryImpl implements BreakBindinngRepository {
 
   @override
   Future<PneumaticStatusResponse> getPneumaticStatus() async {
-    try {
-      final snapshot = await _dbRef.get();
-      if (snapshot.exists && snapshot.value != null) {
-        final Map<dynamic, dynamic> coachesData = snapshot.value as Map<dynamic, dynamic>;
-        List<PneumaticHistoryData> parsedModels = [];
-        
-        coachesData.forEach((coachNumber, coachInfo) {
-          if (coachInfo is Map && coachInfo.containsKey('devices')) {
-            final Map<dynamic, dynamic> devices = coachInfo['devices'];
-            devices.forEach((deviceId, deviceData) {
-              if (deviceData is Map) {
-                parsedModels.add(PneumaticHistoryData(
-                  deviceId: deviceData['device_id']?.toString() ?? '',
-                  coachNo: coachNumber.toString(),
-                  trainNo: coachInfo['coach_info']?['train_number']?.toString() ?? '',
-                  brakeFault: deviceData['brake_fault']?.toString() ?? 'None',
-                  brakeStatus: deviceData['brake_status']?.toString() ?? 'Normal',
-                  createdAt: deviceData['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
-                ));
-              }
-            });
-          }
-        });
-        
-        if (parsedModels.isNotEmpty) {
-          return PneumaticStatusResponse(
-            success: true,
-            history: PneumaticHistory(data: parsedModels),
-          );
-        }
-      }
-      
-      print('No Break Binding data found in Firebase. Seeding with mock data...');
-      await _seedFirebaseWithMockData();
-      return _getMockData();
-    } catch (e) {
-      print('Failed to fetch Break Binding from Firebase, using fallback data: $e');
-      return _getMockData();
-    }
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _getMockData();
   }
 
   Future<void> _seedFirebaseWithMockData() async {
@@ -113,6 +76,70 @@ class BreakBindinngRepositoryImpl implements BreakBindinngRepository {
             trainNo: '12951',
             brakeFault: 'Air Leak',
             brakeStatus: 'Binding',
+            createdAt: DateTime.now().toIso8601String(),
+          ),
+          PneumaticHistoryData(
+            deviceId: 'BB-DEV-003',
+            coachNo: 'B3',
+            trainNo: '12951',
+            brakeFault: 'Wheel Skid',
+            brakeStatus: 'Critical',
+            createdAt: DateTime.now().toIso8601String(),
+          ),
+          PneumaticHistoryData(
+            deviceId: 'BB-DEV-004',
+            coachNo: 'B4',
+            trainNo: '12951',
+            brakeFault: 'None',
+            brakeStatus: 'Normal',
+            createdAt: DateTime.now().toIso8601String(),
+          ),
+          PneumaticHistoryData(
+            deviceId: 'BB-DEV-005',
+            coachNo: 'B5',
+            trainNo: '12951',
+            brakeFault: 'Piston Stroke Issue',
+            brakeStatus: 'Warning',
+            createdAt: DateTime.now().toIso8601String(),
+          ),
+          PneumaticHistoryData(
+            deviceId: 'BB-DEV-006',
+            coachNo: 'B6',
+            trainNo: '12951',
+            brakeFault: 'None',
+            brakeStatus: 'Normal',
+            createdAt: DateTime.now().toIso8601String(),
+          ),
+          PneumaticHistoryData(
+            deviceId: 'BB-DEV-007',
+            coachNo: 'B7',
+            trainNo: '12951',
+            brakeFault: 'None',
+            brakeStatus: 'Normal',
+            createdAt: DateTime.now().toIso8601String(),
+          ),
+          PneumaticHistoryData(
+            deviceId: 'BB-DEV-008',
+            coachNo: 'B8',
+            trainNo: '12951',
+            brakeFault: 'Air Leak',
+            brakeStatus: 'Warning',
+            createdAt: DateTime.now().toIso8601String(),
+          ),
+          PneumaticHistoryData(
+            deviceId: 'BB-DEV-009',
+            coachNo: 'B9',
+            trainNo: '12951',
+            brakeFault: 'None',
+            brakeStatus: 'Normal',
+            createdAt: DateTime.now().toIso8601String(),
+          ),
+          PneumaticHistoryData(
+            deviceId: 'BB-DEV-010',
+            coachNo: 'B10',
+            trainNo: '12951',
+            brakeFault: 'None',
+            brakeStatus: 'Normal',
             createdAt: DateTime.now().toIso8601String(),
           ),
         ]

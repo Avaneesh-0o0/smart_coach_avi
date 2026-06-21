@@ -25,6 +25,10 @@ class OdourCoachModel {
   final int doorOpenEventsToday;
   final String lastOpenedTime;
   final String lastClosedTime;
+  final int totalDoorCyclesToday;
+  final String averageOpenDuration;
+  final String longestOpenDuration;
+  final List<Map<String, String>> recentDoorEventsTimeline;
 
   OdourCoachModel({
     required this.coachNumber,
@@ -51,6 +55,10 @@ class OdourCoachModel {
     this.doorOpenEventsToday = 0,
     this.lastOpenedTime = 'N/A',
     this.lastClosedTime = 'N/A',
+    this.totalDoorCyclesToday = 0,
+    this.averageOpenDuration = 'N/A',
+    this.longestOpenDuration = 'N/A',
+    this.recentDoorEventsTimeline = const [],
   });
 
   bool get isActive => status.toLowerCase() == 'active' || status.toLowerCase() == 'testing';

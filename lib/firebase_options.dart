@@ -32,49 +32,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY',
-    appId: '1:75623031139:web:83849cee0d8c90204fb356',
-    messagingSenderId: '75623031139',
-    projectId: 'smart-odour-cr',
-    authDomain: 'smart-odour-cr.firebaseapp.com',
-    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
-    storageBucket: 'smart-odour-cr.firebasestorage.app',
+    apiKey: 'AIzaSyBStk-C7HKR3eefptSEiN-sfv8PBhNLlUU',
+    appId: '1:162754887675:web:83849cee0d8c90204fb356', // Leaving mock if actual web app not present
+    messagingSenderId: '162754887675',
+    projectId: 'smart-coaches',
+    authDomain: 'smart-coaches.firebaseapp.com',
+    databaseURL: 'https://smart-coaches-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-coaches.firebasestorage.app',
     measurementId: 'G-JQPS9K0SDR',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY', // Using same for now, but usually they differ slightly. It'll work for test mode.
-    appId: '1:75623031139:android:1234567890abcdef', // Mocking android to avoid crash, user will update google-services.json later
-    messagingSenderId: '75623031139',
-    projectId: 'smart-odour-cr',
-    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
-    storageBucket: 'smart-odour-cr.firebasestorage.app',
+    apiKey: 'AIzaSyBStk-C7HKR3eefptSEiN-sfv8PBhNLlUU',
+    appId: '1:162754887675:android:21cadea9fcd3fd6967955e',
+    messagingSenderId: '162754887675',
+    projectId: 'smart-coaches',
+    databaseURL: 'https://smart-coaches-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-coaches.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY',
-    appId: '1:75623031139:ios:1234567890abcdef',
-    messagingSenderId: '75623031139',
-    projectId: 'smart-odour-cr',
-    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
-    storageBucket: 'smart-odour-cr.firebasestorage.app',
+    apiKey: 'AIzaSyBStk-C7HKR3eefptSEiN-sfv8PBhNLlUU',
+    appId: '1:162754887675:ios:1234567890abcdef',
+    messagingSenderId: '162754887675',
+    projectId: 'smart-coaches',
+    databaseURL: 'https://smart-coaches-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-coaches.firebasestorage.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY',
-    appId: '1:75623031139:ios:1234567890abcdef',
-    messagingSenderId: '75623031139',
-    projectId: 'smart-odour-cr',
-    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
-    storageBucket: 'smart-odour-cr.firebasestorage.app',
+    apiKey: 'AIzaSyBStk-C7HKR3eefptSEiN-sfv8PBhNLlUU',
+    appId: '1:162754887675:ios:1234567890abcdef',
+    messagingSenderId: '162754887675',
+    projectId: 'smart-coaches',
+    databaseURL: 'https://smart-coaches-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-coaches.firebasestorage.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyClxti6TNTNANt-J_Cv-T35Ip9PFjHgxjY',
-    appId: '1:75623031139:web:83849cee0d8c90204fb356',
-    messagingSenderId: '75623031139',
-    projectId: 'smart-odour-cr',
-    databaseURL: 'https://smart-odour-cr-default-rtdb.firebaseio.com',
-    storageBucket: 'smart-odour-cr.firebasestorage.app',
+    apiKey: 'AIzaSyBStk-C7HKR3eefptSEiN-sfv8PBhNLlUU',
+    appId: '1:162754887675:web:83849cee0d8c90204fb356',
+    messagingSenderId: '162754887675',
+    projectId: 'smart-coaches',
+    databaseURL: 'https://smart-coaches-default-rtdb.firebaseio.com',
+    storageBucket: 'smart-coaches.firebasestorage.app',
   );
 }

@@ -5,51 +5,8 @@ class DieselTankRepository {
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('modules/diesel_tank/coaches');
 
   Future<List<DieselTankModel>> getDieselTanks() async {
-    try {
-      final snapshot = await _dbRef.get();
-      if (snapshot.exists && snapshot.value != null) {
-        final Map<dynamic, dynamic> coachesData = snapshot.value as Map<dynamic, dynamic>;
-        List<DieselTankModel> parsedModels = [];
-        
-        coachesData.forEach((coachNumber, coachInfo) {
-          if (coachInfo is Map && coachInfo.containsKey('devices')) {
-            final Map<dynamic, dynamic> devices = coachInfo['devices'];
-            devices.forEach((deviceId, deviceData) {
-              if (deviceData is Map) {
-                parsedModels.add(DieselTankModel(
-                  engineId: deviceData['engine_id']?.toString() ?? '',
-                  sensorId: deviceId.toString(),
-                  locoNumber: coachNumber.toString(),
-                  trainName: coachInfo['train_name']?.toString() ?? '',
-                  percentage: int.tryParse(deviceData['percentage']?.toString() ?? '0') ?? 0,
-                  status: deviceData['status']?.toString() ?? 'Normal',
-                  height: double.tryParse(deviceData['height']?.toString() ?? '0') ?? 0.0,
-                  width: double.tryParse(deviceData['width']?.toString() ?? '0') ?? 0.0,
-                  length: double.tryParse(deviceData['length']?.toString() ?? '0') ?? 0.0,
-                  capacity: int.tryParse(deviceData['capacity']?.toString() ?? '0') ?? 0,
-                  consumptionRate: int.tryParse(deviceData['consumption_rate']?.toString() ?? '0') ?? 0,
-                  estimatedRunTime: double.tryParse(deviceData['estimated_run_time']?.toString() ?? '0') ?? 0.0,
-                  rangeLeft: int.tryParse(deviceData['range_left']?.toString() ?? '0') ?? 0,
-                  refilledBy: deviceData['refilled_by']?.toString() ?? '',
-                  lastUpdated: DateTime.tryParse(deviceData['timestamp']?.toString() ?? '') ?? DateTime.now(),
-                ));
-              }
-            });
-          }
-        });
-        
-        if (parsedModels.isNotEmpty) {
-          return parsedModels;
-        }
-      }
-      
-      print('No Diesel Tank data found in Firebase. Seeding with mock data...');
-      await _seedFirebaseWithMockData();
-      return _getMockData();
-    } catch (e) {
-      print('Failed to fetch Diesel Tank from Firebase, using fallback data: $e');
-      return _getMockData();
-    }
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _getMockData();
   }
 
   Future<void> _seedFirebaseWithMockData() async {
@@ -99,7 +56,160 @@ class DieselTankRepository {
         rangeLeft: 950,
         refilledBy: 'Ramesh Kumar',
         lastUpdated: DateTime.now(),
-      )
+      ),
+      DieselTankModel(
+        engineId: 'WDP4D #40346',
+        sensorId: 'WLI 125679',
+        locoNumber: 'WDP4D #40346',
+        trainName: '12951/2 Mumbai Rajdhani',
+        percentage: 82,
+        status: 'Good',
+        height: 180,
+        width: 120,
+        length: 220,
+        capacity: 5000,
+        consumptionRate: 420,
+        estimatedRunTime: 9.8,
+        rangeLeft: 1100,
+        refilledBy: 'Suresh Chandra',
+        lastUpdated: DateTime.now(),
+      ),
+      DieselTankModel(
+        engineId: 'WAP7 #37012',
+        sensorId: 'WLI 125680',
+        locoNumber: 'WAP7 #37012',
+        trainName: '12002/1 New Delhi Shatabdi',
+        percentage: 45,
+        status: 'Low',
+        height: 180,
+        width: 120,
+        length: 220,
+        capacity: 4500,
+        consumptionRate: 380,
+        estimatedRunTime: 5.3,
+        rangeLeft: 600,
+        refilledBy: 'Amit Sharma',
+        lastUpdated: DateTime.now(),
+      ),
+      DieselTankModel(
+        engineId: 'WDP4D #40112',
+        sensorId: 'WLI 125681',
+        locoNumber: 'WDP4D #40112',
+        trainName: '12260/5 Duronto Express',
+        percentage: 12,
+        status: 'Critical',
+        height: 180,
+        width: 120,
+        length: 220,
+        capacity: 5000,
+        consumptionRate: 410,
+        estimatedRunTime: 1.4,
+        rangeLeft: 150,
+        refilledBy: 'Ramesh Kumar',
+        lastUpdated: DateTime.now(),
+      ),
+      DieselTankModel(
+        engineId: 'WDP4B #40050',
+        sensorId: 'WLI 125682',
+        locoNumber: 'WDP4B #40050',
+        trainName: '12424/3 Dibrugarh Rajdhani',
+        percentage: 60,
+        status: 'Good',
+        height: 180,
+        width: 120,
+        length: 220,
+        capacity: 5000,
+        consumptionRate: 430,
+        estimatedRunTime: 6.9,
+        rangeLeft: 800,
+        refilledBy: 'Vijay Yadav',
+        lastUpdated: DateTime.now(),
+      ),
+      DieselTankModel(
+        engineId: 'WDM3D #11340',
+        sensorId: 'WLI 125683',
+        locoNumber: 'WDM3D #11340',
+        trainName: '11077/8 Jhelum Express',
+        percentage: 90,
+        status: 'Good',
+        height: 180,
+        width: 120,
+        length: 200,
+        capacity: 4000,
+        consumptionRate: 350,
+        estimatedRunTime: 10.2,
+        rangeLeft: 1200,
+        refilledBy: 'Suresh Chandra',
+        lastUpdated: DateTime.now(),
+      ),
+      DieselTankModel(
+        engineId: 'WDP4D #40280',
+        sensorId: 'WLI 125684',
+        locoNumber: 'WDP4D #40280',
+        trainName: '12925/6 Paschim Express',
+        percentage: 70,
+        status: 'Good',
+        height: 180,
+        width: 120,
+        length: 220,
+        capacity: 5000,
+        consumptionRate: 400,
+        estimatedRunTime: 8.7,
+        rangeLeft: 980,
+        refilledBy: 'Amit Sharma',
+        lastUpdated: DateTime.now(),
+      ),
+      DieselTankModel(
+        engineId: 'WDP4D #40410',
+        sensorId: 'WLI 125685',
+        locoNumber: 'WDP4D #40410',
+        trainName: '12472/4 Swaraj Express',
+        percentage: 35,
+        status: 'Low',
+        height: 180,
+        width: 120,
+        length: 220,
+        capacity: 5000,
+        consumptionRate: 415,
+        estimatedRunTime: 4.2,
+        rangeLeft: 480,
+        refilledBy: 'Ramesh Kumar',
+        lastUpdated: DateTime.now(),
+      ),
+      DieselTankModel(
+        engineId: 'WDM3A #16245',
+        sensorId: 'WLI 125686',
+        locoNumber: 'WDM3A #16245',
+        trainName: '19019/20 Dehradun Express',
+        percentage: 55,
+        status: 'Good',
+        height: 180,
+        width: 120,
+        length: 200,
+        capacity: 3500,
+        consumptionRate: 320,
+        estimatedRunTime: 6.0,
+        rangeLeft: 700,
+        refilledBy: 'Vijay Yadav',
+        lastUpdated: DateTime.now(),
+      ),
+      DieselTankModel(
+        engineId: 'WDP4D #40520',
+        sensorId: 'WLI 125687',
+        locoNumber: 'WDP4D #40520',
+        trainName: '12247/8 Yuva Express',
+        percentage: 95,
+        status: 'Good',
+        height: 180,
+        width: 120,
+        length: 220,
+        capacity: 5000,
+        consumptionRate: 405,
+        estimatedRunTime: 11.7,
+        rangeLeft: 1350,
+        refilledBy: 'Suresh Chandra',
+        lastUpdated: DateTime.now(),
+      ),
     ];
   }
 }

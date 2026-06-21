@@ -8,11 +8,12 @@ import 'package:smart_coach_new/core/utils/image_utils.dart';
 import 'package:smart_coach_new/core/utils/loader.dart';
 import 'package:smart_coach_new/core/utils/toast_message_utils.dart';
 import 'package:smart_coach_new/core/utils/utils.dart';
+import 'package:smart_coach_new/core/widgets/custom_button.dart';
+import 'package:smart_coach_new/core/widgets/custom_text_field.dart';
 import 'package:smart_coach_new/features/auth/login/presentation/bloc/login_bloc.dart';
 import 'package:smart_coach_new/features/auth/login/presentation/bloc/login_event.dart';
 import 'package:smart_coach_new/features/auth/login/presentation/bloc/login_state.dart';
 import 'package:smart_coach_new/routes/app_router.dart';
-import 'dart:ui';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,15 +25,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailOrNumberController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
   late LoginBloc _loginBloc;
-  bool _isPasswordVisible = false;
 
   @override
   void initState() {
     super.initState();
     _loginBloc = context.read<LoginBloc>();
-    emailOrNumberController.text = "tester@example.com";
-    passwordController.text = "123456";
   }
 
   @override
@@ -44,168 +43,142 @@ class _LoginScreenState extends State<LoginScreen> {
         } else {
           Loader.dismiss();
         }
+
         if (state is LoginSuccess) {
           ToastMessageUtils.showMessage(context, state.message);
           context.go(AppRouter.dashboardRoute);
         }
         if (state is LoginFailure) {
-          Utils.showApiErrorMessageOrList(context, message: state.message, errorList: state.errorList);
+          Utils.showApiErrorMessageOrList(context,
+              message: state.message, errorList: state.errorList);
         }
       },
       child: Scaffold(
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF0F2027),
-                Color(0xFF203A43),
-                Color(0xFF2C5364),
+        body: SafeArea(
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 5.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6.w),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: Offset(2, 8),
+                ),
               ],
             ),
-          ),
-          child: SafeArea(
             child: Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Brand Logo Area
-                    Container(
-                      padding: EdgeInsets.all(2.h),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.1),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 20,
-                            offset: Offset(0, 10),
-                          )
-                        ],
-                      ),
-                      child: SvgPicture.asset(
-                        ImageUtils.icTrain,
-                        height: 6.h,
-                        width: 6.h,
-                        colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      "Smart Coach",
-                      style: TextStyle(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.5,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 1.h),
-                    Text(
-                      "Next-gen railway management",
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.white70,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    SizedBox(height: 5.h),
-
-                    // Glassmorphism Login Card
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          width: 85.w,
-                          padding: EdgeInsets.all(6.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              width: 1.5,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 5.w),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 9.5.h,
+                        width: 9.5.h,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage(
+                              ImageUtils.pisolve,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 25,
-                                spreadRadius: -5,
-                              )
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Sign In",
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(height: 3.h),
-                              
-                              // Custom Email Field
-                              _buildTextField(
-                                controller: emailOrNumberController,
-                                hint: "tester@example.com",
-                                icon: Icons.email_outlined,
-                              ),
-                              SizedBox(height: 2.h),
-                              
-                              // Custom Password Field
-                              _buildTextField(
-                                controller: passwordController,
-                                hint: "Password",
-                                icon: Icons.lock_outline,
-                                isPassword: true,
-                              ),
-                              SizedBox(height: 4.h),
-                              
-                              // Login Button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 6.5.h,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: ColorConstants.primary,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    elevation: 8,
-                                    shadowColor: ColorConstants.primary.withValues(alpha: 0.5),
-                                  ),
-                                  onPressed: () {
-                                    String email = emailOrNumberController.text.trim();
-                                    String password = passwordController.text.trim();
-                                    if (_isValid(email, password)) {
-                                      _loginBloc.add(LoginRequested(email, password));
-                                    }
-                                  },
-                                  child: Text(
-                                    "Continue to Dashboard",
-                                    style: TextStyle(
-                                      fontSize: 13.sp,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 5.h),
-                  ],
+                      SizedBox(height: 2.h),
+                      SizedBox(
+                        height: 5.h,
+                        width: 5.h,
+                        child: SvgPicture.asset(
+                          ImageUtils.icTrain,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      Text(
+                        "Smart Coach",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: ColorConstants.subTextLightBlueColor,
+                        ),
+                      ),
+                      SizedBox(height: 1.h),
+                      Text(
+                        "Sign in to your account",
+                        style: TextStyle(
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 0.3.h),
+                      Text(
+                        "Verify your identity to continue.",
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.black,
+                        ),
+                      ),
+                      SizedBox(height: 3.h),
+                      BlocBuilder<LoginBloc, LoginState>(
+                          builder: (context, state) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(1),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buttonChipView(0, 'Email',
+                                            _loginBloc.isLoginWithEmail),
+                                      ),
+                                      Expanded(
+                                        child: _buttonChipView(1, 'Phone Number',
+                                            !_loginBloc.isLoginWithEmail),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 2.5.h),
+                                _loginBloc.isLoginWithEmail
+                                    ? _emailField()
+                                    : _phoneNumberField(),
+                              ],
+                            );
+                          }),
+                      SizedBox(height: 1.5.h),
+                      CustomTextField(
+                        hintText: 'Enter your password',
+                        labelText: 'Password',
+                        prefixIcon: Icons.lock_outline,
+                        isPassword: true,
+                        controller: passwordController,
+                      ),
+                      SizedBox(height: 3.h),
+                      CustomButton(
+                        text: 'Login',
+                        onPressed: () {
+                          String emailOrNumber =
+                              emailOrNumberController.text.trim();
+                          String password = passwordController.text.trim();
+
+                          if (_isValid(emailOrNumber, password)) {
+                            _loginBloc.add(LoginRequested(
+                                emailOrNumberController.text.trim(),
+                                passwordController.text.trim()));
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -215,53 +188,65 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    bool isPassword = false,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword && !_isPasswordVisible,
-        style: TextStyle(color: Colors.white, fontSize: 12.sp),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: Colors.white54),
-          prefixIcon: Icon(icon, color: Colors.white70, size: 20),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.white70,
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  Widget _buttonChipView(int index, String name, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        _loginBloc
+            .add(LoginWithEmailOrNumberToggled(!_loginBloc.isLoginWithEmail));
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Color(0xFFF1F1F3),
+          borderRadius: BorderRadius.circular(25),
+        ),
+        padding: EdgeInsets.symmetric(
+          vertical: 1.25.h,
+        ),
+        child: Center(
+          child: Text(
+            name,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black54,
+              fontSize: 10.5.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
       ),
     );
   }
 
+  Widget _emailField() {
+    return CustomTextField(
+      hintText: 'Enter your email',
+      labelText: 'Email address',
+      prefixIcon: Icons.email_outlined,
+      textInputAction: TextInputAction.next,
+      controller: emailOrNumberController,
+      textInputType: TextInputType.emailAddress,
+      key: ValueKey('Email'),
+    );
+  }
+
+  Widget _phoneNumberField() {
+    return CustomTextField(
+      hintText: 'Enter your phone number',
+      labelText: 'Phone number',
+      prefixIcon: Icons.call_outlined,
+      textInputAction: TextInputAction.next,
+      controller: emailOrNumberController,
+      textInputType: TextInputType.number,
+      key: ValueKey('Number'),
+    );
+  }
+
   bool _isValid(String emailOrNumber, String password) {
     if (emailOrNumber.isEmpty) {
-      ToastMessageUtils.showMessage(context, 'Please enter a valid email address');
+      ToastMessageUtils.showMessage(context,
+          'Please enter valid ${_loginBloc.isLoginWithEmail ? 'email address' : 'phone number'}');
       return false;
     } else if (password.isEmpty) {
-      ToastMessageUtils.showMessage(context, 'Please enter a valid password');
+      ToastMessageUtils.showMessage(context, 'Please enter valid password');
       return false;
     } else {
       return true;

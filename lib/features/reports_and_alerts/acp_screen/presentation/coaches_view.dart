@@ -53,7 +53,7 @@ class AcpCoachesView extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final double spacing = 12;
-            final int crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+            const int crossAxisCount = 2;
             final double itemWidth = (constraints.maxWidth - (spacing * (crossAxisCount - 1))) / crossAxisCount;
 
             return Wrap(

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_coach_new/core/utils/app_dimensions.dart';
+import 'package:smart_coach_new/core/utils/app_icons.dart';
 import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import '../../data/models/odour_model.dart';
-import 'odour_washroom_details_view.dart';
+import '../odour_coach_washrooms_screen.dart';
 
 class OdourCoachesView extends StatelessWidget {
   final List<OdourCoachModel> coaches;
@@ -61,7 +63,7 @@ class _CoachGroupCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OdourWashroomDetailsView(group: group),
+            builder: (context) => OdourCoachWashroomsScreen(group: group),
           ),
         );
       },
@@ -73,104 +75,49 @@ class _CoachGroupCard extends StatelessWidget {
             color: group.alertToilets > 0 ? Colors.red.withOpacity(0.15) : ColorConstants.divider,
           ),
         ),
-        child: Column(
-        children: [
-          // Coach header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: wc.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.air, color: wc, size: 20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: wc.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: Icon(Icons.air, color: wc, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Coach ${group.coachNumber}',
+                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: ColorConstants.textPrimary)),
+                    Text('${group.trainNumber} - ${group.trainName}',
+                      style: GoogleFonts.poppins(fontSize: 12, color: ColorConstants.textSecondary)),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('${group.totalToilets} Washrooms',
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: ColorConstants.textSecondary)),
+                  const SizedBox(height: 4),
+                  Row(
                     children: [
-                      Text('Coach ${group.coachNumber}',
-                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: ColorConstants.primary)),
-                      Text('${group.trainNumber} - ${group.trainName}',
-                        style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary)),
+                      Text('Peak: ${displayReading.toStringAsFixed(0)} ppm',
+                        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: wc)),
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right, color: ColorConstants.textSecondary, size: 18),
                     ],
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      FittedBox(fit: BoxFit.scaleDown, child: Text('${group.totalToilets} Toilets',
-                        style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: ColorConstants.textSecondary))),
-                      const SizedBox(height: 2),
-                      FittedBox(fit: BoxFit.scaleDown, child: Text('Peak: $displayReading ppm',
-                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: wc))),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
-          const Divider(height: 1, color: ColorConstants.divider),
-          // Individual toilet rows
-          ...group.toilets.map((toilet) => _ToiletRow(toilet: toilet)),
-        ],
-      ),
-    ));
-  }
-}
-
-class _ToiletRow extends StatelessWidget {
-  final OdourCoachModel toilet;
-  const _ToiletRow({required this.toilet});
-
-  @override
-  Widget build(BuildContext context) {
-    final isAlert = toilet.hasAlert;
-    final isActive = toilet.isActive;
-    final readingColor = isAlert ? const Color(0xFFD32F2F) : (isActive ? const Color(0xFF2E7D32) : Colors.grey);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Icon(
-            isAlert ? Icons.warning_amber_rounded : (isActive ? Icons.check_circle : Icons.cancel),
-            size: 16,
-            color: readingColor,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 3,
-            child: Text(toilet.toiletPosition,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: ColorConstants.textPrimary)),
-          ),
-          Expanded(
-            flex: 2,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text('${toilet.reading} ppm',
-                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: readingColor)),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: (isActive ? const Color(0xFF2E7D32) : Colors.grey).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(toilet.status.toUpperCase(),
-              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold,
-                color: isActive ? const Color(0xFF2E7D32) : Colors.grey)),
-          ),
-        ],
+        ),
       ),
     );
   }

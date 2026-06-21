@@ -9,49 +9,8 @@ class FsdsRepository {
   FsdsRepository(this.remoteDataSource);
 
   Future<List<FsdsAssetModel>> getFsdsStatus() async {
-    try {
-      final snapshot = await _dbRef.get();
-      if (snapshot.exists && snapshot.value != null) {
-        final Map<dynamic, dynamic> coachesData = snapshot.value as Map<dynamic, dynamic>;
-        List<FsdsAssetModel> parsedModels = [];
-
-        coachesData.forEach((coachNumber, coachInfo) {
-          if (coachInfo is Map && coachInfo.containsKey('devices')) {
-            final Map<dynamic, dynamic> devices = coachInfo['devices'];
-            devices.forEach((deviceId, deviceData) {
-              if (deviceData is Map) {
-                parsedModels.add(FsdsAssetModel(
-                  deviceId: deviceData['device_id']?.toString() ?? '',
-                  deviceName: deviceData['device_name']?.toString() ?? '',
-                  coachUniqueId: deviceData['coach_unique_id']?.toString() ?? '',
-                  coachDisplayId: coachNumber.toString(),
-                  coachNumber: coachNumber.toString(),
-                  trainId: int.tryParse(coachInfo['coach_info']?['train_id']?.toString() ?? '0') ?? 0,
-                  trainNo: coachInfo['coach_info']?['train_number']?.toString() ?? '',
-                  trainName: coachInfo['coach_info']?['train_name']?.toString() ?? '',
-                  location: deviceData['location']?.toString() ?? '',
-                  bypassStatus: deviceData['bypass_status'] == true || deviceData['bypass_status'] == 'true',
-                  alertStatus: deviceData['alert_status'] == true || deviceData['alert_status'] == 'true',
-                  timestamp: deviceData['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
-                  remarks: deviceData['remarks']?.toString() ?? '',
-                  sensorId: deviceData['sensor_id']?.toString() ?? '',
-                ));
-              }
-            });
-          }
-        });
-        if (parsedModels.isNotEmpty) {
-          return parsedModels;
-        }
-      }
-
-      print('No FSDS data found in Firebase. Seeding with mock data...');
-      await _seedFirebaseWithMockData();
-      return _getMockData();
-    } catch (e) {
-      print('Failed to fetch from Firebase, using fallback data: $e');
-      return _getMockData();
-    }
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _getMockData();
   }
 
   Future<void> _seedFirebaseWithMockData() async {
@@ -129,6 +88,134 @@ class FsdsRepository {
         timestamp: DateTime.now().toIso8601String(),
         remarks: 'Smoke Detected',
         sensorId: 'SENS-F02',
+      ),
+      FsdsAssetModel(
+        deviceId: 'FSDS-DEV-003',
+        deviceName: 'FSDS Master',
+        coachUniqueId: 'UID-A2',
+        coachDisplayId: 'A2',
+        coachNumber: 'A2',
+        trainId: 1,
+        trainNo: '12951',
+        trainName: 'Rajdhani Express',
+        location: 'Cabin-1',
+        bypassStatus: false,
+        alertStatus: false,
+        timestamp: DateTime.now().toIso8601String(),
+        remarks: 'Normal operation',
+        sensorId: 'SENS-F03',
+      ),
+      FsdsAssetModel(
+        deviceId: 'FSDS-DEV-004',
+        deviceName: 'FSDS Slave',
+        coachUniqueId: 'UID-A2',
+        coachDisplayId: 'A2',
+        coachNumber: 'A2',
+        trainId: 1,
+        trainNo: '12951',
+        trainName: 'Rajdhani Express',
+        location: 'Cabin-2',
+        bypassStatus: true,
+        alertStatus: false,
+        timestamp: DateTime.now().toIso8601String(),
+        remarks: 'Bypassed by Staff',
+        sensorId: 'SENS-F04',
+      ),
+      FsdsAssetModel(
+        deviceId: 'FSDS-DEV-005',
+        deviceName: 'FSDS Master',
+        coachUniqueId: 'UID-A3',
+        coachDisplayId: 'A3',
+        coachNumber: 'A3',
+        trainId: 1,
+        trainNo: '12951',
+        trainName: 'Rajdhani Express',
+        location: 'Cabin-1',
+        bypassStatus: false,
+        alertStatus: false,
+        timestamp: DateTime.now().toIso8601String(),
+        remarks: 'Normal operation',
+        sensorId: 'SENS-F05',
+      ),
+      FsdsAssetModel(
+        deviceId: 'FSDS-DEV-006',
+        deviceName: 'FSDS Slave',
+        coachUniqueId: 'UID-A3',
+        coachDisplayId: 'A3',
+        coachNumber: 'A3',
+        trainId: 1,
+        trainNo: '12951',
+        trainName: 'Rajdhani Express',
+        location: 'Cabin-2',
+        bypassStatus: false,
+        alertStatus: false,
+        timestamp: DateTime.now().toIso8601String(),
+        remarks: 'Normal operation',
+        sensorId: 'SENS-F06',
+      ),
+      FsdsAssetModel(
+        deviceId: 'FSDS-DEV-007',
+        deviceName: 'FSDS Master',
+        coachUniqueId: 'UID-A4',
+        coachDisplayId: 'A4',
+        coachNumber: 'A4',
+        trainId: 1,
+        trainNo: '12951',
+        trainName: 'Rajdhani Express',
+        location: 'Cabin-1',
+        bypassStatus: false,
+        alertStatus: false,
+        timestamp: DateTime.now().toIso8601String(),
+        remarks: 'Normal operation',
+        sensorId: 'SENS-F07',
+      ),
+      FsdsAssetModel(
+        deviceId: 'FSDS-DEV-008',
+        deviceName: 'FSDS Slave',
+        coachUniqueId: 'UID-A4',
+        coachDisplayId: 'A4',
+        coachNumber: 'A4',
+        trainId: 1,
+        trainNo: '12951',
+        trainName: 'Rajdhani Express',
+        location: 'Cabin-2',
+        bypassStatus: false,
+        alertStatus: false,
+        timestamp: DateTime.now().toIso8601String(),
+        remarks: 'Normal operation',
+        sensorId: 'SENS-F08',
+      ),
+      FsdsAssetModel(
+        deviceId: 'FSDS-DEV-009',
+        deviceName: 'FSDS Master',
+        coachUniqueId: 'UID-A5',
+        coachDisplayId: 'A5',
+        coachNumber: 'A5',
+        trainId: 1,
+        trainNo: '12951',
+        trainName: 'Rajdhani Express',
+        location: 'Cabin-1',
+        bypassStatus: false,
+        alertStatus: true,
+        timestamp: DateTime.now().toIso8601String(),
+        remarks: 'High Temp Alert',
+        sensorId: 'SENS-F09',
+      ),
+      FsdsAssetModel(
+        deviceId: 'FSDS-DEV-010',
+        deviceName: 'FSDS Slave',
+        coachUniqueId: 'UID-A5',
+        coachDisplayId: 'A5',
+        coachNumber: 'A5',
+        trainId: 1,
+        trainNo: '12951',
+        trainName: 'Rajdhani Express',
+        location: 'Cabin-2',
+        bypassStatus: false,
+        alertStatus: false,
+        timestamp: DateTime.now().toIso8601String(),
+        remarks: 'Normal operation',
+        sensorId: 'SENS-F10',
       ),
     ];
   }

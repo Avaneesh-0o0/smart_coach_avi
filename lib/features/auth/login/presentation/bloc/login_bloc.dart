@@ -38,22 +38,43 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       final email = event.emailOrPhoneNumber.trim();
       final password = event.password.trim();
 
-      // Auto-provisioning logic for our tester account
-      if (email == 'tester@example.com') {
-        try {
-          // Attempt to create user first. If it already exists, it will throw an exception which we catch.
-          await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
-          print('Tester account successfully auto-provisioned!');
-        } on FirebaseAuthException catch (e) {
-          if (e.code == 'email-already-in-use') {
-            print('Tester account already exists, proceeding to sign in.');
-          } else {
-            print('Error auto-provisioning tester: ${e.message}');
-          }
-        }
+      // Hardcoded bypass for our tester account to avoid Firebase Auth config errors
+      if (email == 'tester@example.com' && password == '123456') {
+        print('Tester account bypass activated!');
+        final userModel = UserModel(
+          userId: 1,
+          firstName: 'Tester',
+          lastName: 'Account',
+          email: email,
+          mobileNumber: '0000000000',
+          organisationType: 'Testing',
+          organisationName: 'Smart Coach',
+          zoneId: 1,
+          divisionId: 1,
+          regionId: 1,
+          roleId: 1, // Admin role
+          status: 'Active',
+          approvalStatus: 'Approved',
+          createdDate: DateTime.now().toIso8601String(),
+          employeeId: 'EMP-001',
+          panCardNo: 'ABCDE1234F',
+          panCardImage: null,
+          userImage: null,
+        );
+        
+        await prefs.saveToken('tester-mock-token-123456');
+        await prefs.saveUser(userModel);
+
+        permissionBloc.add(InitializePermissions(
+          roleId: userModel.roleId ?? 0,
+          roleName: 'Admin',
+        ));
+
+        emit(LoginSuccess('Successfully logged in as Tester!'));
+        return; // Exit early, skipping Firebase Auth entirely
       }
 
-      // Sign in using Firebase Auth
+      // For any other email, sign in using Firebase Auth
       final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,

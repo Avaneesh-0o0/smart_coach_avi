@@ -12,7 +12,10 @@ class OdourCoachCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isBad = coach.reading > 70;
+    final double score = coach.hygieneScore;
+    final String status = score >= 70 ? 'Good' : score >= 50 ? 'Warning' : 'Critical';
+    final Color statusColor = status == 'Good' ? Colors.green : status == 'Warning' ? ColorConstants.statusWarning : ColorConstants.statusCritical;
+    final bool isOpen = coach.doorStatus.toLowerCase() == 'open';
 
     return InkWell(
       onTap: () {
@@ -22,102 +25,89 @@ class OdourCoachCard extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isBad ? const Color(0xFFFFF0F0) : ColorConstants.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-          border: Border.all(
-            color: isBad ? Colors.red.withOpacity(0.1) : ColorConstants.divider.withOpacity(0.5),
-          ),
+          color: ColorConstants.cardBackground,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          border: Border.all(color: statusColor.withOpacity(0.3), width: 1.5),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2)),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // 1 & 2: Hygiene Score & Status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Coach ${coach.coachNumber}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: ColorConstants.primary,
-                    ),
-                  ),
-                ),
-                _buildStatusBadge(coach.status),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              coach.toiletPosition,
-              style: GoogleFonts.poppins(
-                fontSize: 10,
-                color: ColorConstants.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const Expanded(child: SizedBox(height: 10)),
-            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Odour Level',
-                  style: GoogleFonts.poppins(
-                    fontSize: 9,
-                    color: ColorConstants.textTertiary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        coach.toiletPosition,
+                        style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: ColorConstants.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text('${score.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: statusColor)),
+                          const SizedBox(width: 4),
+                          Text(status, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor)),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      '${coach.reading}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isBad ? Colors.red : ColorConstants.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'ppm',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        color: ColorConstants.textSecondary,
-                      ),
-                    ),
-                  ],
+                if (coach.hasAlert)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(color: ColorConstants.statusCritical, shape: BoxShape.circle),
+                    child: const Icon(Icons.priority_high, color: Colors.white, size: 12),
+                  )
+              ],
+            ),
+            const Spacer(),
+            // 3: Door Status & Last Activity
+            Row(
+              children: [
+                Icon(isOpen ? Icons.door_front_door : Icons.door_front_door_outlined, size: 14, color: isOpen ? ColorConstants.statusWarning : ColorConstants.iconGrey),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Door ${coach.doorStatus}',
+                    style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w500, color: ColorConstants.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
+            const SizedBox(height: 2),
+            Text(
+              'Last: ${isOpen ? coach.lastOpenedTime : coach.lastClosedTime}',
+              style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textTertiary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            // 4: Current Odour Reading (VOC)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: ColorConstants.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(4)),
+              child: Text(
+                'VOC: ${coach.voc.toStringAsFixed(0)} ppb',
+                style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: ColorConstants.primary),
+              ),
+            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(String status) {
-    final bool isActive = status.toLowerCase() == 'active';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: (isActive ? Colors.green : Colors.grey).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: GoogleFonts.poppins(
-          fontSize: 8,
-          fontWeight: FontWeight.bold,
-          color: isActive ? Colors.green : Colors.grey,
         ),
       ),
     );

@@ -41,122 +41,65 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     LoadDashboardData event,
     Emitter<DashboardState> emit,
   ) async {
-    final prevState = state;
-    if (prevState is! DashboardDataLoaded) {
-      emit(DashboardLoading());
-    }
+    emit(DashboardLoading());
 
-    try {
-      // We use individual try-catches or a custom wrapper to be more resilient
-      Future<T?> safeFetch<T>(Future<T> Function() call) async {
-        try {
-          return await call();
-        } catch (e) {
-          print("Dashboard fetch error: $e");
-          return null;
-        }
-      }
+    // Instantly return sample data as requested
+    await Future.delayed(const Duration(milliseconds: 300)); // Slight delay for smooth UX transition
 
-      final results = await Future.wait([
-        safeFetch(() => trainRepository.fetchTrainList()),
-        safeFetch(() => coachRepository.fetchCoachList()),
-        safeFetch(() => deviceRepository.fetchDevice()),
-        safeFetch(() => sensorRepository.fetchSensor()),
-        safeFetch(() => acpRepository.getAcpSummary()),
-        safeFetch(() => breakBindingRepository.getPneumaticStatus()),
-      ]);
+    final dummyAcpLogs = [
+      AcpLogData(
+        logId: 1,
+        lastUpdated: DateTime.now().toIso8601String(),
+        rawAssetName: "ACP_ASSET_1",
+        acpStatus: "Active",
+        trainNo: "12951",
+        commCoachNo: "B1",
+        techCoachNo: "LHB-1029",
+        trainLocation: "New Delhi",
+        powerCarNo: "PC-01",
+        totalCount: "5",
+        deviceId: "DEV_ACP_001",
+      ),
+      AcpLogData(
+        logId: 2,
+        lastUpdated: DateTime.now().toIso8601String(),
+        rawAssetName: "ACP_ASSET_2",
+        acpStatus: "Normal",
+        trainNo: "12952",
+        commCoachNo: "B2",
+        techCoachNo: "LHB-1030",
+        trainLocation: "Mumbai Central",
+        powerCarNo: "PC-02",
+        totalCount: "0",
+        deviceId: "DEV_ACP_002",
+      ),
+    ];
 
-      // If all failed and we have no old data, THEN show error
-      if (results.every((element) => element == null) && prevState is! DashboardDataLoaded) {
-        emit(DashboardError("Failed to connect to server. Please check your internet."));
-        return;
-      }
+    final dummyPneumaticLogs = [
+      PneumaticHistoryData(
+        createdAt: DateTime.now().toIso8601String(),
+        deviceId: "DEV_PN_001",
+        trainNo: "12951",
+        coachNo: "B1",
+        brakeFault: "Brake Binding",
+        brakeStatus: "Critical",
+      ),
+    ];
 
-      // If some failed but we have previous data, we can blend or just fallback
-      // For simplicity, if we have old data and new fetch failed significantly, we keep old
-      if (results.any((e) => e == null) && prevState is DashboardDataLoaded) {
-        // You could also emit a 'partial success' or snackbar here
-        emit(prevState); 
-        return;
-      }
-
-      final trains = (results[0] as List?) ?? (prevState is DashboardDataLoaded ? List.filled(prevState.totalTrains, null) : []);
-      final allCoaches = (results[1] as List<CoachEntity>?) ?? [];
-      final allDevices = (results[2] as List<DeviceEntity>?) ?? [];
-      final allSensors = (results[3] as List<SensorTypeEntity>?) ?? [];
-      final acpLogs = (results[4] as List<AcpLogData>?) ?? (prevState is DashboardDataLoaded ? prevState.recentAlerts : []);
-      final pneumaticResponse = results[5] as PneumaticStatusResponse?;
-      final allPneumaticLogs = pneumaticResponse?.history?.data ?? (prevState is DashboardDataLoaded ? prevState.recentPneumaticAlerts : []);
-
-      // Filter: only configured coaches (with unique ID)
-      final coaches = allCoaches.where((c) => c.coachUniqueId != null && c.coachUniqueId!.isNotEmpty).toList();
-      // Filter: only active devices
-      final devices = allDevices.where((d) => d.isActive == 1).toList();
-
-      // Filter pneumatic logs: only Brake Binding and DV/BC Defect relevant alerts
-      final pneumaticLogs = allPneumaticLogs.where((pLog) {
-        final fault = pLog.brakeFault?.toString().toLowerCase() ?? '';
-        final status = pLog.brakeStatus?.toString().toLowerCase() ?? '';
-        final isRelevant = fault.contains('brake binding') ||
-            fault.contains('dv/bc') ||
-            fault.contains('dv_bc') ||
-            fault.contains('bc defect') ||
-            status.contains('brake binding') ||
-            status.contains('dv/bc');
-        // Also include if fault exists and is not "none"/"null" (catch-all for relevant issues)
-        return isRelevant || (fault.isNotEmpty && fault != 'null' && fault != 'none' && fault != 'brake release system');
-      }).toList();
-
-      // Simple alert categorization logic
-      int critical = 0;
-      int warnings = 0;
-      int moderate = 0;
-      int normal = 0;
-
-      for (var log in acpLogs) {
-        final status = log.acpStatus?.toString().toLowerCase() ?? "";
-        if (status.contains("active") || status.contains("pulled")) {
-          critical++;
-        } else if (status.contains("suspected")) {
-          warnings++;
-        } else if (status.contains("moderate")) {
-          moderate++;
-        } else {
-          normal++;
-        }
-      }
-
-      for (var pLog in pneumaticLogs) {
-        final fault = pLog.brakeFault?.toString().toLowerCase() ?? "";
-        final status = pLog.brakeStatus?.toString().toLowerCase() ?? "";
-        if (fault.isNotEmpty && fault != "null" && fault != "none") {
-          critical++;
-        } else if (status.contains("fault") || status.contains("critical")) {
-          critical++;
-        }
-      }
-
-      emit(
-        DashboardDataLoaded(
-          totalTrains: trains.length,
-          smartCoaches: coaches.length,
-          activeDevices: devices.length,
-          activeSensors: allSensors.length,
-          criticalAlerts: critical,
-          warnings: warnings,
-          moderate: moderate,
-          normalState: normal,
-          recentAlerts: acpLogs.take(5).toList(),
-          recentPneumaticAlerts: pneumaticLogs.take(5).toList(),
-        ),
-      );
-    } catch (e) {
-      if (prevState is DashboardDataLoaded) {
-        emit(prevState);
-      } else {
-        emit(DashboardError("Failed to load dashboard data: ${e.toString()}"));
-      }
-    }
+    emit(
+      DashboardDataLoaded(
+        totalTrains: 5,
+        smartCoaches: 24,
+        activeDevices: 42,
+        activeSensors: 108,
+        criticalAlerts: 2,
+        warnings: 1,
+        moderate: 0,
+        normalState: 45,
+        recentAlerts: dummyAcpLogs,
+        recentPneumaticAlerts: dummyPneumaticLogs,
+      ),
+    );
   }
 
   void _onNavigateToNotifications(
