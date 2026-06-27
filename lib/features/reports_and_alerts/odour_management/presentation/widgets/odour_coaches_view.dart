@@ -32,10 +32,20 @@ class OdourCoachesView extends StatelessWidget {
       children: [
         Text('${grouped.length} Coaches', style: AppTextStyles.header3),
         const SizedBox(height: 16),
-        ...grouped.map((group) => Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: _CoachGroupCard(group: group),
-        )),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.95,
+          ),
+          itemCount: grouped.length,
+          itemBuilder: (context, index) {
+            return _CoachGroupCard(group: grouped[index]);
+          },
+        ),
       ],
     );
   }
@@ -68,55 +78,105 @@ class _CoachGroupCard extends StatelessWidget {
         );
       },
       child: Container(
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: group.alertToilets > 0 ? const Color(0xFFFFF0F0) : ColorConstants.cardBackground,
           borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
           border: Border.all(
-            color: group.alertToilets > 0 ? Colors.red.withOpacity(0.15) : ColorConstants.divider,
+            color: group.alertToilets > 0 ? Colors.red.withValues(alpha: 0.15) : ColorConstants.divider,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: wc.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Coach ${group.coachNumber}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: ColorConstants.primary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                child: Icon(Icons.air, color: wc, size: 24),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: wc.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.air, color: wc, size: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Train: ${group.trainNumber}',
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                color: ColorConstants.textSecondary,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${group.trainName}',
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                color: ColorConstants.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Coach ${group.coachNumber}',
-                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: ColorConstants.textPrimary)),
-                    Text('${group.trainNumber} - ${group.trainName}',
-                      style: GoogleFonts.poppins(fontSize: 12, color: ColorConstants.textSecondary)),
+                    Text('Washrooms', style: GoogleFonts.poppins(fontSize: 8, color: ColorConstants.textTertiary)),
+                    Text(
+                      '${group.totalToilets}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: ColorConstants.textPrimary,
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('${group.totalToilets} Washrooms',
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: ColorConstants.textSecondary)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text('Peak: ${displayReading.toStringAsFixed(0)} ppm',
-                        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: wc)),
-                      const SizedBox(width: 4),
-                      Icon(Icons.chevron_right, color: ColorConstants.textSecondary, size: 18),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('Peak', style: GoogleFonts.poppins(fontSize: 8, color: ColorConstants.textTertiary)),
+                    Text(
+                      '${displayReading.toStringAsFixed(0)} ppm',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: wc,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

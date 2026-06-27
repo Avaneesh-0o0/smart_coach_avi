@@ -6,17 +6,15 @@ import 'package:smart_coach_new/core/utils/prefs.dart';
 import 'package:smart_coach_new/features/auth/login/domain/usecases/login_usecase.dart';
 import 'package:smart_coach_new/features/auth/login/presentation/bloc/login_event.dart';
 import 'package:smart_coach_new/features/auth/login/presentation/bloc/login_state.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'package:smart_coach_new/features/auth/login/data/models/user_model.dart';
-
 import '../../../../../core/network/api_constants.dart';
 
 @injectable
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final Prefs prefs;
   final PermissionBloc permissionBloc;
   bool isLoginWithEmail = true;
@@ -74,29 +72,29 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         return; // Exit early, skipping Firebase Auth entirely
       }
 
-      // For any other email, sign in using Firebase Auth
-      final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+      // For any other email, sign in using Supabase Auth
+      final response = await Supabase.instance.client.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
-      if (userCredential.user == null) {
-        throw Exception('Firebase authentication failed. User is null.');
+      if (response.user == null) {
+        throw Exception('Supabase authentication failed. User is null.');
       }
 
-      final fbUser = userCredential.user!;
+      final sbUser = response.user!;
       
-      // Get the firebase token
-      final String idToken = await fbUser.getIdToken() ?? '';
+      // Get the session token
+      final String idToken = response.session?.accessToken ?? '';
       await prefs.saveToken(idToken);
 
       // Create a mock UserModel for the app's internal logic
       final userModel = UserModel(
-        userId: 1, // Firebase uid is string, but model expects int
-        firstName: fbUser.displayName?.split(' ').first ?? 'Tester',
-        lastName: fbUser.displayName?.split(' ').last ?? 'Account',
-        email: fbUser.email ?? email,
-        mobileNumber: fbUser.phoneNumber ?? '0000000000',
+        userId: 1, // Supabase uid is string, but model expects int
+        firstName: sbUser.userMetadata?['first_name'] ?? 'Tester',
+        lastName: sbUser.userMetadata?['last_name'] ?? 'Account',
+        email: sbUser.email ?? email,
+        mobileNumber: sbUser.phone ?? '0000000000',
         organisationType: 'Testing',
         organisationName: 'Smart Coach',
         zoneId: 1,
@@ -123,25 +121,22 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       try {
         final fcmToken = await _messaging.getToken();
         if (fcmToken != null) {
-          // You can also write this to Firebase Realtime Database:
-          // FirebaseDatabase.instance.ref().child('users/${fbUser.uid}/fcmToken').set(fcmToken);
-          
           await http.post(
             Uri.parse("${ApiConstants.devUrl}/fcm/fcm-token"),
             body: {
-              'user_id': fbUser.uid,
+              'user_id': sbUser.id,
               'fcm_token': fcmToken,
             },
           );
         }
       } catch (_) {
-        print('FCM Token sync failed, ignoring for Firebase migration.');
+        print('FCM Token sync failed, ignoring for database migration.');
       }
 
-      emit(LoginSuccess('Successfully logged in via Firebase!'));
-    } on FirebaseAuthException catch (e) {
-      print('❌ FIREBASE LOGIN ERROR: ${e.message}');
-      emit(LoginFailure(message: e.message ?? 'Authentication failed'));
+      emit(LoginSuccess('Successfully logged in via Supabase!'));
+    } on AuthException catch (e) {
+      print('❌ SUPABASE LOGIN ERROR: ${e.message}');
+      emit(LoginFailure(message: e.message));
     } catch (e, stackTrace) {
       print('❌ LOGIN ERROR: $e');
       print('❌ STACK TRACE: $stackTrace');

@@ -1,114 +1,64 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/odour_model.dart';
 
 class OdourRepository {
-  // Path matches what ESP32 writes to:
-  // /modules/odour_management/coaches/{coachId}/washrooms/{toiletId}
-  static const String _basePath = 'modules/odour_management/coaches';
-
-  final DatabaseReference _dbRef =
-      FirebaseDatabase.instance.ref().child(_basePath);
-
-  /// Tries Firebase first. If the database is empty or unreachable,
+  /// Tries Supabase first. If the database is empty, times out, or unreachable,
   /// silently falls back to built-in sample data.
   Future<List<OdourCoachModel>> getOdourData() async {
     try {
-      final snapshot = await _dbRef
-          .get()
+      final response = await Supabase.instance.client
+          .from('odour_management_live')
+          .select()
           .timeout(const Duration(seconds: 6));
 
-      if (snapshot.exists && snapshot.value != null) {
-        final parsed = _parseFirebaseSnapshot(snapshot);
+      if (response.isNotEmpty) {
+        final parsed = response.map((map) => _buildModelFromSupabase(map)).toList();
         if (parsed.isNotEmpty) {
           return parsed;
         }
       }
     } catch (e) {
-      // Firebase unreachable / timed out → fall through to mock
-      print('[OdourRepository] Firebase unavailable ($e), using sample data.');
+      // Supabase unreachable / timed out / empty → fall through to mock
+      print('[OdourRepository] Supabase unavailable ($e), using sample data.');
     }
 
     return getSampleData();
   }
 
-  Stream<List<OdourCoachModel>> watchOdourData() {
-    return _dbRef.onValue.map((event) {
-      if (event.snapshot.exists && event.snapshot.value != null) {
-        final parsed = _parseFirebaseSnapshot(event.snapshot);
-        if (parsed.isNotEmpty) return parsed;
-      }
-      return getSampleData();
-    });
-  }
+  /// Streams live odour data. It yields local sample data first,
+  /// then subscribes to the Supabase table `odour_management_live` for real-time updates.
+  /// If the database is empty or an error occurs, it continues yielding sample data.
+  Stream<List<OdourCoachModel>> watchOdourData() async* {
+    // 1. Instantly yield sample data first so that it is shown by default
+    yield getSampleData();
 
-  // ---------------------------------------------------------------------------
-  // Firebase parser
-  // ---------------------------------------------------------------------------
-
-  List<OdourCoachModel> _parseFirebaseSnapshot(DataSnapshot snapshot) {
-    final result = <OdourCoachModel>[];
+    // 2. Stream from Supabase database
     try {
-      final coachesMap = snapshot.value as Map<dynamic, dynamic>;
+      final stream = Supabase.instance.client
+          .from('odour_management_live')
+          .stream(primaryKey: ['id'])
+          .map((maps) {
+            if (maps.isEmpty) {
+              return getSampleData();
+            }
+            return maps.map((map) => _buildModelFromSupabase(map)).toList();
+          })
+          .handleError((error) {
+            print('[OdourRepository] Supabase stream error: $error');
+            return getSampleData();
+          });
 
-      for (final coachEntry in coachesMap.entries) {
-        final coachId = coachEntry.key.toString();
-        final coachData = coachEntry.value;
-        if (coachData == null) continue;
-
-        final coachMap = Map<String, dynamic>.from(coachData as Map);
-
-        // Support both structured (with coach_info + washrooms) and flat nodes
-        final hasWashrooms =
-            coachMap.containsKey('washrooms') && coachMap['washrooms'] != null;
-
-        if (hasWashrooms) {
-          final coachInfo =
-              coachMap['coach_info'] as Map<dynamic, dynamic>? ?? {};
-          final washroomsMap =
-              coachMap['washrooms'] as Map<dynamic, dynamic>;
-
-          for (final wEntry in washroomsMap.entries) {
-            final toiletId = wEntry.key.toString();
-            final toilet = wEntry.value;
-            if (toilet == null) continue;
-
-            final t = Map<String, dynamic>.from(toilet as Map);
-            result.add(_buildModel(
-              coachId: coachId,
-              toiletId: toiletId,
-              toiletData: t,
-              coachInfo: Map<String, dynamic>.from(coachInfo),
-            ));
-          }
-        } else {
-          // Flat node (e.g. from ESP32 writing directly without washrooms key)
-          result.add(_buildModel(
-            coachId: coachId,
-            toiletId: 'Toilet-1',
-            toiletData: coachMap,
-            coachInfo: const {},
-          ));
-        }
-      }
+      yield* stream;
     } catch (e) {
-      print('[OdourRepository] Parse error: $e');
+      print('[OdourRepository] Supabase stream subscription failed: $e. Falling back to sample data.');
     }
-    return result;
   }
 
-  OdourCoachModel _buildModel({
-    required String coachId,
-    required String toiletId,
-    required Map<String, dynamic> toiletData,
-    required Map<String, dynamic> coachInfo,
-  }) {
-    final sensors =
-        toiletData['sensors'] as Map<dynamic, dynamic>? ?? {};
-    final door =
-        toiletData['door_activity'] as Map<dynamic, dynamic>? ?? {};
-    final gps =
-        toiletData['gps'] as Map<dynamic, dynamic>? ?? {};
+  // ---------------------------------------------------------------------------
+  // Supabase parser
+  // ---------------------------------------------------------------------------
 
+  OdourCoachModel _buildModelFromSupabase(Map<String, dynamic> data) {
     double _d(dynamic v, [double def = 0.0]) =>
         (v as num?)?.toDouble() ?? def;
     int _i(dynamic v, [int def = 0]) => (v as num?)?.toInt() ?? def;
@@ -116,38 +66,36 @@ class OdourRepository {
         v?.toString() ?? def;
 
     return OdourCoachModel(
-      coachNumber: coachId,
-      coachType: _s(coachInfo['coach_type'], 'Unknown'),
-      toiletPosition: toiletId,
-      status: _s(toiletData['status'], 'Active'),
-      reading: _d(sensors['voc']),
-      timestamp: _s(toiletData['timestamp'],
-          DateTime.now().toIso8601String()),
-      sensorId: _s(toiletData['sensor_id'], 'SENS-??'),
-      deviceId: _s(toiletData['device_id'], 'OMD-??'),
-      trainNumber: _s(coachInfo['train_number'], '--'),
-      trainName: _s(coachInfo['train_name'], '--'),
-      route: _s(coachInfo['route'], '--'),
+      coachNumber: _s(data['coach_number']),
+      coachType: _s(data['coach_type'], 'Unknown'),
+      toiletPosition: _s(data['toilet_position']),
+      status: _s(data['status'], 'Active'),
+      reading: _d(data['reading'] ?? data['voc']),
+      timestamp: _s(data['timestamp'], DateTime.now().toIso8601String()),
+      sensorId: _s(data['sensor_id'], 'SENS-??'),
+      deviceId: _s(data['device_id'], 'OMD-??'),
+      trainNumber: _s(data['train_number'], '--'),
+      trainName: _s(data['train_name'], '--'),
+      route: _s(data['route'], '--'),
       isRecent: true,
-      voc: _d(sensors['voc']),
-      h2s: _d(sensors['h2s']),
-      nh3: _d(sensors['nh3']),
-      smoke: _d(sensors['smoke']),
-      temperature: _d(sensors['temperature']),
-      humidity: _d(sensors['humidity']),
-      latitude: _d(gps['latitude']),
-      longitude: _d(gps['longitude']),
-      doorStatus: _s(door['status'] ?? toiletData['door_status'], 'Closed'),
-      doorOpenEventsToday:
-          _i(door['events_today'] ?? toiletData['door_events_today']),
-      lastOpenedTime: _s(door['last_opened'], 'N/A'),
-      lastClosedTime: _s(door['last_closed'], 'N/A'),
-      totalDoorCyclesToday:
-          _i(door['events_today'] ?? toiletData['door_events_today']),
-      averageOpenDuration: _s(door['avg_duration'], 'N/A'),
-      longestOpenDuration: _s(door['longest_duration'], 'N/A'),
+      voc: _d(data['voc']),
+      h2s: _d(data['h2s']),
+      nh3: _d(data['nh3']),
+      smoke: _d(data['smoke']),
+      temperature: _d(data['temperature']),
+      humidity: _d(data['humidity']),
+      latitude: _d(data['latitude']),
+      longitude: _d(data['longitude']),
+      doorStatus: _s(data['door_status'], 'Closed'),
+      doorOpenEventsToday: _i(data['door_open_events_today']),
+      lastOpenedTime: _s(data['last_opened_time'], 'N/A'),
+      lastClosedTime: _s(data['last_closed_time'], 'N/A'),
+      totalDoorCyclesToday: _i(data['total_door_cycles_today']),
+      averageOpenDuration: _s(data['average_open_duration'], 'N/A'),
+      longestOpenDuration: _s(data['longest_open_duration'], 'N/A'),
     );
   }
+
 
   // ---------------------------------------------------------------------------
   // Sample / Fallback data
@@ -309,42 +257,41 @@ class OdourRepository {
     ];
   }
 
-  /// Write data from hardware directly to Firebase (called by push endpoint).
+  /// Write data from hardware directly to Supabase (called by push endpoint).
   Future<void> sendOdourData(Map<String, dynamic> payload) async {
-    final coachNumber =
-        payload['coach_data']?['coach_number'] ?? 'T1';
-    final toiletPos =
-        payload['coach_data']?['toilet_position'] ??
-            'Toilet-1-Front-Left';
+    final coachNumber = payload['coach_data']?['coach_number'] ?? 'T1';
+    final toiletPos = payload['coach_data']?['toilet_position'] ?? 'Toilet-1-Front-Left';
 
     final dbPayload = {
+      "coach_number": coachNumber,
+      "toilet_position": toiletPos,
       "device_id": payload['source']?['deviceId'] ?? 'Unknown',
       "sensor_id": payload['source']?['SensorId'] ?? 'Unknown',
       "status": payload['coach_data']?['status'] ?? 'Active',
-      "timestamp": payload['coach_data']?['timestamp'] ??
-          DateTime.now().toIso8601String(),
-      "sensors": {
-        "voc": payload['coach_data']?['voc'] ?? 0,
-        "h2s": payload['coach_data']?['h2s'] ?? 0,
-        "nh3": payload['coach_data']?['nh3'] ?? 0,
-        "smoke": payload['coach_data']?['smoke'] ?? 0,
-        "temperature": payload['coach_data']?['temperature'] ?? 0,
-        "humidity": payload['coach_data']?['humidity'] ?? 0,
-      },
-      "gps": {
-        "latitude": payload['coach_data']?['latitude'] ?? 0,
-        "longitude": payload['coach_data']?['longitude'] ?? 0,
-      },
+      "timestamp": payload['coach_data']?['timestamp'] ?? DateTime.now().toIso8601String(),
+      "voc": payload['coach_data']?['voc'] ?? 0.0,
+      "nh3": payload['coach_data']?['nh3'] ?? 0.0,
+      "h2s": payload['coach_data']?['h2s'] ?? 0.0,
+      "smoke": payload['coach_data']?['smoke'] ?? 0.0,
+      "temperature": payload['coach_data']?['temperature'] ?? 0.0,
+      "humidity": payload['coach_data']?['humidity'] ?? 0.0,
+      "latitude": payload['coach_data']?['latitude'] ?? 0.0,
+      "longitude": payload['coach_data']?['longitude'] ?? 0.0,
+      "door_status": payload['coach_data']?['door_status'] ?? 'Closed',
+      "door_open_events_today": payload['coach_data']?['door_events_today'] ?? 0,
+      // Default info columns for the dashboard
+      "coach_type": payload['coach_data']?['coach_type'] ?? '3AC',
+      "train_number": payload['coach_data']?['train_number'] ?? '12952',
+      "train_name": payload['coach_data']?['train_name'] ?? 'Rajdhani Express',
+      "route": payload['coach_data']?['route'] ?? 'NDLS-BCT',
     };
 
     try {
-      await _dbRef
-          .child(coachNumber)
-          .child('washrooms')
-          .child(toiletPos)
-          .update(dbPayload);
+      await Supabase.instance.client
+          .from('odour_management_live')
+          .upsert(dbPayload);
     } catch (e) {
-      print('[OdourRepository] sendOdourData failed: $e');
+      print('[OdourRepository] Supabase sendOdourData failed: $e');
     }
   }
 }

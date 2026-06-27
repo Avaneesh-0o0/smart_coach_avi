@@ -2,8 +2,6 @@ import 'package:injectable/injectable.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/datasource/acp_remote_data_source.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_log_response.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/acp_screen/data/models/acp_filters_response.dart';
-import 'package:firebase_database/firebase_database.dart';
-
 abstract class AcpRepository {
   Future<List<AcpLogData>> getAcpLogs();
   Future<List<AcpLogData>> getAcpSummary();
@@ -22,7 +20,6 @@ abstract class AcpRepository {
 @Injectable(as: AcpRepository)
 class AcpRepositoryImpl implements AcpRepository {
   final AcpRemoteDataSource remoteDataSource; // Kept for DI compatibility
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('modules/acp/coaches');
 
   AcpRepositoryImpl(this.remoteDataSource);
 
@@ -67,39 +64,6 @@ class AcpRepositoryImpl implements AcpRepository {
       bool matchesCoach = techCoachNo == null || log.techCoachNo == techCoachNo;
       return matchesTrain && matchesCoach;
     }).toList();
-  }
-
-  Future<void> _seedFirebaseWithMockData() async {
-    final mockData = {
-      "S1": {
-        "coach_info": {
-          "coach_type": "SL",
-          "train_number": "12951",
-          "train_name": "Rajdhani Express",
-        },
-        "devices": {
-          "ACP-DEV-001": {
-            "device_id": "ACP-DEV-001",
-            "device_name": "ACP Handle 1",
-            "location": "Near Door A",
-            "acp_status": "Normal",
-            "timestamp": DateTime.now().toIso8601String(),
-          },
-          "ACP-DEV-002": {
-            "device_id": "ACP-DEV-002",
-            "device_name": "ACP Handle 2",
-            "location": "Near Door B",
-            "acp_status": "Pulled",
-            "timestamp": DateTime.now().toIso8601String(),
-          }
-        }
-      }
-    };
-    try {
-      await _dbRef.set(mockData);
-    } catch (e) {
-      print("Could not seed ACP Firebase data: $e");
-    }
   }
 
   List<AcpLogData> _getMockData() {

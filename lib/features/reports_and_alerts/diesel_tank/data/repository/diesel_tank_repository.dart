@@ -1,41 +1,8 @@
 import 'package:smart_coach_new/features/reports_and_alerts/diesel_tank/data/models/diesel_tank_model.dart';
-import 'package:firebase_database/firebase_database.dart';
-
 class DieselTankRepository {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('modules/diesel_tank/coaches');
-
   Future<List<DieselTankModel>> getDieselTanks() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return _getMockData();
-  }
-
-  Future<void> _seedFirebaseWithMockData() async {
-    final mockData = {
-      "WDP4D #40345": {
-        "train_name": "12615/6 Grand Trunk Express",
-        "devices": {
-          "WLI 125678": {
-            "engine_id": "WDP4D #40345",
-            "percentage": 75,
-            "status": "Good",
-            "height": 180.0,
-            "width": 120.0,
-            "length": 220.0,
-            "capacity": 5000,
-            "consumption_rate": 400,
-            "estimated_run_time": 8.5,
-            "range_left": 950,
-            "refilled_by": "Ramesh Kumar",
-            "timestamp": DateTime.now().toIso8601String(),
-          }
-        }
-      }
-    };
-    try {
-      await _dbRef.set(mockData);
-    } catch (e) {
-      print("Could not seed Diesel Tank Firebase data: $e");
-    }
   }
 
   List<DieselTankModel> _getMockData() {

@@ -1,59 +1,8 @@
 import 'package:smart_coach_new/features/reports_and_alerts/bc_pressure/data/models/bc_pressure_model.dart';
-import 'package:firebase_database/firebase_database.dart';
-
 class BcPressureRepository {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('modules/bc_pressure/coaches');
-
   Future<List<BCPressureModel>> getBcPressureData() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return _getMockData();
-  }
-
-  Future<void> _seedFirebaseWithMockData() async {
-    final mockData = {
-      "C1": {
-        "coach_info": {
-          "coach_type": "LHB",
-          "train_number": "12615",
-          "train_name": "Grand Trunk Exp",
-        },
-        "devices": {
-          "BC-DEV-001": {
-            "device_id": "BC-DEV-001",
-            "sensor_id": "SENS-B01",
-            "pressure": 3.8,
-            "status": "Good",
-            "brake_applied": "Yes",
-            "brake_released": "No",
-            "timestamp": DateTime.now().toIso8601String(),
-          }
-        }
-      },
-      "C2": {
-        "coach_info": {
-          "coach_type": "LHB",
-          "train_number": "12615",
-          "train_name": "Grand Trunk Exp",
-        },
-        "devices": {
-          "BC-DEV-002": {
-            "device_id": "BC-DEV-002",
-            "sensor_id": "SENS-B02",
-            "pressure": 1.2,
-            "status": "Critical",
-            "brake_applied": "Yes",
-            "brake_released": "Yes",
-            "warningMessage": "Pressure drop detected",
-            "timestamp": DateTime.now().toIso8601String(),
-          }
-        }
-      }
-    };
-    try {
-      await _dbRef.set(mockData);
-    } catch (e) {
-      print("Could not seed BC Pressure Firebase data: $e");
-    }
   }
 
   List<BCPressureModel> _getMockData() {

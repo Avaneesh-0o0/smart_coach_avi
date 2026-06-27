@@ -2,12 +2,9 @@ import 'package:injectable/injectable.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/break_binding/data/datasources/break_binding_remote_data_source.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/break_binding/data/models/pneumatic_status_model.dart';
 import 'package:smart_coach_new/features/reports_and_alerts/break_binding/domain/repositories/break_bindinng_repository.dart';
-import 'package:firebase_database/firebase_database.dart';
-
 @Injectable(as: BreakBindinngRepository)
 class BreakBindinngRepositoryImpl implements BreakBindinngRepository {
   final BreakBindingRemoteDataSourceImpl remoteDataSource; // Kept for DI compatibility
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('modules/break_binding/coaches');
 
   BreakBindinngRepositoryImpl({required this.remoteDataSource});
 
@@ -15,46 +12,6 @@ class BreakBindinngRepositoryImpl implements BreakBindinngRepository {
   Future<PneumaticStatusResponse> getPneumaticStatus() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return _getMockData();
-  }
-
-  Future<void> _seedFirebaseWithMockData() async {
-    final mockData = {
-      "B1": {
-        "coach_info": {
-          "coach_type": "SL",
-          "train_number": "12951",
-          "train_name": "Rajdhani Express",
-        },
-        "devices": {
-          "BB-DEV-001": {
-            "device_id": "BB-DEV-001",
-            "brake_fault": "None",
-            "brake_status": "Normal",
-            "timestamp": DateTime.now().toIso8601String(),
-          }
-        }
-      },
-      "B2": {
-        "coach_info": {
-          "coach_type": "SL",
-          "train_number": "12951",
-          "train_name": "Rajdhani Express",
-        },
-        "devices": {
-          "BB-DEV-002": {
-            "device_id": "BB-DEV-002",
-            "brake_fault": "Air Leak",
-            "brake_status": "Binding",
-            "timestamp": DateTime.now().toIso8601String(),
-          }
-        }
-      }
-    };
-    try {
-      await _dbRef.set(mockData);
-    } catch (e) {
-      print("Could not seed Break Binding Firebase data: $e");
-    }
   }
 
   PneumaticStatusResponse _getMockData() {

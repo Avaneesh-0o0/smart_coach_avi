@@ -35,7 +35,7 @@ class _OdourDashboardState extends State<OdourDashboard> {
   String selectedViewType = 'Monitoring';
   String lastUpdated = 'Never';
   bool isRefreshing = false;
-  Timer? _refreshTimer;
+  StreamSubscription<List<OdourCoachModel>>? _odourSubscription;
 
   List<String> trainNumbers = ['All Trains'];
   List<String> coachTypes = ['All Types'];
@@ -49,8 +49,26 @@ class _OdourDashboardState extends State<OdourDashboard> {
   void initState() {
     super.initState();
     _loadSampleDataInstantly();
-    _refreshData();
-    _startAutoRefresh();
+    _subscribeToOdourData();
+  }
+
+  void _subscribeToOdourData() {
+    _odourSubscription?.cancel();
+    final repository = OdourRepository();
+    _odourSubscription = repository.watchOdourData().listen((records) {
+      if (mounted) {
+        setState(() {
+          _allRecords = records;
+          trainNumbers = ['All Trains', ...records.map((e) => e.trainNumber).toSet()];
+          coachTypes = ['All Types', ...records.map((e) => e.coachType).toSet()];
+          coachNumbers = ['All Unique IDs', ...records.map((e) => e.coachNumber).toSet()];
+          _applyFilters();
+          lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
+        });
+      }
+    }, onError: (error) {
+      log('Error streaming odour data: $error');
+    });
   }
 
   void _loadSampleDataInstantly() {
@@ -67,14 +85,8 @@ class _OdourDashboardState extends State<OdourDashboard> {
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
+    _odourSubscription?.cancel();
     super.dispose();
-  }
-
-  void _startAutoRefresh() {
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (mounted) _refreshData(isBackgroundRefresh: true);
-    });
   }
 
   void _clearFilters() {
@@ -151,29 +163,11 @@ class _OdourDashboardState extends State<OdourDashboard> {
     return data;
   }
 
-  Future<void> _refreshData({bool isBackgroundRefresh = false}) async {
-    if (!isBackgroundRefresh) {
-      if (mounted) setState(() => isRefreshing = true);
-    }
-    try {
-      final repository = OdourRepository();
-      final records = await repository.getOdourData();
-
-      if (mounted) {
-        setState(() {
-          _allRecords = records;
-          trainNumbers = ['All Trains', ...records.map((e) => e.trainNumber).toSet()];
-          coachTypes = ['All Types', ...records.map((e) => e.coachType).toSet()];
-          coachNumbers = ['All Unique IDs', ...records.map((e) => e.coachNumber).toSet()];
-          _applyFilters();
-          lastUpdated = DateFormat('HH:mm:ss').format(DateTime.now());
-          if (!isBackgroundRefresh) isRefreshing = false;
-        });
-      }
-    } catch (e) {
-      log('Error refreshing odour data: $e');
-      if (mounted && !isBackgroundRefresh) setState(() => isRefreshing = false);
-    }
+  Future<void> _refreshData() async {
+    if (mounted) setState(() => isRefreshing = true);
+    _subscribeToOdourData();
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) setState(() => isRefreshing = false);
   }
 
   @override

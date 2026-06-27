@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:smart_coach_new/core/utils/app_dimensions.dart';
 import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/odour_model.dart';
 
 class OdourAlertItem {
@@ -134,11 +135,26 @@ class _OdourAlertsViewState extends State<OdourAlertsView> {
                   child: Text('Acknowledge', style: GoogleFonts.poppins(color: Colors.blue, fontWeight: FontWeight.w600)),
                 ),
               const SizedBox(width: 8),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, elevation: 0),
-                onPressed: () => setState(() => _resolvedIds.add(alert.id)),
-                child: Text('Resolve', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-              ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, elevation: 0),
+                  onPressed: () async {
+                    setState(() => _resolvedIds.add(alert.id));
+                    try {
+                      await Supabase.instance.client
+                          .from('odour_management_live')
+                          .update({'pending_action': 'RESOLVE'})
+                          .eq('sensor_id', alert.record.sensorId);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Resolve command sent to hardware!')),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint('Error sending resolve command: $e');
+                    }
+                  },
+                  child: Text('Resolve', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                ),
             ],
           )
         ],

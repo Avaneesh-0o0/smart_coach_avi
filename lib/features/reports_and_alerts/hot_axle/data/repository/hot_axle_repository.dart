@@ -1,71 +1,9 @@
 import 'package:smart_coach_new/features/reports_and_alerts/hot_axle/data/models/hot_axle_model.dart';
-import 'package:firebase_database/firebase_database.dart';
-
 class HotAxleRepository {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('modules/hot_axle/coaches');
-
   Future<List<HotAxleCoachModel>> getHotAxleData() async {
     // Instantly return sample data to prevent loading hangups on demo
     await Future.delayed(const Duration(milliseconds: 300));
     return _getMockData();
-  }
-
-  Future<void> _seedFirebaseWithMockData() async {
-    final mockData = {
-      "HA1": {
-        "coach_info": {
-          "coach_type": "1AC",
-          "owning_rly": "NR",
-          "train_number": "12951",
-          "train_name": "Rajdhani Express",
-        },
-        "devices": {
-          "HA-DEV-001": {
-            "device_id": "HA-DEV-001",
-            "a11_temp": 42.5,
-            "a12_temp": 41.2,
-            "a21_temp": 43.1,
-            "a22_temp": 44.0,
-            "a31_temp": 45.5,
-            "a32_temp": 42.8,
-            "a41_temp": 43.9,
-            "a42_temp": 44.1,
-            "battery_percentage": 90,
-            "signal_strength": 3,
-            "timestamp": DateTime.now().toIso8601String(),
-          }
-        }
-      },
-      "HA2": {
-        "coach_info": {
-          "coach_type": "2AC",
-          "owning_rly": "NR",
-          "train_number": "12951",
-          "train_name": "Rajdhani Express",
-        },
-        "devices": {
-          "HA-DEV-002": {
-            "device_id": "HA-DEV-002",
-            "a11_temp": 95.0,
-            "a12_temp": 40.2,
-            "a21_temp": 41.1,
-            "a22_temp": 42.0,
-            "a31_temp": 43.5,
-            "a32_temp": 44.8,
-            "a41_temp": 45.9,
-            "a42_temp": 46.1,
-            "battery_percentage": 15,
-            "signal_strength": 1,
-            "timestamp": DateTime.now().toIso8601String(),
-          }
-        }
-      }
-    };
-    try {
-      await _dbRef.set(mockData);
-    } catch (e) {
-      print("Could not seed Hot Axle Firebase data: $e");
-    }
   }
 
   List<HotAxleCoachModel> _getMockData() {

@@ -1,58 +1,8 @@
 import 'package:smart_coach_new/features/reports_and_alerts/water_lvl_indicator/data/models/water_tank_model.dart';
-import 'package:firebase_database/firebase_database.dart';
-
 class WaterLvlRepository {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref().child('modules/water_lvl/coaches');
-
   Future<List<WaterTankModel>> getWaterTankData() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return _getMockData();
-  }
-
-  Future<void> _seedFirebaseWithMockData() async {
-    final mockData = {
-      "WLI-001": {
-        "source": {
-          "companyName": "TechCorp",
-          "systemType": "WLI",
-          "deviceId": "DEV-1001"
-        },
-        "location": {
-          "coachId": "C1",
-          "coachName": "C1"
-        },
-        "messageType": "periodic",
-        "timestamp": DateTime.now().toIso8601String(),
-        "placement": {
-          "type": "Roof",
-          "sensorCount": 4,
-          "position": ["LH1", "RH1", "LH2", "RH2"]
-        },
-        "assets": [
-          {
-            "assetId": "SENS-1",
-            "assetName": "Tank 1",
-            "rawValue": 500,
-            "levelCm": 45.0,
-            "volumeLiters": 250.0,
-            "percentFull": 55.0
-          },
-          {
-            "assetId": "SENS-2",
-            "assetName": "Tank 2",
-            "rawValue": 200,
-            "levelCm": 15.0,
-            "volumeLiters": 80.0,
-            "percentFull": 15.0
-          }
-        ]
-      }
-    };
-    try {
-      await _dbRef.set(mockData);
-    } catch (e) {
-      print("Could not seed Water Level Firebase data: $e");
-    }
   }
 
   List<WaterTankModel> _getMockData() {
