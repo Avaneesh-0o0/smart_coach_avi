@@ -120,8 +120,8 @@ float convertToPPM(float Rs_R0_ratio, float a, float b, float clean_ppm) {
 // --- Status Classifications ---
 // =====================================================
 const char* getStatusMQ2(float ppm) {
-  if (ppm < 5.0)   return "Good";
-  if (ppm <= 10.0) return "Moderate";
+  if (ppm <= 30.0) return "Good";
+  if (ppm <= 40.0) return "Moderate";
   return "Bad";
 }
 const char* getStatusMQ135(float ppm) {
@@ -166,8 +166,8 @@ float calculateHygieneScore(float p2, float p135, float p136, float p137) {
   else if (p135 <= 1000.0) scoreMQ135 = W_MQ135 * 0.5;
   else                     scoreMQ135 = W_MQ135 * 0.0;
 
-  if (p2 < 5.0)        scoreMQ2 = W_MQ2 * 1.0;
-  else if (p2 <= 10.0) scoreMQ2 = W_MQ2 * 0.5;
+  if (p2 <= 30.0)      scoreMQ2 = W_MQ2 * 1.0;
+  else if (p2 <= 40.0) scoreMQ2 = W_MQ2 * 0.5;
   else                 scoreMQ2 = W_MQ2 * 0.0;
 
   float currentHygieneScore = (scoreMQ137 + scoreMQ136 + scoreMQ135 + scoreMQ2) * 100.0;

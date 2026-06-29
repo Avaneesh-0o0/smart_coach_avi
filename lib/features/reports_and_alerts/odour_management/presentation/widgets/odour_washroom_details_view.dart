@@ -159,7 +159,7 @@ class OdourWashroomDetailsView extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${score.toStringAsFixed(2)}%', style: GoogleFonts.poppins(fontSize: 40, fontWeight: FontWeight.w800, color: color)),
+                Text('${score.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.w800, color: color)),
                 Text(status, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: color)),
               ],
             ),

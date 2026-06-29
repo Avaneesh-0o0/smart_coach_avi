@@ -58,7 +58,7 @@ class OdourCoachCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
-                          Text('${score.toStringAsFixed(2)}%', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: statusColor)),
+                          Text('${score.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: statusColor)),
                           const SizedBox(width: 4),
                           Text(status, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor)),
                         ],

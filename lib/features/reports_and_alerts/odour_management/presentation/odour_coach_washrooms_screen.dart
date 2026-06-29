@@ -147,7 +147,7 @@ class _WashroomCardState extends State<_WashroomCard> {
               ),
               const Spacer(),
               Text('Hygiene Score', style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary)),
-              Text('${widget.toilet.hygieneScore.toStringAsFixed(2)}%', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: wc)),
+              Text('${widget.toilet.hygieneScore.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: wc)),
               const SizedBox(height: 4),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
