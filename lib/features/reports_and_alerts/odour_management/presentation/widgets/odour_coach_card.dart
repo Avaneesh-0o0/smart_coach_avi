@@ -58,7 +58,7 @@ class OdourCoachCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
-                          Text('${score.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: statusColor)),
+                          Text('${score.toStringAsFixed(2)}%', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: statusColor)),
                           const SizedBox(width: 4),
                           Text(status, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: statusColor)),
                         ],
@@ -103,7 +103,7 @@ class OdourCoachCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(color: ColorConstants.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(4)),
               child: Text(
-                'VOC: ${coach.voc.toStringAsFixed(0)} ppb',
+                'VOC: ${coach.voc.toStringAsFixed(2)} ppb',
                 style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: ColorConstants.primary),
               ),
             ),

@@ -129,7 +129,7 @@ class OdourSensorModal extends StatelessWidget {
                         _buildDetailRow('Coach Type', coach.coachType),
                         _buildDetailRow('Train Number', coach.trainNumber),
                         _buildDetailRow('Train Route', coach.route),
-                        _buildDetailRow('GPS Coordinates', coach.gpsCoordinates),
+                        _buildDetailRow('Location', coach.locationAddress),
                         _buildDetailRow('Communication Status', coach.communicationStatus),
                         _buildDetailRow('Last Updated', _formatTimestamp(coach.timestamp)),
                       ]),

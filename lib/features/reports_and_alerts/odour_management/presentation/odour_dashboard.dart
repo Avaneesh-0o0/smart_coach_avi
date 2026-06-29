@@ -290,15 +290,9 @@ class _OdourDashboardState extends State<OdourDashboard> {
             const SizedBox(width: 8),
             Expanded(child: ActionButton(label: AppStrings.generateReport, svgIcon: AppIcons.report, onTap: () => OdourReportGenerator.generate(context, _allRecords), isFullWidth: true)),
             const SizedBox(width: 8),
-            GestureDetector(
-              onTap: isRefreshing ? () {} : _refreshData,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(color: ColorConstants.cardBackground, borderRadius: BorderRadius.circular(AppDimensions.radiusMedium), border: Border.all(color: ColorConstants.divider)),
-                child: isRefreshing
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: ColorConstants.primary))
-                    : SvgPicture.asset(AppIcons.refresh, width: 18, height: 18, colorFilter: const ColorFilter.mode(ColorConstants.iconGrey, BlendMode.srcIn)),
-              ),
+            AnimatedSyncButton(
+              isSyncing: isRefreshing,
+              onTap: _refreshData,
             ),
           ],
         ),
@@ -327,3 +321,77 @@ class _OdourDashboardState extends State<OdourDashboard> {
     );
   }
 }
+
+class AnimatedSyncButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final bool isSyncing;
+
+  const AnimatedSyncButton({super.key, required this.onTap, required this.isSyncing});
+
+  @override
+  State<AnimatedSyncButton> createState() => _AnimatedSyncButtonState();
+}
+
+class _AnimatedSyncButtonState extends State<AnimatedSyncButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1));
+    if (widget.isSyncing) _controller.repeat();
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedSyncButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSyncing && !oldWidget.isSyncing) {
+      _controller.repeat();
+    } else if (!widget.isSyncing && oldWidget.isSyncing) {
+      _controller.stop();
+      _controller.animateTo(0, duration: const Duration(milliseconds: 300));
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.isSyncing ? null : widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: widget.isSyncing ? ColorConstants.primary.withValues(alpha: 0.1) : ColorConstants.cardBackground,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          border: Border.all(color: widget.isSyncing ? ColorConstants.primary.withValues(alpha: 0.3) : ColorConstants.divider)
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RotationTransition(
+              turns: _controller,
+              child: SvgPicture.asset(
+                AppIcons.refresh,
+                width: 18,
+                height: 18,
+                colorFilter: ColorFilter.mode(
+                  widget.isSyncing ? ColorConstants.primary : ColorConstants.iconGrey,
+                  BlendMode.srcIn
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text('Sync', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: widget.isSyncing ? ColorConstants.primary : ColorConstants.textSecondary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

@@ -6,6 +6,7 @@ import 'package:smart_coach_new/core/utils/app_icons.dart';
 import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import '../../data/models/odour_model.dart';
+import 'odour_sensor_modal.dart';
 
 class OdourWashroomDetailsView extends StatelessWidget {
   final OdourCoachModel toilet;
@@ -42,6 +43,18 @@ class OdourWashroomDetailsView extends StatelessWidget {
         ),
         titleSpacing: 4,
         title: Text('${toilet.coachNumber} - ${toilet.toiletPosition}', style: AppTextStyles.header1),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: ColorConstants.primary),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => OdourSensorModal(coach: toilet),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -146,7 +159,7 @@ class OdourWashroomDetailsView extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${score.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 40, fontWeight: FontWeight.w800, color: color)),
+                Text('${score.toStringAsFixed(2)}%', style: GoogleFonts.poppins(fontSize: 40, fontWeight: FontWeight.w800, color: color)),
                 Text(status, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: color)),
               ],
             ),
@@ -193,13 +206,29 @@ class OdourWashroomDetailsView extends StatelessWidget {
        // For temp/humidity, percentage is based on an arbitrary max (e.g. 50C for temp, 100% for humidity)
        percent = value / (label == 'Temp' ? 50.0 : 100.0);
     }
+    
+    // Map internal status to UI status
+    String displayStatus = status;
+    if (status.toLowerCase() == 'warning') displayStatus = 'Moderate';
+    if (status.toLowerCase() == 'critical') displayStatus = 'Bad';
+
+    IconData statusIcon = Icons.check_circle;
+    if (displayStatus == 'Moderate') statusIcon = Icons.warning_rounded;
+    if (displayStatus == 'Bad') statusIcon = Icons.error_rounded;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -215,7 +244,7 @@ class OdourWashroomDetailsView extends StatelessWidget {
                 child: CircularProgressIndicator(
                   value: percent,
                   strokeWidth: 8,
-                  backgroundColor: color.withValues(alpha: 0.2),
+                  backgroundColor: color.withValues(alpha: 0.15),
                   valueColor: AlwaysStoppedAnimation(color),
                   strokeCap: StrokeCap.round,
                 ),
@@ -224,18 +253,29 @@ class OdourWashroomDetailsView extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('${value.toStringAsFixed(1)}', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+                  child: Text('${value.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800, color: color)),
                 ),
               ),
             ],
           ),
-          const Spacer(),
-          Text(unit, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: ColorConstants.textSecondary)),
           const SizedBox(height: 2),
+          Text(unit, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: ColorConstants.textSecondary)),
+          const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-            child: Text(status, style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold, color: color)),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15), 
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(statusIcon, size: 10, color: color),
+                const SizedBox(width: 4),
+                Text(displayStatus.toUpperCase(), style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w800, color: color, letterSpacing: 0.5)),
+              ],
+            ),
           )
         ],
       ),
@@ -317,7 +357,7 @@ class OdourWashroomDetailsView extends StatelessWidget {
         const Divider(color: ColorConstants.divider),
         _dataRow('Coach Number', wm.coachNumber),
         const Divider(color: ColorConstants.divider),
-        _dataRow('GPS Location', wm.gpsCoordinates),
+        _dataRow('Location', wm.locationAddress),
       ],
     );
   }

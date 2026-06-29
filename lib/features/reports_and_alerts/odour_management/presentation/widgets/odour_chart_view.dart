@@ -177,7 +177,7 @@ class OdourChartView extends StatelessWidget {
   }
 
   Widget _donutLegendRow(String label, int count, int total, Color color) {
-    final pct = total > 0 ? (count / total * 100).toStringAsFixed(0) : '0';
+    final pct = total > 0 ? (count / total * 100).toStringAsFixed(2) : '0';
     return Row(
       children: [
         Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
@@ -215,7 +215,7 @@ class OdourChartView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.15), shape: BoxShape.circle),
-                child: Text('${score.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+                child: Text('${score.toStringAsFixed(2)}%', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -315,7 +315,7 @@ class OdourChartView extends StatelessWidget {
                       '${labels[group.x.toInt()]}\n',
                       const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                       children: [
-                        TextSpan(text: '${rod.toY.toStringAsFixed(1)} Score', style: const TextStyle(color: Colors.yellowAccent, fontSize: 11, fontWeight: FontWeight.w500))
+                        TextSpan(text: '${rod.toY.toStringAsFixed(2)} Score', style: const TextStyle(color: Colors.yellowAccent, fontSize: 11, fontWeight: FontWeight.w500))
                       ]
                     );
                   }
@@ -408,7 +408,7 @@ class OdourChartView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(value.toStringAsFixed(1), style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: color)),
+              Text(value.toStringAsFixed(2), style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: color)),
               const SizedBox(width: 4),
               Text(unit, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: color)),
             ],
@@ -428,7 +428,7 @@ class OdourChartView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('0', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary)),
-              Text('Max: ${threshold.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary)),
+              Text('Max: ${threshold.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary)),
             ],
           )
         ],

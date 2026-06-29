@@ -10,7 +10,8 @@
  */
 
 // Your Supabase Configuration
-$SUPABASE_URL = "https://cxzzmfqxyxondlzledjn.supabase.co/rest/v1/odour_management_live?sensor_id=eq.SENS-001";
+// Using UPSERT (POST + resolution=merge-duplicates) so it automatically reads sensor_id from JSON
+$SUPABASE_URL = "https://cxzzmfqxyxondlzledjn.supabase.co/rest/v1/odour_management_live";
 $SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4enptZnF4eXhvbmRsemxlZGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NDExNDMsImV4cCI6MjA5ODExNzE0M30.JcSfMGc6u6PmlSNEzZA96r9IoWdV88C7z-n68RiouMk";
 
 // Read the raw JSON payload coming from the SIM800L
@@ -19,18 +20,17 @@ $jsonPayload = file_get_contents('php://input');
 // Initialize cURL to forward the request to Supabase over secure HTTPS
 $ch = curl_init($SUPABASE_URL);
 
-// Set up the required headers for Supabase
+// Set up the required headers for Supabase UPSERT
 $headers = array(
     "apikey: " . $SUPABASE_KEY,
     "Authorization: Bearer " . $SUPABASE_KEY,
     "Content-Type: application/json",
-    "Prefer: return=representation",
-    "X-HTTP-Method-Override: PATCH"
+    "Prefer: resolution=merge-duplicates,return=representation"
 );
 
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PATCH");
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 

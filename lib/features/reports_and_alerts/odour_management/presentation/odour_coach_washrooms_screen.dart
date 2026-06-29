@@ -57,10 +57,17 @@ class OdourCoachWashroomsScreen extends StatelessWidget {
   }
 }
 
-class _WashroomCard extends StatelessWidget {
+class _WashroomCard extends StatefulWidget {
   final OdourCoachModel toilet;
 
   const _WashroomCard({required this.toilet});
+
+  @override
+  State<_WashroomCard> createState() => _WashroomCardState();
+}
+
+class _WashroomCardState extends State<_WashroomCard> {
+  bool _isPressed = false;
 
   Color _statusColor(String status) {
     if (status.toLowerCase() == 'alert') return const Color(0xFFD32F2F);
@@ -70,8 +77,8 @@ class _WashroomCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAlert = toilet.hasAlert;
-    final isActive = toilet.isActive;
+    final isAlert = widget.toilet.hasAlert;
+    final isActive = widget.toilet.isActive;
     
     // Overall status logic for this specific washroom
     String statusStr = 'Active';
@@ -80,81 +87,89 @@ class _WashroomCard extends StatelessWidget {
     
     final wc = _statusColor(statusStr);
 
-    return InkWell(
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OdourWashroomDetailsView(toilet: toilet),
+            builder: (context) => OdourWashroomDetailsView(toilet: widget.toilet),
           ),
         );
       },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isAlert ? const Color(0xFFFFF0F0) : ColorConstants.cardBackground,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-          border: Border.all(
-            color: isAlert ? Colors.red.withOpacity(0.15) : ColorConstants.divider,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isAlert ? const Color(0xFFFFF0F0) : ColorConstants.cardBackground,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+            border: Border.all(
+              color: isAlert ? Colors.red.withValues(alpha: 0.15) : ColorConstants.divider,
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    toilet.toiletPosition,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: ColorConstants.textPrimary),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.toilet.toiletPosition,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: ColorConstants.textPrimary),
+                    ),
                   ),
-                ),
-                Icon(
-                  isAlert ? Icons.warning_amber_rounded : (isActive ? Icons.check_circle : Icons.cancel),
-                  size: 18,
-                  color: wc,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: wc.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
+                  Icon(
+                    isAlert ? Icons.warning_amber_rounded : (isActive ? Icons.check_circle : Icons.cancel),
+                    size: 18,
+                    color: wc,
+                  ),
+                ],
               ),
-              child: Text(
-                statusStr.toUpperCase(),
-                style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold, color: wc),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: wc.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  statusStr.toUpperCase(),
+                  style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.bold, color: wc),
+                ),
               ),
-            ),
-            const Spacer(),
-            Text('Hygiene Score', style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary)),
-            Text('${toilet.hygieneScore.toStringAsFixed(0)}%', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: wc)),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Door', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary)),
-                    Text(toilet.doorStatus, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: toilet.doorStatus.toLowerCase() == 'open' ? ColorConstants.statusWarning : Colors.green)),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('VOC', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary)),
-                    Text('${toilet.voc.toStringAsFixed(0)}', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: ColorConstants.textPrimary)),
-                  ],
-                ),
-              ],
-            )
-          ],
+              const Spacer(),
+              Text('Hygiene Score', style: GoogleFonts.poppins(fontSize: 10, color: ColorConstants.textSecondary)),
+              Text('${widget.toilet.hygieneScore.toStringAsFixed(2)}%', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: wc)),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Door', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary)),
+                      Text(widget.toilet.doorStatus, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: widget.toilet.doorStatus.toLowerCase() == 'open' ? ColorConstants.statusWarning : Colors.green)),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('VOC', style: GoogleFonts.poppins(fontSize: 9, color: ColorConstants.textSecondary)),
+                      Text('${widget.toilet.voc.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: ColorConstants.textPrimary)),
+                    ],
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );

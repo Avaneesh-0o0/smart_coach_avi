@@ -19,8 +19,11 @@ class OdourCoachModel {
   final double smoke;
   final double temperature;
   final double humidity;
-  final double latitude;
-  final double longitude;
+  final String mcc;
+  final String mnc;
+  final String lac;
+  final String cellId;
+  final String address;
   final String doorStatus;
   final int doorOpenEventsToday;
   final String lastOpenedTime;
@@ -49,8 +52,11 @@ class OdourCoachModel {
     this.smoke = 0.0,
     this.temperature = 0.0,
     this.humidity = 0.0,
-    this.latitude = 0.0,
-    this.longitude = 0.0,
+    this.mcc = '404',
+    this.mnc = '93',
+    this.lac = 'Unknown',
+    this.cellId = 'Unknown',
+    this.address = 'Unknown',
     this.doorStatus = 'Closed',
     this.doorOpenEventsToday = 0,
     this.lastOpenedTime = 'N/A',
@@ -95,7 +101,7 @@ class OdourCoachModel {
   double get h2sThreshold => 0.1;
   double get smokeThreshold => 10.0;
 
-  String get gpsCoordinates => '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}';
+  String get locationAddress => address;
 
   bool get isOnline => true;
   String get communicationStatus => 'Stable';
