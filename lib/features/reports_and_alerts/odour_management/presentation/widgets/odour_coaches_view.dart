@@ -174,19 +174,26 @@ class _CoachGroupCardState extends State<_CoachGroupCard> {
                       ),
                     ],
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text('Peak', style: GoogleFonts.poppins(fontSize: 8, color: ColorConstants.textTertiary)),
-                      Text(
-                        '${displayReading.toStringAsFixed(2)} ppm',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: wc,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('Peak', style: GoogleFonts.poppins(fontSize: 8, color: ColorConstants.textTertiary)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            '${displayReading.toStringAsFixed(2)} ppm',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: wc,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),

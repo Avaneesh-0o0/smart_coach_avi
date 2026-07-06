@@ -12,7 +12,7 @@ class OdourSensorModal extends StatelessWidget {
 
   String _formatTimestamp(String ts) {
     try {
-      return DateFormat('dd/MM/yy HH:mm:ss').format(DateTime.parse(ts));
+      return DateFormat('dd/MM/yy HH:mm:ss').format(DateTime.parse(ts).toLocal());
     } catch (_) {
       return ts;
     }
@@ -129,7 +129,10 @@ class OdourSensorModal extends StatelessWidget {
                         _buildDetailRow('Coach Type', coach.coachType),
                         _buildDetailRow('Train Number', coach.trainNumber),
                         _buildDetailRow('Train Route', coach.route),
-                        _buildDetailRow('Location', coach.locationAddress),
+                        _buildDetailRow('MNC', coach.mnc),
+                        _buildDetailRow('MCC', coach.mcc),
+                        _buildDetailRow('Cell ID', coach.cellId),
+                        _buildDetailRow('LAC', coach.lac),
                         _buildDetailRow('Communication Status', coach.communicationStatus),
                         _buildDetailRow('Last Updated', _formatTimestamp(coach.timestamp)),
                       ]),

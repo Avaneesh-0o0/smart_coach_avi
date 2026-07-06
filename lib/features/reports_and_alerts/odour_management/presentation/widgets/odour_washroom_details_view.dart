@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,6 +7,7 @@ import 'package:smart_coach_new/core/utils/app_icons.dart';
 import 'package:smart_coach_new/core/utils/app_text_styles.dart';
 import 'package:smart_coach_new/core/utils/color_constants.dart';
 import '../../data/models/odour_model.dart';
+import '../../data/repository/odour_repository.dart';
 import 'odour_sensor_modal.dart';
 
 class OdourWashroomDetailsView extends StatelessWidget {
@@ -15,78 +17,102 @@ class OdourWashroomDetailsView extends StatelessWidget {
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'good': return Colors.green;
-      case 'warning': return ColorConstants.statusWarning;
-      case 'critical': return ColorConstants.statusCritical;
+      case 'good': 
+      case 'normal':
+        return Colors.green;
+      case 'cold':
+        return Colors.blue;
+      case 'hot':
+        return Colors.red;
+      case 'warning': 
+      case 'moderate':
+      case 'dry':
+        return ColorConstants.statusWarning;
+      case 'critical': 
+      case 'bad':
+      case 'hot':
+      case 'humid':
+        return ColorConstants.statusCritical;
       default: return ColorConstants.iconGrey;
     }
   }
 
   String _fmtDt(String ts) {
-    try { return DateFormat('dd/MM/yy HH:mm').format(DateTime.parse(ts)); }
+    try { return DateFormat('dd/MM/yy HH:mm').format(DateTime.parse(ts).toLocal()); }
     catch (_) { return ts; }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorConstants.scaffoldBackground,
-      appBar: AppBar(
-        backgroundColor: ColorConstants.scaffoldBackground,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leadingWidth: 40,
-        leading: IconButton(
-          padding: EdgeInsets.zero,
-          icon: const Icon(Icons.arrow_back, color: ColorConstants.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        titleSpacing: 4,
-        title: Text('${toilet.coachNumber} - ${toilet.toiletPosition}', style: AppTextStyles.header1),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: ColorConstants.primary),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => OdourSensorModal(coach: toilet),
-              );
-            },
+    return StreamBuilder<List<OdourCoachModel>>(
+      stream: OdourRepository().watchOdourData(),
+      initialData: [toilet],
+      builder: (context, snapshot) {
+        final currentToilet = snapshot.data?.firstWhere(
+          (t) => t.deviceId == toilet.deviceId, 
+          orElse: () => toilet
+        ) ?? toilet;
+
+        return Scaffold(
+          backgroundColor: ColorConstants.scaffoldBackground,
+          appBar: AppBar(
+            backgroundColor: ColorConstants.scaffoldBackground,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            leadingWidth: 40,
+            leading: IconButton(
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.arrow_back, color: ColorConstants.textPrimary),
+              onPressed: () => Navigator.pop(context),
+            ),
+            titleSpacing: 4,
+            title: Text('${currentToilet.coachNumber} - ${currentToilet.toiletPosition}', style: AppTextStyles.header1),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.info_outline, color: ColorConstants.primary),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => OdourSensorModal(coach: currentToilet),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Train info card
-            _trainInfoCard(),
-            const SizedBox(height: 12),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Train info card
+                _trainInfoCard(currentToilet),
+                const SizedBox(height: 12),
 
-            // 1. Hygiene Score (Large Circular Gauge)
-            _card(child: _hygieneSection(toilet)),
-            const SizedBox(height: 10),
+                // 1. Hygiene Score (Large Circular Gauge)
+                _card(child: _hygieneSection(currentToilet)),
+                const SizedBox(height: 10),
 
-            // 2. Sensor Readings (Smaller Circular Gauges)
-            _card(child: _sensorSection(toilet)),
-            const SizedBox(height: 10),
+                // 2. Sensor Readings (Smaller Circular Gauges)
+                _card(child: _sensorSection(currentToilet)),
+                const SizedBox(height: 10),
 
-            // 3. Door Activity
-            _card(child: _doorSection(toilet)),
-            const SizedBox(height: 10),
+                // 3. Door Activity
+                _card(child: _doorSection(currentToilet)),
+                const SizedBox(height: 10),
 
-            // 4. Device Information
-            _card(child: _deviceInfoSection(toilet)),
-            const SizedBox(height: 10),
+                // 4. Device Information
+                _card(child: _deviceInfoSection(currentToilet)),
+                const SizedBox(height: 10),
 
-            // 5. System Health
-            _card(child: _systemHealthSection(toilet)),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+                // 5. System Health
+                _card(child: _systemHealthSection(currentToilet)),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      }
     );
   }
 
@@ -97,7 +123,7 @@ class OdourWashroomDetailsView extends StatelessWidget {
     child: child,
   );
 
-  Widget _trainInfoCard() => Container(
+  Widget _trainInfoCard(OdourCoachModel wm) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
@@ -109,17 +135,17 @@ class OdourWashroomDetailsView extends StatelessWidget {
       Row(children: [
         SvgPicture.asset(AppIcons.train, width: 18, height: 18, colorFilter: const ColorFilter.mode(ColorConstants.primary, BlendMode.srcIn)),
         const SizedBox(width: 8),
-        Expanded(child: Text('${toilet.trainNumber} - ${toilet.trainName}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary))),
+        Expanded(child: Text('${wm.trainNumber} - ${wm.trainName}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: ColorConstants.primary))),
       ]),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
         runSpacing: 4,
         children: [
-          _infoPill('Coach: ${toilet.coachNumber}'),
-          _infoPill(toilet.coachType),
-          _infoPill('Device: ${toilet.deviceId}'),
-          _infoPill('Updated: ${_fmtDt(toilet.timestamp)}'),
+          _infoPill('Coach: ${wm.coachNumber}'),
+          _infoPill(wm.coachType),
+          _infoPill('Device: ${wm.deviceId}'),
+          _infoPill('Updated: ${_fmtDt(wm.timestamp)}'),
         ],
       ),
     ]),
@@ -166,6 +192,12 @@ class OdourWashroomDetailsView extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
+        Text(
+          '* Hygiene score is considered Low if below 70% and Critical if below 50%.',
+          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: ColorConstants.textSecondary, fontStyle: FontStyle.italic),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -207,14 +239,17 @@ class OdourWashroomDetailsView extends StatelessWidget {
        percent = value / (label == 'Temp' ? 50.0 : 100.0);
     }
     
-    // Map internal status to UI status
+    // Map internal status to UI status (Capitalize first letter)
     String displayStatus = status;
-    if (status.toLowerCase() == 'warning') displayStatus = 'Moderate';
-    if (status.toLowerCase() == 'critical') displayStatus = 'Bad';
-
+    String dsLower = status.toLowerCase();
+    
+    // Define the icon based on the generalized string
     IconData statusIcon = Icons.check_circle;
-    if (displayStatus == 'Moderate') statusIcon = Icons.warning_rounded;
-    if (displayStatus == 'Bad') statusIcon = Icons.error_rounded;
+    if (dsLower == 'warning' || dsLower == 'moderate' || dsLower == 'dry' || dsLower == 'cold') {
+      statusIcon = Icons.warning_rounded;
+    } else if (dsLower == 'critical' || dsLower == 'bad' || dsLower == 'hot' || dsLower == 'humid') {
+      statusIcon = Icons.error_rounded;
+    }
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -239,21 +274,20 @@ class OdourWashroomDetailsView extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 70,
-                height: 70,
-                child: CircularProgressIndicator(
-                  value: percent,
-                  strokeWidth: 8,
-                  backgroundColor: color.withValues(alpha: 0.15),
-                  valueColor: AlwaysStoppedAnimation(color),
-                  strokeCap: StrokeCap.round,
+                width: 80,
+                height: 80,
+                child: CustomPaint(
+                  painter: NeedleGaugePainter(percent: percent, color: color),
                 ),
               ),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('${value.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800, color: color)),
+              Positioned(
+                bottom: 0,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('${value.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w800, color: color)),
+                  ),
                 ),
               ),
             ],
@@ -310,6 +344,60 @@ class OdourWashroomDetailsView extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.water_drop, size: 14, color: Colors.blue),
+                        const SizedBox(width: 4),
+                        Text('U Count', style: AppTextStyles.bodySmall),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text('${wm.uCount}', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.blue)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.brown.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.brown.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.spa, size: 14, color: Colors.brown),
+                        const SizedBox(width: 4),
+                        Text('F Count', style: AppTextStyles.bodySmall),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text('${wm.fCount}', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.brown)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         _dataRow('Open Events Today', '${wm.doorOpenEventsToday}'),
         const Divider(color: ColorConstants.divider),
@@ -357,7 +445,13 @@ class OdourWashroomDetailsView extends StatelessWidget {
         const Divider(color: ColorConstants.divider),
         _dataRow('Coach Number', wm.coachNumber),
         const Divider(color: ColorConstants.divider),
-        _dataRow('Location', wm.locationAddress),
+        _dataRow('MNC', wm.mnc),
+        const Divider(color: ColorConstants.divider),
+        _dataRow('MCC', wm.mcc),
+        const Divider(color: ColorConstants.divider),
+        _dataRow('Cell ID', wm.cellId),
+        const Divider(color: ColorConstants.divider),
+        _dataRow('LAC', wm.lac),
       ],
     );
   }
@@ -381,7 +475,7 @@ class OdourWashroomDetailsView extends StatelessWidget {
         const SizedBox(height: 8),
         _dataRow('Communication', wm.communicationStatus),
         const Divider(color: ColorConstants.divider),
-        _dataRow('Last Data Received', wm.lastDataReceived),
+        _dataRow('Last Data Received', _fmtDt(wm.lastDataReceived)),
       ],
     );
   }
@@ -396,4 +490,63 @@ class OdourWashroomDetailsView extends StatelessWidget {
       ],
     ),
   );
+}
+
+class NeedleGaugePainter extends CustomPainter {
+  final double percent;
+  final Color color;
+
+  NeedleGaugePainter({required this.percent, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2 + 5);
+    final radius = size.width / 2;
+
+    final Paint trackPaint = Paint()
+      ..color = color.withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+
+    final Paint valuePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+
+    final rect = Rect.fromCircle(center: center, radius: radius - 4);
+
+    final startAngle = math.pi * 0.8; 
+    final sweepAngle = math.pi * 1.4; 
+
+    canvas.drawArc(rect, startAngle, sweepAngle, false, trackPaint);
+    canvas.drawArc(rect, startAngle, sweepAngle * percent, false, valuePaint);
+
+    final angle = startAngle + (sweepAngle * percent);
+    final needleLength = radius - 10;
+    
+    final needleEnd = Offset(
+      center.dx + needleLength * math.cos(angle),
+      center.dy + needleLength * math.sin(angle),
+    );
+
+    final Paint needlePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(center, needleEnd, needlePaint);
+    
+    final Paint dotPaint = Paint()..color = color;
+    canvas.drawCircle(center, 5, dotPaint);
+    final Paint innerDotPaint = Paint()..color = Colors.white;
+    canvas.drawCircle(center, 2, innerDotPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant NeedleGaugePainter oldDelegate) {
+    return oldDelegate.percent != percent || oldDelegate.color != color;
+  }
 }

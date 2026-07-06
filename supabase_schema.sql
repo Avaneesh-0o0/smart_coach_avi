@@ -130,7 +130,11 @@ alter publication supabase_realtime add table acp_data;
 -- Note: Replace with actual authentication policies based on project requirements.
 -- For quick dev, allowing ALL access.
 -- =========================================================================
-/*
-ALTER TABLE odour_data ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Enable all for authenticated users only" ON odour_data FOR ALL TO authenticated USING (true);
 */
+
+-- =========================================================================
+-- V2 MIGRATION: ADD U-COUNT AND F-COUNT COLUMNS
+-- =========================================================================
+ALTER TABLE odour_management_live 
+ADD COLUMN IF NOT EXISTS u_count INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS f_count INTEGER DEFAULT 0;

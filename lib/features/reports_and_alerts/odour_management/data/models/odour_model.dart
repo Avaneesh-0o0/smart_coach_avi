@@ -26,12 +26,22 @@ class OdourCoachModel {
   final String address;
   final String doorStatus;
   final int doorOpenEventsToday;
+  final int uCount;
+  final int fCount;
   final String lastOpenedTime;
   final String lastClosedTime;
   final int totalDoorCyclesToday;
   final String averageOpenDuration;
   final String longestOpenDuration;
   final List<Map<String, String>> recentDoorEventsTimeline;
+
+  final double? serverHygieneScore;
+  final String? serverVocStatus;
+  final String? serverNh3Status;
+  final String? serverH2sStatus;
+  final String? serverSmokeStatus;
+  final String? serverTempStatus;
+  final String? serverHumStatus;
 
   OdourCoachModel({
     required this.coachNumber,
@@ -59,12 +69,21 @@ class OdourCoachModel {
     this.address = 'Unknown',
     this.doorStatus = 'Closed',
     this.doorOpenEventsToday = 0,
+    this.uCount = 0,
+    this.fCount = 0,
     this.lastOpenedTime = 'N/A',
     this.lastClosedTime = 'N/A',
     this.totalDoorCyclesToday = 0,
     this.averageOpenDuration = 'N/A',
     this.longestOpenDuration = 'N/A',
     this.recentDoorEventsTimeline = const [],
+    this.serverHygieneScore,
+    this.serverVocStatus,
+    this.serverNh3Status,
+    this.serverH2sStatus,
+    this.serverSmokeStatus,
+    this.serverTempStatus,
+    this.serverHumStatus,
   });
 
   bool get isActive => status.toLowerCase() == 'active' || status.toLowerCase() == 'testing';
@@ -72,6 +91,7 @@ class OdourCoachModel {
 
   // Computed properties for details view
   double get hygieneScore {
+    if (serverHygieneScore != null) return serverHygieneScore!;
     // 100 is best, 0 is worst
     double score = 100.0;
     if (nh3 > 1.0) score -= 40;
@@ -89,17 +109,44 @@ class OdourCoachModel {
     return score.clamp(0.0, 100.0);
   }
 
-  String get vocStatus => voc < 800 ? 'Good' : (voc <= 1000 ? 'Warning' : 'Critical');
-  String get nh3Status => nh3 < 0.2 ? 'Good' : (nh3 <= 1.0 ? 'Warning' : 'Critical');
-  String get h2sStatus => h2s < 0.05 ? 'Good' : (h2s <= 0.1 ? 'Warning' : 'Critical');
-  String get smokeStatus => smoke < 5 ? 'Good' : (smoke <= 10 ? 'Warning' : 'Critical');
-  String get tempStatus => temperature < 30 ? 'Good' : 'Warning';
-  String get humidityStatus => humidity < 60 ? 'Good' : 'Warning';
+  String get vocStatus {
+    if (serverVocStatus != null) return serverVocStatus!;
+    return voc < 800 ? 'Good' : (voc <= 1000 ? 'Warning' : 'Critical');
+  }
+
+  String get nh3Status {
+    if (serverNh3Status != null) return serverNh3Status!;
+    return nh3 < 0.2 ? 'Good' : (nh3 <= 1.0 ? 'Warning' : 'Critical');
+  }
+
+  String get h2sStatus {
+    if (serverH2sStatus != null) return serverH2sStatus!;
+    return h2s < 0.05 ? 'Good' : (h2s <= 0.1 ? 'Warning' : 'Critical');
+  }
+
+  String get smokeStatus {
+    if (serverSmokeStatus != null) return serverSmokeStatus!;
+    return smoke <= 9.9 ? 'Good' : (smoke <= 19.9 ? 'Warning' : 'Critical');
+  }
+
+  String get tempStatus {
+    if (serverTempStatus != null) return serverTempStatus!;
+    if (temperature < 20.0) return 'Cold';
+    if (temperature > 35.0) return 'Hot';
+    return 'Normal';
+  }
+
+  String get humidityStatus {
+    if (serverHumStatus != null) return serverHumStatus!;
+    if (humidity < 30.0) return 'Dry';
+    if (humidity > 70.0) return 'Humid';
+    return 'Normal';
+  }
 
   double get vocThreshold => 1000.0;
   double get nh3Threshold => 1.0;
   double get h2sThreshold => 0.1;
-  double get smokeThreshold => 10.0;
+  double get smokeThreshold => 19.9;
 
   String get locationAddress => address;
 

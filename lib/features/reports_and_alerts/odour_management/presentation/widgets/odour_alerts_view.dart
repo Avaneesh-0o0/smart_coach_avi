@@ -87,7 +87,7 @@ class _OdourAlertsViewState extends State<OdourAlertsView> {
   }
 
   String _fmt(String ts) {
-    try { return DateFormat('dd MMM, HH:mm:ss').format(DateTime.parse(ts)); }
+    try { return DateFormat('dd MMM, HH:mm:ss').format(DateTime.parse(ts).toLocal()); }
     catch (_) { return ts; }
   }
 

@@ -37,7 +37,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       final password = event.password.trim();
 
       // Hardcoded bypass for our tester account to avoid Firebase Auth config errors
-      if (email == 'tester@example.com' && password == '123456') {
+      if ((email == 'tester@example.com' || email == 'avaneesh@login.com' || email == 'tilak@login.com') && password == '123456') {
         print('Tester account bypass activated!');
         final userModel = UserModel(
           userId: 1,
