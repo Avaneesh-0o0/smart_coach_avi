@@ -103,7 +103,7 @@ class OdourCoachCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(color: ColorConstants.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(4)),
               child: Text(
-                'VOC: ${coach.voc.toStringAsFixed(2)} ppb',
+                'VOC: ${coach.voc.toStringAsFixed(2)} ppm',
                 style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: ColorConstants.primary),
               ),
             ),

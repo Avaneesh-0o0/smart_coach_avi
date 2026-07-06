@@ -371,12 +371,12 @@ class OdourChartView extends StatelessWidget {
       crossAxisSpacing: 12,
       childAspectRatio: 1.1, // Adjusted to fit progress bars
       children: [
-        _avgSensorTile('Avg VOC', avgVoc, 'ppb', const Color(0xFF4285F4), wm?.vocThreshold ?? 500.0),
+        _avgSensorTile('Avg VOC', avgVoc, 'ppm', const Color(0xFF4285F4), wm?.vocThreshold ?? 500.0),
         _avgSensorTile('Avg NH₃', avgNh3, 'ppm', const Color(0xFFFBBC05), wm?.nh3Threshold ?? 1.0),
         _avgSensorTile('Avg H₂S', avgH2s, 'ppm', const Color(0xFFEA4335), wm?.h2sThreshold ?? 0.1),
-        _avgSensorTile('Avg Smoke', avgSmoke, 'mg/m³', Colors.grey.shade700, wm?.smokeThreshold ?? 10.0),
+        _avgSensorTile('Avg Smoke', avgSmoke, 'ppm', Colors.grey.shade700, wm?.smokeThreshold ?? 10.0),
         _avgSensorTile('Avg Temp', avgTemp, '°C', const Color(0xFFFA7B17), 50.0),
-        _avgSensorTile('Avg Humidity', avgHum, '%', const Color(0xFF34A853), 100.0),
+        _avgSensorTile('Avg Humidity', avgHum, '% RH', const Color(0xFF34A853), 100.0),
       ],
     );
   }
